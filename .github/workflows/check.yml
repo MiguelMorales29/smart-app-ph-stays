@@ -46,3 +46,10 @@ jobs:
 
       - name: Build packages
         run: pnpm build
+
+      - name: Scan build output for development addresses
+        run: |
+          if grep -rnE "localhost:3100|localhost:5174|localhost:4100|127\.0\.0\.1" apps/dashboard/dist apps/storefront/.next --exclude="*.map" --exclude-dir=cache; then
+            echo "Dev address found in a production build"
+            exit 1
+          fi
