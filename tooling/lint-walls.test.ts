@@ -1,10 +1,14 @@
 import { resolve } from 'node:path';
 
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const eslint = new ESLint({ cwd: repoRoot });
+
+beforeAll(async () => {
+  await eslint.calculateConfigForFile(resolve(repoRoot, 'packages/core/src/index.ts'));
+}, 20000);
 
 async function lintSnippet(relativePath: string, code: string): Promise<string[]> {
   const results = await eslint.lintText(code, {
