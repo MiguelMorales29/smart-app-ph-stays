@@ -11,7 +11,7 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D5 Tailwind CSS, the shadcn CLI, fonts, design tokens, the Prettier Tailwind plugin and the CSS lint walls are set up in phase 3, together with the look. Phase 1 pages are unstyled.
 - D6 TanStack Router and Query, React Hook Form and the dashboard routes arrive in phase 3 (app frames). The Supabase CLI and `supabase/` arrive in phase 10.
 - D7 Versions: the newest stable release at least 7 days old, pinned exactly, re-checked on install day. TypeScript stays on 6.0.x while typescript-eslint supports only `<6.1`. `@types/node` follows Node 24. Node is pinned to 24.14.0 (founder's Mac, macOS 12.7).
-- D8 Git: one prompt, one branch, one pull request. CI must be green before the founder merges. Agents never push to `main`. (The food app's later "push straight to main" rule is not used here.)
+- D8 Git: one prompt, one branch, one pull request. The agent merges its own pull request only after CI is green (founder, 2026-11-16). Nothing is pushed straight to main.
 - D9 Copied from the food app (read-only reference, commit b34ca22): the shape of `tsconfig.base.json`, `pnpm-workspace.yaml` settings, `turbo.json`, the ESLint import walls, Prettier settings, the CI order, the API dev script, Vitest with `unplugin-swc` for the API. Written fresh: `AGENTS.md`, the docs, and no Supabase, demo emails or component exceptions.
 - D10 `cacheComponents` is on in the storefront from the start, so every page is written for it.
 - D11 Checking on a phone in phase 1: the dev servers listen on the Wi-Fi address and the phone opens `http://<mac-ip>:<port>`. Hosted preview links are decided in phase 3.
