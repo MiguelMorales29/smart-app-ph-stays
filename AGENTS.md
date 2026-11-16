@@ -41,7 +41,7 @@ No Nest CLI and no `nest` commands: write NestJS files by hand.
 7. **Components (from phase 3).** Use the planned library components. Install anything missing with the shadcn CLI. If you hand-write a component instead, stop and tell the founder why before continuing.
 8. **Backend (from phase 10).** Browser to NestJS API to Postgres. Screens never call Supabase. Only the founder applies migrations; never run a command that changes a hosted database.
 9. **Secrets.** Never read, print or commit `.env*` files or keys. Only `.env.example` files are committed. Each app checks its environment with Zod at start.
-10. **Git.** Work on the branch the prompt names, created from the latest `main`. Never push to `main`, never merge, never force-push. Open the pull request yourself (`gh pr create --base main`) and print its link. If `gh` is not signed in, stop and say so.
+10. **Git.** Work on the branch the prompt names, created from the latest `main`. Open the pull request yourself (`gh pr create --base main`), wait for the CI check with `gh pr checks --watch`, and when it is green merge it yourself with `gh pr merge --squash --delete-branch`, then `git checkout main && git pull`. If CI fails, fix it on the branch; never merge a red check. Never push directly to `main` and never force-push.
 11. **Generated and build files.** Never edit `dist/`, `.next/`, lockfile entries by hand, or any build output to make a check pass.
 
 ## Every task
@@ -51,7 +51,7 @@ No Nest CLI and no `nest` commands: write NestJS files by hand.
 3. Build in small commits: `chore(p1a): ...`, `feat(p1b): ...`.
 4. Before the pull request: `pnpm install --frozen-lockfile`, `pnpm format:check` and `pnpm check` pass. Run `pnpm build` too unless the prompt says CI will do it.
 5. Update `docs/PROGRESS.md` (tick the task), add one line to `docs/CHANGELOG.md`, and add any decision the founder approved to `docs/decisions.md`.
-6. Finish with: the pull request link, what changed, how the founder tests it, and what the founder must do by hand.
+6. Finish with: what changed, how the founder tests it, what the founder must do by hand, and the merged pull request link.
 
 ## If something fails
 
