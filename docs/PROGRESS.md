@@ -5,7 +5,7 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 ## Phase 1. Repository and stack
 
 - [x] P1-A Root, tooling, shared packages and CI
-- [ ] P1-B The three apps with placeholder pages and the API health check
+- [x] P1-B The three apps with placeholder pages and the API health check
 - [ ] P1-C Lint-wall tests, build scan, phone check and final verification
 
 ## Later phases
