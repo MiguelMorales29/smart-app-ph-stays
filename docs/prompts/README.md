@@ -1,0 +1,68 @@
+# Phase 1 guide: repository and stack
+
+Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one branch and one pull request. Before them, do step 0 by hand.
+
+## Step 0. Set up by hand (about 20 minutes)
+
+1. **Create the repository** on GitHub: owner `webserbisyo`, name `smart-app-ph-stays`, **Private**, and leave "Add a README", ".gitignore" and "license" all off (it must be empty).
+2. **Clone it** next to the food app:
+   ```
+   cd ~/Project
+   git clone https://github.com/webserbisyo/smart-app-ph-stays.git
+   cd smart-app-ph-stays
+   ```
+3. **Copy in the starter pack**: unzip `smart-app-ph-stays-starter.zip` and copy its contents (`AGENTS.md`, `docs/`, `.github/`) into this folder. Hidden folders like `.github` are hidden in Finder; press Cmd+Shift+. to show them.
+4. **Export the blueprint snapshots.** In the Claude Doc, open each tab below, use Export → Markdown, and save it into `docs/blueprints/` with this name:
+   - Build roadmap → `build-roadmap.md`
+   - Stack register → `stack-register.md`
+   - AI handoff brief → `ai-handoff-brief.md`
+   - System blueprint (Proposal) → `system-blueprint.md`
+   - Database blueprint → `database-blueprint.md`
+   - Feature blueprint → `feature-blueprint.md`
+   - Meta Pixel, CAPI and super admin → `meta-pixel-capi.md`
+   - Tours (MVP B) → `tours-mvp-b.md`
+5. **Check your tools** in Terminal (paste the output to Claude if anything looks wrong):
+   ```
+   node -v          # must be v24.14.0
+   pnpm -v          # any 12.x; the repo switches to 12.18.0 itself
+   gh auth status   # must say Logged in to github.com
+   git config user.name && git config user.email
+   ```
+6. **First commit** (the only time anything goes straight to `main`):
+   ```
+   git add -A
+   git commit -m "docs: starter docs, blueprint snapshots and phase 1 prompts"
+   git push origin main
+   ```
+7. **Open the folder in Antigravity.** Model: Gemini 4 Argon, Medium. Use Planning mode, so the agent posts a plan and waits. In the agent settings, have terminal commands ask for your review, at least for `git push` and anything that deletes files.
+
+## Running each prompt
+
+1. Start a **new** Antigravity conversation for each prompt. A fresh, small context makes fewer wrong guesses.
+2. Paste the whole prompt file (everything below its line).
+3. Read the plan it posts. Check it against "Review the plan" below, then reply "OK" or with your corrections.
+4. When it reports back, check "Review the result" below.
+5. Wait for the green tick on the pull request (GitHub → Pull requests → Checks).
+6. Merge it yourself (Squash and merge), then in Terminal: `git checkout main && git pull`.
+7. Paste the agent's final report to Claude if anything looked odd. Then run the next prompt.
+
+## Review the plan (every prompt)
+
+- Does it list only the packages in the prompt's table?
+- Does it name a branch `ag/p1...` and say it will open a pull request, never push to `main`?
+- Does it skip anything the prompt says "Not in this task"?
+- For scaffolders or GitHub actions, does it name the versions or flags it will use?
+
+## Review the result
+
+- **P1-A:** the pull request shows `turbo.json`, `pnpm-workspace.yaml`, `eslint.config.js`, `tsconfig.base.json`, three folders in `packages/` and `.github/workflows/check.yml`. CI is green.
+- **P1-B:** run `pnpm dev`. Open http://localhost:3100 and http://localhost:5174 on the Mac, then `http://<your Mac's IP>:3100` and `:5174` on your phone (same Wi-Fi). Open http://localhost:4100/health. Each shows its text.
+- **P1-C:** the report shows 14 lint-wall cases passing, a wall it broke on purpose failing, and the fresh-clone check passing.
+
+## Red flags: stop and paste to Claude
+
+- It edited `eslint.config.js`, a tsconfig or a test to make a check pass.
+- It added a package that is not in the table, or a `^` in a version.
+- It pushed to `main`, or skipped the pull request.
+- It switched Next.js to webpack, or changed the Node version, on its own.
+- It says "done" without pasting the command output.

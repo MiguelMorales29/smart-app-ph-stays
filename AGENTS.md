@@ -1,0 +1,58 @@
+# AGENTS.md: Smart App PH Stays and Rentals
+
+Smart App PH Stays and Rentals gives small Philippine property owners their own installable booking app. Guests book staycations (per night) and tenants rent rooms and apartments (per month). Owners run everything from a dashboard; the founder runs the platform from a super admin area. Tours come later (MVP B).
+
+This file is the rule book for every AI coder in this repository. It stays short on purpose. The full plans are in `docs/blueprints/`; read one only when a prompt names it.
+
+## Where we are
+
+**Phase 1 of 16: repository and stack.** No database, no sign-in, no features, no UI components yet. The phases are in `docs/blueprints/build-roadmap.md`; progress is ticked in `docs/PROGRESS.md`.
+
+Order of work (decided 2026-11-16): inside each wave, the screens are built first on mock data, then the real database and API for the same screens. A page on mock data is **UI approved**; it is **Done** only when it runs on the real database.
+
+## Shape
+
+- pnpm workspace + Turborepo. Node 24.14, TypeScript strict. Package scope `@smartapp/*`.
+- `apps/storefront`: Next.js App Router. The guest-facing app (stays, rentals, later tours). Port 3100.
+- `apps/dashboard`: Vite + React single-page app. Owner dashboard and super admin. Port 5174.
+- `apps/api`: NestJS on Express, written by hand. Port 4100. Health check only in phase 1.
+- `packages/core`: Zod schemas, types, money, dates, words, error codes, demo data. No React, no UI, no data fetching.
+- `packages/ui`: design tokens, the one stylesheet, installed library components (from phase 3).
+- `packages/data`: the only functions screens call for data. Mock adapters now, the API later.
+- `tooling`: repo checks (lint-wall tests and scripts).
+- `docs`: decisions, progress, changelog, prompts and the blueprint snapshots.
+
+The ports differ from the food app (3000, 5173, 4000) so both can run at the same time.
+
+## Commands
+
+`pnpm install` · `pnpm dev` (all apps) · `pnpm check` (typecheck, lint, test) · `pnpm build` · `pnpm format` · `pnpm format:check`.
+
+No Nest CLI and no `nest` commands: write NestJS files by hand.
+
+## Hard rules
+
+1. **Scope.** Do only the task in the prompt. If something has no clear place, or two documents disagree, stop and ask. Never pick one silently.
+2. **Packages.** Exact versions, no `^` or `~`. A release must be at least 7 days old (`minimumReleaseAge` in `pnpm-workspace.yaml`) unless it is a security fix the founder approved. No new package without the founder's yes; every approved package is listed in `docs/decisions.md`. pnpm settings live in `pnpm-workspace.yaml` only; there is no `.npmrc`.
+3. **Imports.** Apps never import each other. Only `apps/api` may import `@supabase/*` (from phase 10). `packages/core` imports no React, `@smartapp/ui` or `@smartapp/data`. `packages/ui` does not import `@smartapp/data`. Screens never import mock files. Never weaken `eslint.config.js` or a tsconfig to make a check pass; stop and ask instead.
+4. **Types.** No `any`, no `as` casts, no `@ts-ignore`, `@ts-expect-error` or `@ts-nocheck`. Closed lists are `as const` arrays plus a Zod enum.
+5. **Mock data.** Lives only in `packages/data/src/mocks` and `packages/core/src/demo`, typed by the Zod schemas in `packages/core`. Mock data may imitate a database rule but must say so in a comment; the real rule lives in the database.
+6. **Money and time.** Money is whole centavos (integers). Dates are Manila calendar dates; times are shown in Manila time.
+7. **Components (from phase 3).** Use the planned library components. Install anything missing with the shadcn CLI. If you hand-write a component instead, stop and tell the founder why before continuing.
+8. **Backend (from phase 10).** Browser to NestJS API to Postgres. Screens never call Supabase. Only the founder applies migrations; never run a command that changes a hosted database.
+9. **Secrets.** Never read, print or commit `.env*` files or keys. Only `.env.example` files are committed. Each app checks its environment with Zod at start.
+10. **Git.** Work on the branch the prompt names, created from the latest `main`. Never push to `main`, never merge, never force-push. Open the pull request yourself (`gh pr create --base main`) and print its link. If `gh` is not signed in, stop and say so.
+11. **Generated and build files.** Never edit `dist/`, `.next/`, lockfile entries by hand, or any build output to make a check pass.
+
+## Every task
+
+1. Read this file, then only the files the prompt names.
+2. Post a short plan (files, commands, the flags of any scaffolder after reading its `--help`) and wait for the founder's OK.
+3. Build in small commits: `chore(p1a): ...`, `feat(p1b): ...`.
+4. Before the pull request: `pnpm install --frozen-lockfile`, `pnpm format:check` and `pnpm check` pass. Run `pnpm build` too unless the prompt says CI will do it.
+5. Update `docs/PROGRESS.md` (tick the task), add one line to `docs/CHANGELOG.md`, and add any decision the founder approved to `docs/decisions.md`.
+6. Finish with: the pull request link, what changed, how the founder tests it, and what the founder must do by hand.
+
+## If something fails
+
+Read the current official documentation for that tool, use the closest correct fix, and say exactly what you changed and why. If the fix needs a new package, a looser rule or a different version than the prompt says, stop and ask first. The founder's Mac runs macOS 12.7 on Node 24.14.0: if a tool will not run there, stop and report it rather than working around it.
