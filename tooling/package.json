@@ -1,0 +1,16 @@
+{
+  "name": "@smartapp/tooling",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "10.14.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
