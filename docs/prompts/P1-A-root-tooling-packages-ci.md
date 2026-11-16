@@ -22,22 +22,22 @@ Apps, Tailwind, the shadcn CLI, fonts, Supabase, TanStack, React Hook Form, Play
 
 Pin exactly. These were the newest releases at least 7 days old on 2026-11-16. Before installing, run `npm view <pkg> version time --json` for each and confirm. If pnpm refuses one because of `minimumReleaseAge`, use the newest older patch of the same minor, and list every change in your final report. Never go up a major or minor without asking.
 
-| Package | Version | Where |
-|---|---|---|
-| pnpm | 12.18.0 | `packageManager` |
-| turbo | 2.11.10 | root dev |
-| typescript | 6.0.3 | catalog (stay on 6.0.x: typescript-eslint supports `<6.1`) |
-| @types/node | 24.19.2 | catalog (follows Node 24, never 25 or 26) |
-| eslint | 10.14.0 | root dev |
-| @eslint/js | 10.0.1 | root dev |
-| typescript-eslint | 8.72.2 | root dev |
-| eslint-plugin-react-hooks | 7.1.1 | root dev |
-| @next/eslint-plugin-next | 16.4.6 | root dev |
-| prettier | 3.9.10 | root dev |
-| vitest | 5.1.0 | catalog |
-| zod | 4.6.7 | catalog |
-| react, react-dom | 19.3.1 | catalog (used from P1-B) |
-| @types/react, @types/react-dom | 19.3.0 | catalog (used from P1-B) |
+| Package                        | Version | Where                                                      |
+| ------------------------------ | ------- | ---------------------------------------------------------- |
+| pnpm                           | 12.18.0 | `packageManager`                                           |
+| turbo                          | 2.11.10 | root dev                                                   |
+| typescript                     | 6.0.3   | catalog (stay on 6.0.x: typescript-eslint supports `<6.1`) |
+| @types/node                    | 24.19.2 | catalog (follows Node 24, never 25 or 26)                  |
+| eslint                         | 10.14.0 | root dev                                                   |
+| @eslint/js                     | 10.0.1  | root dev                                                   |
+| typescript-eslint              | 8.72.2  | root dev                                                   |
+| eslint-plugin-react-hooks      | 7.1.1   | root dev                                                   |
+| @next/eslint-plugin-next       | 16.4.6  | root dev                                                   |
+| prettier                       | 3.9.10  | root dev                                                   |
+| vitest                         | 5.1.0   | catalog                                                    |
+| zod                            | 4.6.7   | catalog                                                    |
+| react, react-dom               | 19.3.1  | catalog (used from P1-B)                                   |
+| @types/react, @types/react-dom | 19.3.0  | catalog (used from P1-B)                                   |
 
 Two of these pass the 7-day rule only on 17 November 2026, Manila time: `typescript-eslint` 8.72.2 after about 01:10 and `@next/eslint-plugin-next` 16.4.6 after about 04:30. Earlier than that, use 8.72.1 and 16.4.5 and say so.
 

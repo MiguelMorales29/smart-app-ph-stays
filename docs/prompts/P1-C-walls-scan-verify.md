@@ -35,7 +35,7 @@ New features, new apps, new rules in `eslint.config.js`. If a wall does not fire
    - `packages/core/src/x.ts` with `// @ts-ignore` → `@typescript-eslint/ban-ts-comment`.
    - `packages/core/src/x.ts` with `let v: any` → `@typescript-eslint/no-explicit-any`.
    - And two allowed cases with no errors: `apps/api/src/x.ts` importing `@supabase/supabase-js`, and `apps/dashboard/src/app/x.tsx` importing `@smartapp/core`.
-   Because `@supabase/supabase-js` is not installed, the test only lints text; it never resolves imports.
+     Because `@supabase/supabase-js` is not installed, the test only lints text; it never resolves imports.
 3. **CI build scan.** In `.github/workflows/check.yml`, after `pnpm build`, add a step that searches `apps/dashboard/dist` and `apps/storefront/.next` (excluding `*.map` files and `.next/cache`) for `localhost:3100`, `localhost:5174`, `localhost:4100` and `127.0.0.1`, and fails if it finds any. Run the same search locally first and paste the result. If the Next.js build contains one of these strings from Next's own code, show me the file and line and stop; do not add an exception on your own.
 4. **Root `README.md`**: what the product is (two sentences), requirements (Node 24.14.0 from `.nvmrc`; pnpm comes from `packageManager`), the commands from `AGENTS.md`, the three local addresses, how to open the pages from a phone on the same Wi-Fi, and where the docs are (`docs/README.md`).
 5. **Fresh-clone check.** In a temporary folder outside the repo: clone the branch, `pnpm install --frozen-lockfile`, `pnpm format:check`, `pnpm check`, `pnpm build`, then start `pnpm dev` and `curl` the health address and both pages. Paste the last lines of each. Delete the temporary folder after.

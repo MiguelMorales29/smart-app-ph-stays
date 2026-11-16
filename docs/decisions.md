@@ -18,6 +18,7 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D12 Docs: the Claude Doc is the master plan. `docs/blueprints/` holds dated Markdown snapshots of its tabs. Agents read a snapshot only when a prompt names it.
 - D13 Tests: Vitest in each package (`--passWithNoTests` until a package has tests); the API uses `@nestjs/testing` with supertest. No Playwright until a phase needs it.
 - D14 Approved packages for phase 1 (exact versions in the prompts): turbo, typescript, @types/node, eslint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks, @next/eslint-plugin-next, prettier, vitest, zod, react, react-dom, @types/react, @types/react-dom, next, vite, @vitejs/plugin-react, @nestjs/common, @nestjs/core, @nestjs/platform-express, @nestjs/config, @nestjs/testing, reflect-metadata, rxjs, helmet, unplugin-swc, @swc/core, supertest, @types/supertest, @types/express.
+- D15 P1-A install-day adjustments (2026-11-16): `typescript-eslint` pinned to `8.72.1` (instead of `8.72.2`) and `@next/eslint-plugin-next` pinned to `16.4.5` (instead of `16.4.6`) to satisfy `minimumReleaseAge: 10080`; `typescript` and `@types/node` (catalog) added to root `devDependencies` for `typescript-eslint`; `allowBuilds: {}` (no P1-A packages required build scripts).
 
 ## Open (not phase 1)
 

@@ -28,24 +28,24 @@ Tailwind, CSS files, the shadcn CLI, fonts, TanStack Router or Query, React Hook
 
 Same rule as P1-A: confirm with `npm view <pkg> version time --json`; if `minimumReleaseAge` refuses one, take the newest older patch of the same minor and list it in your report.
 
-| Package | Version | Where |
-|---|---|---|
-| next | 16.4.6 | storefront |
-| vite | 8.3.7 | dashboard dev |
-| @vitejs/plugin-react | 6.3.0 | dashboard dev |
-| react, react-dom, @types/react, @types/react-dom | catalog | storefront, dashboard |
-| @nestjs/common, @nestjs/core, @nestjs/platform-express | 12.4.2 | api |
-| @nestjs/config | 12.1.1 | api |
-| @nestjs/testing | 12.4.2 | api dev |
-| reflect-metadata | 0.2.2 | api |
-| rxjs | 7.8.2 | api |
-| helmet | 8.3.0 | api |
-| zod | catalog | api |
-| unplugin-swc | 2.0.0 | api dev |
-| @swc/core | 1.16.22 | api dev |
-| supertest | 7.3.2 | api dev |
-| @types/supertest | 7.2.1 | api dev |
-| @types/express | 5.0.6 | api dev |
+| Package                                                | Version | Where                 |
+| ------------------------------------------------------ | ------- | --------------------- |
+| next                                                   | 16.4.6  | storefront            |
+| vite                                                   | 8.3.7   | dashboard dev         |
+| @vitejs/plugin-react                                   | 6.3.0   | dashboard dev         |
+| react, react-dom, @types/react, @types/react-dom       | catalog | storefront, dashboard |
+| @nestjs/common, @nestjs/core, @nestjs/platform-express | 12.4.2  | api                   |
+| @nestjs/config                                         | 12.1.1  | api                   |
+| @nestjs/testing                                        | 12.4.2  | api dev               |
+| reflect-metadata                                       | 0.2.2   | api                   |
+| rxjs                                                   | 7.8.2   | api                   |
+| helmet                                                 | 8.3.0   | api                   |
+| zod                                                    | catalog | api                   |
+| unplugin-swc                                           | 2.0.0   | api dev               |
+| @swc/core                                              | 1.16.22 | api dev               |
+| supertest                                              | 7.3.2   | api dev               |
+| @types/supertest                                       | 7.2.1   | api dev               |
+| @types/express                                         | 5.0.6   | api dev               |
 
 `next` 16.4.6 passes the 7-day rule only after about 05:00 on 17 November 2026, Manila time. If it is earlier, use 16.4.5 and say so.
 
