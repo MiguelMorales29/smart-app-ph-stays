@@ -3,7 +3,7 @@
 @import '@fontsource-variable/plus-jakarta-sans';
 @import './tokens.css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 @custom-variant pointer-coarse (@media (pointer: coarse));
 @custom-variant hover-hover (@media (hover: hover));
 @custom-variant keyboard-open (&:where([data-keyboard='open'], [data-keyboard='open'] *));
