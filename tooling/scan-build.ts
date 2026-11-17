@@ -33,6 +33,11 @@ export const BUILD_SCAN_RULES: readonly BuildScanRule[] = [
     label: 'Developer switch bar marker',
     pattern: /__SMARTAPP_DEV_SWITCH_BAR__/,
   },
+  {
+    id: 'kit-marker',
+    label: 'Developer UI kit marker',
+    pattern: /__SMARTAPP_DEV_KIT__/,
+  },
 ];
 
 export interface BuildScanViolation {
