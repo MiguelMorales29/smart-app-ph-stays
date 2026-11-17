@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { centavos, centavosSchema, formatPeso, percentOf, pesos, sum } from './index.js';
+import {
+  centavos,
+  centavosSchema,
+  formatPeso,
+  percentOf,
+  pesos,
+  signedCentavos,
+  signedCentavosSchema,
+  sum,
+} from './index.js';
 
 describe('money', () => {
   describe('centavosSchema and centavos', () => {
@@ -14,6 +23,19 @@ describe('money', () => {
       expect(centavosSchema.safeParse(12.5).success).toBe(false);
       expect(centavosSchema.safeParse(Number.NaN).success).toBe(false);
       expect(centavosSchema.safeParse(Number.POSITIVE_INFINITY).success).toBe(false);
+    });
+  });
+
+  describe('signedCentavosSchema and signedCentavos', () => {
+    it('accepts negative, zero, and positive integers', () => {
+      expect(signedCentavosSchema.parse(-25000)).toBe(-25000);
+      expect(signedCentavos(0)).toBe(0);
+      expect(signedCentavos(25000)).toBe(25000);
+    });
+
+    it('rejects floats and non-finite values', () => {
+      expect(signedCentavosSchema.safeParse(-12.5).success).toBe(false);
+      expect(signedCentavosSchema.safeParse(Number.NaN).success).toBe(false);
     });
   });
 
@@ -42,9 +64,9 @@ describe('money', () => {
       expect(formatPeso(pesos(1250000))).toBe('₱1,250,000');
     });
 
-    it('formats negative integer centavos for discount lines', () => {
-      expect(formatPeso(-50000)).toBe('-₱500');
-      expect(formatPeso(-50050)).toBe('-₱500.50');
+    it('formats negative signed centavos for discount lines', () => {
+      expect(formatPeso(signedCentavos(-50000))).toBe('-₱500');
+      expect(formatPeso(signedCentavos(-50050))).toBe('-₱500.50');
     });
 
     it('rejects non-integer values', () => {

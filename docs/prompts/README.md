@@ -74,3 +74,4 @@ Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one b
 - [P1-C](P1-C-walls-scan-verify.md) · `ag/p1c-verify` · [PR #4](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/4) · 2026-11-16
 - [P2-A](P2-A-demo-media.md) · `ag/p2a-demo-media` · [PR #5](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/5) · 2026-11-17
 - [P2-B](P2-B-core-basics.md) · `ag/p2b-core-basics` · [PR #6](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/6) · 2026-11-17
+- [P2-C](P2-C-schemas-contract.md) · `ag/p2c-schemas-contract` · [PR #7](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/7) · 2026-11-17

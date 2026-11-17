@@ -50,6 +50,7 @@ import {
   PAYMENT_SUBMITTERS,
   PROPERTY_STATUSES,
   PUSH_AUDIENCES,
+  RESERVED_SLUGS,
   SUBSCRIPTION_PAYMENT_METHODS,
   SUBSCRIPTION_PAYMENT_STATUSES,
   SUBSCRIPTION_STATUSES,
@@ -81,6 +82,7 @@ import {
   filePurposeSchema,
   fileStatusSchema,
   fileUploaderKindSchema,
+  isReservedSlug,
   jobRunStatusSchema,
   memberRoleSchema,
   memberStatusSchema,
@@ -103,13 +105,16 @@ import {
   paymentMethodSchema,
   paymentStatusSchema,
   paymentSubmitterSchema,
+  propertySlugSchema,
   propertyStatusSchema,
   pushAudienceSchema,
+  reservedSlugSchema,
   subscriptionPaymentMethodSchema,
   subscriptionPaymentStatusSchema,
   subscriptionStatusSchema,
   threadStatusSchema,
   unitModeSchema,
+  unitSlugSchema,
   unitStatusSchema,
   unitTypeSchema,
 } from './index.js';
@@ -244,5 +249,23 @@ describe('closed lists', () => {
     expect(BANKS).toHaveLength(13);
     expect(bankSchema.safeParse('china_bank').success).toBe(true);
     expect(bankSchema.safeParse('other').success).toBe(true);
+  });
+
+  it('includes demo-media and app route words in RESERVED_SLUGS and enforces 3..40 slug rules (D28)', () => {
+    expect(RESERVED_SLUGS).toContain('demo-media');
+    expect(RESERVED_SLUGS).toContain('admin');
+    expect(RESERVED_SLUGS).toContain('book');
+    expect(RESERVED_SLUGS).toContain('settings');
+    expect(reservedSlugSchema.safeParse('demo-media').success).toBe(true);
+    expect(isReservedSlug('demo-media')).toBe(true);
+    expect(isReservedSlug('bahay-batis')).toBe(false);
+
+    expect(propertySlugSchema.safeParse('bahay-batis').success).toBe(true);
+    expect(propertySlugSchema.safeParse('demo-media').success).toBe(false);
+    expect(propertySlugSchema.safeParse('admin').success).toBe(false);
+    expect(propertySlugSchema.safeParse('ab').success).toBe(false);
+    expect(propertySlugSchema.safeParse('a'.repeat(41)).success).toBe(false);
+    expect(propertySlugSchema.safeParse('Bad-Slug').success).toBe(false);
+    expect(unitSlugSchema.safeParse('buong-bahay').success).toBe(true);
   });
 });

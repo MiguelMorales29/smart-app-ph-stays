@@ -34,6 +34,9 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D25 Demo packs: marketing (the only pack allowed on live), qa (development only), empty, busy.
 - D26 Subscription moves added: trial → paused (system) and cancel by super admin. The blueprint's section 9 did not cover a trial ending unpaid.
 - D27 File purposes guest_id and data_export added; booking_guests.id_file_id and data_exports.file_id point to files.
+- D28 Slugs are 3 to 40 characters; the Database blueprint's 60 is changed to 40.
+- D29 On payment_accounts, bank (from BANKS) replaces bank_name as the required field when method is bank; bank_name is kept only as an optional label, required when bank is "other".
+- D30 threads.inquiry_id and lease_id stay nullable uuids ready for wave 2; createInquiry and BK-10 move to wave 2 with RN-01 because the inquiries table is wave 2.
 
 ## Open (not phase 1)
 
