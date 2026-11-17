@@ -7,6 +7,10 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { ErrorState } from '@smartapp/ui/compositions/error-state';
+import { LoadingState } from '@smartapp/ui/compositions/loading-state';
+
 import { env } from '@/env';
 import { loadStorefrontClient } from '@/lib/storefront-client';
 
@@ -110,48 +114,45 @@ export function StorefrontHomeClient() {
   }, [normalizedSearch, reloadNonce]);
 
   return (
-    <main>
-      <h1>Smart App PH · Stays and Rentals</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+          Stays and rentals
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Places to stay, booked straight from the owner. Sample properties for now.
+        </p>
+      </div>
 
-      {state.kind === 'loading' ? <p role="status">Loading stays…</p> : null}
+      {state.kind === 'loading' ? <LoadingState layout="cards" label="Loading stays…" /> : null}
 
       {state.kind === 'offline' ? (
-        <section role="alert">
-          <h2>Offline</h2>
-          <p>{state.message}</p>
-          <button type="button" onClick={refresh}>
-            Retry
-          </button>
-        </section>
+        <ErrorState title="You are offline" message={state.message} onRetry={refresh} />
       ) : null}
 
       {state.kind === 'error' ? (
-        <section role="alert">
-          <h2>Something went wrong ({state.code})</h2>
-          <p>{state.message}</p>
-          <button type="button" onClick={refresh}>
-            Retry
-          </button>
-        </section>
+        <ErrorState
+          title={`Something went wrong (${state.code})`}
+          message={state.message}
+          onRetry={refresh}
+        />
       ) : null}
 
       {state.kind === 'empty' ? (
-        <section>
-          <h2>No stays listed</h2>
-          <p>
-            Active scenario ({state.pack}) has no published properties yet (viewing as {state.as}).
-          </p>
-        </section>
+        <EmptyState
+          title="No stays listed yet"
+          description={`The ${state.pack} scenario has no published properties (viewing as ${state.as}).`}
+        />
       ) : null}
 
       {state.kind === 'ready' ? (
-        <section>
-          <p>
-            Scenario: <strong>{state.pack}</strong> · Viewing as: <strong>{state.as}</strong> ·
-            Manila date: <strong>{state.today}</strong>
-            {state.hasBookingLink ? ' · Booking link token active' : ''}
+        <section aria-label="Properties" className="flex flex-col gap-3">
+          <p className="text-xs text-muted-foreground">
+            Scenario {state.pack} · viewing as {state.as} · Manila date{' '}
+            <span className="tabular">{state.today}</span>
+            {state.hasBookingLink ? ' · booking link token active' : ''}
           </p>
-          <ul>
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {state.properties.map((item) => {
               const coverPhoto = item.photos[0];
               const fallbackUrl = coverPhoto
@@ -164,35 +165,45 @@ export function StorefrontHomeClient() {
                   )
                 : null;
               const coverSrc = coverPhoto?.url ?? fallbackUrl;
+              const unitCount = item.units.length;
 
               return (
                 <li key={item.property.id}>
-                  <h2>
-                    <Link href={`/${item.property.slug}${state.activeSearch}`}>
-                      {item.property.name}
-                    </Link>
-                  </h2>
-                  <p>
-                    {item.property.city}, {item.property.province} — {item.property.tagline}
-                  </p>
-                  <p>
-                    Units: {item.units.length} · Page version: v{item.page.version}
-                  </p>
-                  {coverSrc ? (
-                    <Image
-                      src={coverSrc}
-                      alt={coverPhoto?.alt_text ?? item.property.name}
-                      width={320}
-                      height={180}
-                      unoptimized
-                    />
-                  ) : null}
+                  <Link
+                    href={`/${item.property.slug}${state.activeSearch}`}
+                    className="group pressable flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <div className="relative aspect-[4/3] w-full bg-muted">
+                      {coverSrc ? (
+                        <Image
+                          src={coverSrc}
+                          alt={coverPhoto?.alt_text ?? item.property.name}
+                          fill
+                          sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : null}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-1 p-4">
+                      <h2 className="font-heading text-base font-semibold group-hover:underline">
+                        {item.property.name}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {item.property.city}, {item.property.province}
+                      </p>
+                      <p className="line-clamp-2 text-sm">{item.property.tagline}</p>
+                      <p className="mt-auto pt-2 text-xs text-muted-foreground">
+                        {unitCount} {unitCount === 1 ? 'unit' : 'units'}
+                      </p>
+                    </div>
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </section>
       ) : null}
-    </main>
+    </div>
   );
 }

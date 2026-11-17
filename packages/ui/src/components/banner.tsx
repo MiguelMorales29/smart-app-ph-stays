@@ -315,10 +315,12 @@ const bannerVariants = cva(
     variants: {
       variant: {
         default: 'bg-card text-card-foreground',
-        info: 'bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-50',
-        success: 'bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-50',
-        warning: 'bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-50',
-        destructive: 'bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-50',
+        // Smart App PH: mapped to the D35 status tokens instead of raw Tailwind colours,
+        // so banners follow light/dark and the platform palette (logged in docs/ui-library.md).
+        info: 'bg-info-tint text-foreground [&_[data-slot=banner-icon]]:text-info',
+        success: 'bg-success-tint text-foreground [&_[data-slot=banner-icon]]:text-success',
+        warning: 'bg-warning-tint text-foreground [&_[data-slot=banner-icon]]:text-warning',
+        destructive: 'bg-danger-tint text-foreground [&_[data-slot=banner-icon]]:text-destructive',
       },
     },
     defaultVariants: {

@@ -52,7 +52,7 @@ Following `D18` and `D19`:
 
 ## How to use the switches
 
-Both `apps/storefront` and `apps/dashboard` render a developer switch bar whenever `DATA_SOURCE=memory` and `APP_ENV !== 'production'`. In `APP_ENV=production` (`DATA_SOURCE=http` required), the switch bar, `@smartapp/data/switches`, and demo data are stripped from production bundles and enforced by `node tooling/scan-build.ts`.
+Both `apps/storefront` and `apps/dashboard` show the floating developer switches (the "Preview" pill in the bottom-right corner, D42; add `?clean=1` to hide it for recordings) whenever `DATA_SOURCE=memory` and `APP_ENV !== 'production'`. In `APP_ENV=production` (`DATA_SOURCE=http` required), the switch bar, `@smartapp/data/switches`, and demo data are stripped from production bundles and enforced by `node tooling/scan-build.ts`.
 
 - **View as (`?as=`):**
   - `guest` (storefront default): public visitor browsing.

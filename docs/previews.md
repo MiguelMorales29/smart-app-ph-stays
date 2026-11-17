@@ -1,6 +1,6 @@
 # Hosted Previews (Vercel, D38)
 
-Both front-end apps are already configured on Vercel as Preview-only deployments using the in-memory sample world (`DATA_SOURCE=memory`) and `APP_ENV=preview`, with no Production deploys until Phase 14.
+Both front-end apps are configured on Vercel and run the in-memory sample world (`DATA_SOURCE=memory`, `APP_ENV=preview`) until Phase 14 (D38).
 
 ## Existing Vercel Projects
 
@@ -10,18 +10,19 @@ Both front-end apps are already configured on Vercel as Preview-only deployments
 | Root directory             | `apps/storefront`                                  | `apps/dashboard`                                       |
 | Node.js version            | `24.x`                                             | `24.x`                                                 |
 | Preview URL (`main`)       | `https://smart-app-ph-stays-storefront.vercel.app` | `https://smart-app-ph-stays-dashboard.vercel.app`      |
-| Production branch tracking | Empty `production` branch                          | Empty `production` branch                              |
+| Production branch tracking | `main`                                             | `main`                                                 |
 | Vercel Authentication      | Disabled                                           | Disabled                                               |
 | Deep-link SPA rewrite      | Not needed (Next.js App Router)                    | `apps/dashboard/vercel.json` (`/(.*)` → `/index.html`) |
 
-Because both projects track an empty `production` branch:
+Because both projects track `main`:
 
-- Every commit on `main` and every pull request branch triggers a **Preview** deployment automatically.
-- **Never push to or delete the `production` branch until Phase 14.** Keeping Production unpopulated ensures no accidental production deploy happens while `DATA_SOURCE=memory` is active.
+- Every merge to `main` refreshes the two short links above. Vercel labels these deploys "Production", but they still use `APP_ENV=preview` and sample data; the real production setup comes in Phase 14.
+- Every pull request branch gets its own Preview deployment link (see below).
+- The old empty `production` branch is no longer used and can be deleted.
 
 ## Environment Variables (Preview Only)
 
-Configured on both projects for the **Preview** environment only (and no Production environment variables set):
+Configured on both projects for the Preview and Production environments (both run sample data until Phase 14):
 
 - **Storefront (`smart-app-ph-stays-storefront`):**
   - `APP_ENV=preview`

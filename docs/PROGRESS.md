@@ -25,6 +25,7 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 - [x] P3-C Storefront frame and routes
 - [x] P3-D Dashboard and admin frames, router and route index
 - [x] P3-E Kits, screenshot tests, previews and docs
+- [x] P3 polish: floating developer switches, banner tokens, glass fix, storefront home cards, invalid-slug 404s, favicons
 
 ## Later phases
 
