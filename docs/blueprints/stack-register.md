@@ -21,6 +21,24 @@ What this system uses, with exact versions. The food app's versions were checked
 
 (`shadcn@4.23.0`, MIT, is invoked via `pnpm dlx shadcn@4.23.0` and is not installed as a dependency.)
 
+**Phase 3 storefront font packages (installed 18 November 2026, >= 7 days old):**
+
+| Package | Version | Licence | Where | Reason |
+| --- | --- | --- | --- | --- |
+| `@fontsource-variable/fredoka` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `friendly` heading variable font |
+| `@fontsource-variable/nunito` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `friendly`, `bakery`, `playful` body variable font |
+| `@fontsource-variable/bricolage-grotesque` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `street` heading variable font |
+| `@fontsource-variable/dm-sans` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `street` body variable font |
+| `@fontsource-variable/fraunces` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `cafe` heading variable font |
+| `@fontsource-variable/figtree` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `cafe` body variable font |
+| `@fontsource-variable/playfair-display` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `elegant` heading variable font |
+| `@fontsource-variable/manrope` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `elegant` body variable font |
+| `@fontsource-variable/baloo-2` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `playful` heading variable font |
+| `@fontsource-variable/sora` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `modern` heading variable font |
+| `@fontsource-variable/outfit` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `modern` body variable font |
+| `@fontsource-variable/unbounded` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `bold` heading variable font |
+| `@fontsource/young-serif` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `bakery` and `homey` static heading font |
+
 ## 1. Runtime and tooling (carried over)
 
 | Item | Version | Where it is pinned | Use |
