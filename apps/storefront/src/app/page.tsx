@@ -1,9 +1,11 @@
-import { words } from '@smartapp/core';
+import { Suspense } from 'react';
+
+import { StorefrontHomeClient } from '@/components/StorefrontHomeClient';
 
 export default function HomePage() {
   return (
-    <main>
-      {words.appName} · {words.productName} · storefront
-    </main>
+    <Suspense fallback={<main><p>Loading stays…</p></main>}>
+      <StorefrontHomeClient />
+    </Suspense>
   );
 }

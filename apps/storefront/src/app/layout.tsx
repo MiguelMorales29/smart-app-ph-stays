@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
+
+import { PreviewRibbon } from '@/components/PreviewRibbon';
+import { StorefrontSwitchGate } from '@/components/StorefrontSwitchGate';
 
 export const metadata: Metadata = {
   title: 'Smart App PH · Stays and Rentals',
@@ -14,7 +17,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Suspense fallback={null}>
+          <StorefrontSwitchGate />
+        </Suspense>
+        {children}
+        <PreviewRibbon />
+      </body>
     </html>
   );
 }
