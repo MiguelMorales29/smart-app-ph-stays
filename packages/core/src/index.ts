@@ -1,4 +1,5 @@
 export * from './contract/index.js';
+export * from './demo/index.js';
 export * from './errors/index.js';
 export * from './ids/index.js';
 export * from './lifecycles/index.js';
