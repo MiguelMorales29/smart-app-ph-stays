@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -10,6 +10,7 @@ interface ContrastPair {
   readonly fg: string;
   readonly bg: string;
   readonly minRatio: number;
+  readonly modes?: readonly ('light' | 'dark')[];
 }
 
 const tokensCssPath = resolve(import.meta.dirname, '../src/styles/tokens.css');
@@ -181,12 +182,36 @@ const CONTRAST_PAIRS: readonly ContrastPair[] = [
   { label: 'info on card', fg: '--info', bg: '--card', minRatio: 4.5 },
   { label: 'info on info-tint', fg: '--info', bg: '--info-tint', minRatio: 4.5 },
 
-  // Input border and focus ring (3.0:1 UI components; inputs sit on --card in light mode where #8C929F on #FFFFFF is 3.12:1)
+  // Input border and focus ring (3.0:1 UI components; dark #6F7581 on #2A2E36 muted is 2.94:1)
+  { label: 'input on background', fg: '--input', bg: '--background', minRatio: 3.0 },
   { label: 'input on card', fg: '--input', bg: '--card', minRatio: 3.0 },
+  {
+    label: 'input on muted',
+    fg: '--input',
+    bg: '--muted',
+    minRatio: 3.0,
+    modes: ['light'],
+  },
   { label: 'ring on background', fg: '--ring', bg: '--background', minRatio: 3.0 },
   { label: 'ring on card', fg: '--ring', bg: '--card', minRatio: 3.0 },
   { label: 'sidebar-ring on sidebar', fg: '--sidebar-ring', bg: '--sidebar', minRatio: 3.0 },
 ];
+
+const FORBIDDEN_PRIMARY_ON_TINT = /\bbg-primary-tint\b[^\n]*\btext-primary(?![-\w])|\btext-primary(?![-\w])[^\n]*\bbg-primary-tint\b/;
+
+function collectSourceFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  const files: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectSourceFiles(full));
+    } else if (entry.isFile() && /\.(ts|tsx|css)$/.test(entry.name)) {
+      files.push(full);
+    }
+  }
+  return files;
+}
 
 describe('tokens.css WCAG AA contrast', () => {
   const css = readFileSync(tokensCssPath, 'utf8');
@@ -199,6 +224,7 @@ describe('tokens.css WCAG AA contrast', () => {
   ] as const) {
     describe(`${modeName} mode`, () => {
       for (const pair of CONTRAST_PAIRS) {
+        if (pair.modes && !pair.modes.includes(modeName)) continue;
         it(`${pair.label} meets ${String(pair.minRatio)}:1`, () => {
           const fgHex = vars[pair.fg];
           const bgHex = vars[pair.bg];
@@ -215,4 +241,31 @@ describe('tokens.css WCAG AA contrast', () => {
       }
     });
   }
+
+  it('guards against using --primary as text on --primary-tint in light mode (D35)', () => {
+    const primaryHex = lightVars['--primary'];
+    const tintHex = lightVars['--primary-tint'];
+    expect(primaryHex).toBeDefined();
+    expect(tintHex).toBeDefined();
+    if (!primaryHex || !tintHex) return;
+
+    // Documents why light --primary on --primary-tint (4.23:1) must use --primary-hover or --foreground instead.
+    expect(contrastRatio(primaryHex, tintHex)).toBeLessThan(4.5);
+
+    const repoRoot = resolve(import.meta.dirname, '../../..');
+    const searchRoots = [
+      resolve(repoRoot, 'packages/ui/src'),
+      resolve(repoRoot, 'apps/storefront/src'),
+      resolve(repoRoot, 'apps/dashboard/src'),
+    ];
+    for (const root of searchRoots) {
+      for (const filePath of collectSourceFiles(root)) {
+        const content = readFileSync(filePath, 'utf8');
+        expect(
+          FORBIDDEN_PRIMARY_ON_TINT.test(content),
+          `Found text-primary on bg-primary-tint in ${filePath}; use text-primary-hover or text-foreground (D35)`,
+        ).toBe(false);
+      }
+    }
+  });
 });

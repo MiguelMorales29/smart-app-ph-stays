@@ -6,9 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans:
-    'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, sans-serif;
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -64,6 +63,15 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  --color-property-60: var(--property-60);
+  --color-property-30: var(--property-30);
+  --color-property-10: var(--property-10);
+  --color-property-10-foreground: var(--property-10-foreground);
+  --color-property-10-hover: var(--property-10-hover);
+  --color-property-10-text: var(--property-10-text);
+  --color-property-10-soft: var(--property-10-soft);
+  --color-property-10-soft-foreground: var(--property-10-soft-foreground);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -84,10 +92,26 @@
     outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
 
+  h1,
+  h2,
+  h3,
+  .font-heading {
+    font-family: var(--font-heading);
+    font-synthesis-weight: none;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+}
+
+.light {
+  color-scheme: light;
+}
+
+[data-slot='property-theme'][data-surface-mix='mixed'] [data-page-surface] {
+  color: var(--page-foreground, var(--foreground));
 }
