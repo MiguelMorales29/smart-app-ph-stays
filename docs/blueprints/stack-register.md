@@ -39,6 +39,13 @@ What this system uses, with exact versions. The food app's versions were checked
 | `@fontsource-variable/unbounded` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `bold` heading variable font |
 | `@fontsource/young-serif` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted `bakery` and `homey` static heading font |
 
+**Phase 3 routing & visual testing packages (installed 18 November 2026, >= 7 days old):**
+
+| Package | Version | Licence | Where | Reason |
+| --- | --- | --- | --- | --- |
+| `@tanstack/react-router` | `1.170.46` | MIT | `apps/dashboard` (catalog) | Code-based dashboard & admin routes (no router plugin) |
+| `@playwright/test` | `1.65.0` | Apache-2.0 | `tooling` (dev, catalog) | Chromium-only visual screenshot tests (`1.65.1` skipped: < 7 days old) |
+
 ## 1. Runtime and tooling (carried over)
 
 | Item | Version | Where it is pinned | Use |
@@ -50,7 +57,7 @@ What this system uses, with exact versions. The food app's versions were checked
 | ESLint | 10.12.0 | catalog | Lint, including module-wall rules |
 | Prettier | 3.9.10 | catalog | Formatting |
 | Vitest | 5.0.3 | catalog | Unit tests |
-| Playwright | 1.64.1 | tooling | End-to-end smoke tests |
+| Playwright | 1.65.0 (Apache-2.0, installed) | tooling (catalog) | Chromium visual screenshot tests (`tooling/e2e`) |
 | Supabase CLI | 2.120.0 | catalog | Migrations and types |
 | shadcn | 4.21.4 | dev dependency | Component installer for `packages/ui` and the dashboard |
 
