@@ -23,8 +23,7 @@ export interface AppError {
 }
 
 export type Result<T> =
-  | { readonly ok: true; readonly data: T }
-  | { readonly ok: false; readonly error: AppError };
+  { readonly ok: true; readonly data: T } | { readonly ok: false; readonly error: AppError };
 
 export function appError(
   code: ErrorCode,

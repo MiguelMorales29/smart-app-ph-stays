@@ -1,15 +1,19 @@
 Read AGENTS.md and docs/decisions.md (D18–D25 are new). Then read only these parts of docs/blueprints/database-blueprint.md: section 2 (design rules), section 9 (life cycles), and the error codes in section 11. From docs/blueprints/feature-blueprint.md read section 10 (limits and money rules) only.
 
 ## Goal
+
 The small, pure building blocks every later prompt uses, all in packages/core, all tested. No React, no data fetching, no new packages.
 
 ## Plan first
+
 Post the file list and the public names you will export, then wait for my OK.
 
 ## Branch
+
 `ag/p2b-core-basics` from the latest main. Follow AGENTS.md rule 10.
 
 ## Build in packages/core/src
+
 1. `money/`: a branded `Centavos` integer type and a Zod schema for it (whole number, 0 or more unless a function says otherwise). Helpers: `pesos(n)` to centavos; `formatPeso` ("₱2,600", "₱2,600.50", "₱1,250,000"); `sum`; `percentOf(amount, percent)` with the rounding rule written in a comment and tested. Never use floats for stored values.
 2. `time/`:
    - a branded `CalendarDate` ("YYYY-MM-DD") with a Zod schema;
@@ -22,10 +26,13 @@ Post the file list and the public names you will export, then wait for my OK.
 6. `ids/`: a `DEMO_ID_PREFIX = "dec0de"` constant, an `isDemoId` function, and a Zod `uuid` schema. Test that a sample demo id passes Zod's uuid check.
 
 ## Rules
+
 Follow AGENTS.md hard rules 4–6. Every export has a unit test. If a blueprint value seems wrong, stop and tell me rather than changing it.
 
 ## Not in this task
+
 Table schemas (Prompt C), demo data (Prompt D), packages/data, apps.
 
 ## Done when
+
 `pnpm check` passes with the new tests, CI is green, the PR is merged per rule 10, and PROGRESS shows "P2-B". In the same pull request, save this prompt word for word as docs/prompts/P2-B-core-basics.md and add one line to docs/prompts/README.md: prompt, branch, PR link, date. In your report, list the error codes and life-cycle moves you found, so I can compare them with the blueprint.

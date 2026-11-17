@@ -3,8 +3,7 @@ import type { Bank } from './lists/payments.js';
 
 const errorMessages = {
   dates_taken: 'Those dates were just taken. Pick different dates to continue.',
-  price_changed:
-    'The price changed while you were booking. Check the updated total and try again.',
+  price_changed: 'The price changed while you were booking. Check the updated total and try again.',
   hold_limit: 'You already have two unpaid holds with this property. Complete or cancel one first.',
   reference_used: 'That payment reference was already used on another payment.',
   invalid_move: 'This record can no longer be changed that way.',
