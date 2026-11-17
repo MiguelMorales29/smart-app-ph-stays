@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Suspense, type ReactNode } from 'react';
 
@@ -32,23 +32,6 @@ export async function generateMetadata({
   };
 }
 
-export async function generateViewport({
-  params,
-}: {
-  readonly params: Promise<{ readonly slug: string }>;
-}): Promise<Viewport> {
-  const { slug } = await params;
-  const propertyView = await getServerProperty(slug);
-  const brandColor = propertyView?.page.published?.look.brandColor;
-
-  return {
-    width: 'device-width',
-    initialScale: 1,
-    viewportFit: 'cover',
-    ...(brandColor ? { themeColor: brandColor } : {}),
-  };
-}
-
 async function PropertyThemeBoundary({
   params,
   children,
@@ -75,6 +58,7 @@ async function PropertyThemeBoundary({
       logoShape={look.logoShape}
       withPortals
     >
+      <meta name="theme-color" content={look.brandColor} />
       {children}
     </PropertyTheme>
   );
