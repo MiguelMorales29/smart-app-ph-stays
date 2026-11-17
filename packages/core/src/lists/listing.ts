@@ -40,16 +40,16 @@ export const amenityGroupSchema = z.enum(AMENITY_GROUPS);
 export type AmenityGroup = z.infer<typeof amenityGroupSchema>;
 
 export const FONT_PAIRS = [
-  'plus-jakarta-sans',
-  'nunito-dm-sans',
-  'bricolage-dm-sans',
-  'fraunces-figtree',
-  'playfair-dm-sans',
-  'baloo-nunito',
-  'fredoka-plus-jakarta',
-  'sora-sora',
-  'unbounded-plus-jakarta',
-  'young-serif-plus-jakarta',
+  'malinaw',
+  'friendly',
+  'street',
+  'cafe',
+  'elegant',
+  'bakery',
+  'playful',
+  'modern',
+  'bold',
+  'homey',
 ] as const;
 export const fontPairSchema = z.enum(FONT_PAIRS);
 export type FontPair = z.infer<typeof fontPairSchema>;

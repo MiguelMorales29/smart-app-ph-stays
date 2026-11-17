@@ -39,7 +39,7 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
       cardColor: '#D5F4F2',
       accentColor: '#FA776B',
       logoShape: 'rounded',
-      fontPair: 'unbounded-plus-jakarta',
+      fontPair: 'bold',
       banners: media.banners,
       bannerSeconds: 5,
       announcement: {

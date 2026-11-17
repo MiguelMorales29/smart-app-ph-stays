@@ -8,5 +8,6 @@ export * from './money/index.js';
 export * from './pricing/index.js';
 export * from './schemas/tables/index.js';
 export * from './schemas/views/index.js';
+export * from './theme/index.js';
 export * from './time/index.js';
 export { words } from './words.js';

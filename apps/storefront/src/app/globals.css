@@ -1,4 +1,5 @@
 @import '@smartapp/ui/styles/globals.css';
+@import '@smartapp/ui/styles/property-fonts.css';
 @source "../../../../packages/ui/src";
 
 :root {

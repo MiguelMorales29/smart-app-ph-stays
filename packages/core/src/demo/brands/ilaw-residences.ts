@@ -39,7 +39,7 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       cardColor: '#E9EDF5',
       accentColor: '#DF9200',
       logoShape: 'rounded',
-      fontPair: 'sora-sora',
+      fontPair: 'modern',
       banners: media.banners,
       bannerSeconds: 5,
       announcement: {

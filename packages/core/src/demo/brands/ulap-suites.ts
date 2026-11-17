@@ -40,7 +40,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       cardColor: '#E8ECFF',
       accentColor: '#E68B3C',
       logoShape: 'rounded',
-      fontPair: 'fraunces-figtree',
+      fontPair: 'cafe',
       banners: media.banners,
       bannerSeconds: 5,
       announcement: {
