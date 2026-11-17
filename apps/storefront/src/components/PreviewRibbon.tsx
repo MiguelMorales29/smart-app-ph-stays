@@ -1,28 +1,27 @@
 'use client';
 
+import { Banner, BannerContent, BannerIcon, BannerTitle } from '@smartapp/ui/components/banner';
+import { FlaskConicalIcon } from 'lucide-react';
+
 export function PreviewRibbon() {
   if (process.env.NEXT_PUBLIC_APP_ENV !== 'preview') {
     return null;
   }
 
   return (
-    <div
+    <Banner
+      variant="warning"
+      dismissible={false}
       role="status"
       aria-label="Preview environment indicator"
-      style={{
-        position: 'fixed',
-        bottom: '8px',
-        right: '8px',
-        zIndex: 9999,
-        padding: '4px 10px',
-        backgroundColor: '#fef3c7',
-        color: '#92400e',
-        border: '1px solid #f59e0b',
-        fontSize: '12px',
-        fontWeight: 600,
-      }}
+      className="rounded-none border-x-0 border-t-0 px-4 py-2"
     >
-      Preview · sample data
-    </div>
+      <BannerContent className="mx-auto w-full max-w-5xl justify-center">
+        <BannerIcon>
+          <FlaskConicalIcon className="size-4" />
+        </BannerIcon>
+        <BannerTitle>Preview · sample data</BannerTitle>
+      </BannerContent>
+    </Banner>
   );
 }

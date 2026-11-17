@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import type * as SwitchesModule from '@smartapp/data/switches';
@@ -25,6 +26,7 @@ interface LoadedSwitchUi {
 }
 
 export function StorefrontSwitchBar() {
+  const router = useRouter();
   const [loaded, setLoaded] = useState<LoadedSwitchUi | null>(null);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export function StorefrontSwitchBar() {
         window.location.search,
         window.sessionStorage,
       );
+      document.cookie = controller.serializeSwitchStateCookie(state);
       const clock = controller.resolveSwitchClock(state.clock);
       setLoaded({
         marker: controller.SWITCH_BAR_MARKER,
@@ -63,11 +66,13 @@ export function StorefrontSwitchBar() {
   function applyNextState(next: SwitchState) {
     if (!loaded) return;
     loaded.controller.saveSwitchStateToStorage(window.sessionStorage, next);
+    document.cookie = loaded.controller.serializeSwitchStateCookie(next);
     const nextSearch = loaded.controller.serializeSwitchStateToSearch(next, window.location.search);
     const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;
     window.history.replaceState(null, '', nextUrl);
     setLoaded({ ...loaded, state: next });
     window.dispatchEvent(new Event('smartapp:switch-change'));
+    router.refresh();
   }
 
   return (
