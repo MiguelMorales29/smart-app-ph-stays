@@ -41,11 +41,19 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D32 Font pairs gain unbounded-plus-jakarta and young-serif-plus-jakarta (10 pairs in total); Bahay Batis and Tita Lorna's Dorm use them, closing O6. Installing the Unbounded and Young Serif font packages waits for Phase 3.
 - D33 Approving a GCash, Maya or bank payment without wallet_checked returns not_allowed with details { reason: "wallet_not_checked" }, keeping the 7 blueprint error codes.
 
+## Phase 3 (founder, 2026-11-18)
+
+- D34 Component layers: library components are installed once in packages/ui/src/components, changed only by shared variants. Each app's look comes from CSS variables. Different behaviour means a component in that app that wraps the shared one. Never copy a component into an app. An app component both apps need moves to packages/ui. Business rules stay in packages/core and packages/data. Three kits: base, dashboard and storefront.
+- D35 Platform theme: Smart App PH logo colours (Smart Blue primary, Growth Mint accent, navy ink); cool navy-tinted neutrals; dark mode in layers (sidebar darkest, page, card, raised), never pure black, off-white text; status colours green done, amber waiting, blue in progress, red problem, grey finished, always with an icon and a word; mint never means status; one font, Plus Jakarta Sans.
+- D36 The dashboard and admin have light, dark and system, kept on the device; the storefront is light only.
+- D39 Installed components live in packages/ui/src/components with one relaxed lint and type block for that folder only (closes O3).
+- D41 shadcn base-nova on Base UI is the base; Dice UI items are added one at a time; ReUI, Magic UI and EvilCharts registries are configured but nothing is installed until a page's research step picks it; no paid (Pro) item, ever.
+- P3-A approved packages (2026-11-18): `tailwindcss@4.3.5` (MIT), `@tailwindcss/postcss@4.3.5` (MIT), `@tailwindcss/vite@4.3.5` (MIT), `@base-ui/react@1.9.0` (MIT), `@base-ui/utils@0.5.0` (MIT, needed directly by `@diceui/banner`), `cn@0.5.2` (MIT, catalog; replaces separate `clsx` + `tailwind-merge`), `lucide-react@1.71.0` (ISC, catalog; `1.74.0` skipped under `minimumReleaseAge`), `class-variance-authority@0.7.1` (Apache-2.0), `tw-animate-css@1.4.0` (MIT), `@fontsource-variable/plus-jakarta-sans@5.3.0` (OFL-1.1); `shadcn@4.23.0` (MIT) run only via `pnpm dlx`.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
 - O2 Hosted preview links for phone checks (Vercel previews or another host). Decide in phase 3.
-- O3 Installed library components get their own folder and one relaxed lint and type rule set from the first install, instead of one exception per file as in the food app. Decide in phase 3.
 - O4 How bed spaces count toward the plan's 5 included units.
 - O5 Day-use stays (for example a Pansol day swim, 8 am to 5 pm) have no model.
 - O7 Check that the five demo brand names are not real businesses before public videos.

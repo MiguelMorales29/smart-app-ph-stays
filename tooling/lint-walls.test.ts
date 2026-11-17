@@ -130,4 +130,26 @@ describe('ESLint import walls and type rules', () => {
     );
     expect(rules).toEqual([]);
   });
+
+  it('allows type assertions only in packages/ui/src/components (D39)', async () => {
+    const componentRules = await lintSnippet(
+      'packages/ui/src/components/x.tsx',
+      'const value: unknown = 1;\nexport const n = value as number;\n',
+    );
+    expect(componentRules).toEqual([]);
+  });
+
+  it('keeps type assertions blocked in packages/ui lib, hooks, and compositions (D39)', async () => {
+    for (const filePath of [
+      'packages/ui/src/lib/x.ts',
+      'packages/ui/src/hooks/x.ts',
+      'packages/ui/src/compositions/x.tsx',
+    ]) {
+      const rules = await lintSnippet(
+        filePath,
+        'const value: unknown = 1;\nexport const n = value as number;\n',
+      );
+      expect(rules).toContain('@typescript-eslint/consistent-type-assertions');
+    }
+  });
 });

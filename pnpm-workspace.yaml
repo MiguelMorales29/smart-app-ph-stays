@@ -16,6 +16,8 @@ catalog:
   react-dom: 19.3.1
   '@types/react': 19.3.0
   '@types/react-dom': 19.3.0
+  cn: 0.5.2
+  lucide-react: 1.71.0
 
 allowBuilds:
   '@swc/core': true
