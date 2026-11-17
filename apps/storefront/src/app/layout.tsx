@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense, type ReactNode } from 'react';
 
+import './globals.css';
 import { PreviewRibbon } from '@/components/PreviewRibbon';
 import { StorefrontSwitchGate } from '@/components/StorefrontSwitchGate';
 
