@@ -402,6 +402,9 @@ importers:
 
   tooling:
     devDependencies:
+      '@smartapp/core':
+        specifier: workspace:*
+        version: link:../packages/core
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2
