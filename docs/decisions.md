@@ -32,6 +32,8 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D23 Demo media lives in apps/storefront/public/demo-media and is served at /demo-media. Photos stay 4:3; screens crop with CSS. Screens get image URLs only from packages/data. On live, the seed uploads the same files to Supabase Storage. Reserve slug `demo-media` (Prompt C adds it to the reserved-slug list).
 - D24 A bed space is one unit per bed ("Room 2A · Bed 1") until O4 is decided.
 - D25 Demo packs: marketing (the only pack allowed on live), qa (development only), empty, busy.
+- D26 Subscription moves added: trial → paused (system) and cancel by super admin. The blueprint's section 9 did not cover a trial ending unpaid.
+- D27 File purposes guest_id and data_export added; booking_guests.id_file_id and data_exports.file_id point to files.
 
 ## Open (not phase 1)
 
