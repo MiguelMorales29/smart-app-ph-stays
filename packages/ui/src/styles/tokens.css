@@ -1,0 +1,134 @@
+:root {
+  --background: #f9fafd;
+  --foreground: #0b1633;
+
+  --sidebar: #f1f3f9;
+  --sidebar-foreground: #0b1633;
+  --sidebar-primary: #2866ee;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #edf0f6;
+  --sidebar-accent-foreground: #0b1633;
+  --sidebar-border: #e0e3ea;
+  --sidebar-ring: #4883ff;
+
+  --card: #ffffff;
+  --card-foreground: #0b1633;
+
+  --popover: #ffffff;
+  --popover-foreground: #0b1633;
+
+  --raised: #ffffff;
+
+  --muted: #edf0f6;
+  --muted-foreground: #5c6372;
+
+  --secondary: #edf0f6;
+  --secondary-foreground: #0b1633;
+
+  --accent: #edf0f6;
+  --accent-foreground: #0b1633;
+
+  --brand-accent: #7ed6ac;
+  --brand-accent-foreground: #0b1633;
+
+  --primary: #2866ee;
+  --primary-hover: #194fc9;
+  --primary-foreground: #ffffff;
+  --primary-tint: #e4edff;
+
+  --destructive: #ac111f;
+  --destructive-foreground: #ffffff;
+  --danger-tint: #ffe6e4;
+
+  --success: #007031;
+  --success-tint: #daf5de;
+
+  --warning: #7d5200;
+  --warning-tint: #fee9ce;
+
+  --info: #006393;
+  --info-tint: #dcf0ff;
+
+  --border: #e0e3ea;
+  --input: #8c929f;
+  --ring: #4883ff;
+
+  --radius: 0.625rem;
+  --control-h: 44px;
+
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+
+  --shadow-sm: 0 1px 2px 0 rgb(11 22 51 / 0.05);
+  --shadow-md: 0 4px 12px -2px rgb(11 22 51 / 0.08), 0 2px 4px -2px rgb(11 22 51 / 0.04);
+  --shadow-lg: 0 12px 28px -4px rgb(11 22 51 / 0.12), 0 4px 8px -2px rgb(11 22 51 / 0.06);
+}
+
+.dark {
+  --background: #1b1e24;
+  --foreground: #eef0f4;
+
+  --sidebar: #14171d;
+  --sidebar-foreground: #eef0f4;
+  --sidebar-primary: #74a2ff;
+  --sidebar-primary-foreground: #060e25;
+  --sidebar-accent: #2a2e36;
+  --sidebar-accent-foreground: #eef0f4;
+  --sidebar-border: #393d46;
+  --sidebar-ring: #74a2ff;
+
+  --card: #23262d;
+  --card-foreground: #eef0f4;
+
+  --popover: #2c3039;
+  --popover-foreground: #eef0f4;
+
+  --raised: #2c3039;
+
+  --muted: #2a2e36;
+  --muted-foreground: #9fa5b0;
+
+  --secondary: #2a2e36;
+  --secondary-foreground: #eef0f4;
+
+  --accent: #2a2e36;
+  --accent-foreground: #eef0f4;
+
+  --brand-accent: #40be8a;
+  --brand-accent-foreground: #060e25;
+
+  --primary: #74a2ff;
+  --primary-hover: #a1c1ff;
+  --primary-foreground: #060e25;
+  --primary-tint: #1e3666;
+
+  --destructive: #ff716b;
+  --destructive-foreground: #060e25;
+  --danger-tint: #542523;
+
+  --success: #50bf6f;
+  --success-tint: #193b22;
+
+  --warning: #db9400;
+  --warning-tint: #47300c;
+
+  --info: #4faeeb;
+  --info-tint: #133951;
+
+  --border: #393d46;
+  --input: #6f7581;
+  --ring: #74a2ff;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 28px -4px rgb(0 0 0 / 0.55), 0 4px 8px -2px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}
