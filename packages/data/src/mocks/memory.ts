@@ -6,7 +6,6 @@ import {
   addDays,
   appError,
   canMove,
-  centavos,
   err,
   manilaToday,
   nightsBetween,
@@ -284,7 +283,10 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
             if (existingCustomer.status === 'blocked') {
               return err(appError('not_allowed', 'This guest is blocked from booking here.'));
             }
-            if (countActiveUnpaidHoldsForCustomer(world, property.account_id, existingCustomer.id) >= 2) {
+            if (
+              countActiveUnpaidHoldsForCustomer(world, property.account_id, existingCustomer.id) >=
+              2
+            ) {
               return err(appError('hold_limit'));
             }
           }
@@ -568,8 +570,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           }
 
           const nowIso = nowIsoFromClock(clock);
-          const senderKind: 'owner' | 'customer' =
-            session.role === 'owner' ? 'owner' : 'customer';
+          const senderKind: 'owner' | 'customer' = session.role === 'owner' ? 'owner' : 'customer';
           const senderProfileId =
             session.role === 'owner'
               ? session.profileId
@@ -660,7 +661,9 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           if (input.referenceNo !== null) {
             const norm = normalizePaymentReference(input.referenceNo);
             if (norm.length === 0) {
-              return err(appError('not_allowed', 'Payment reference must include letters or digits.'));
+              return err(
+                appError('not_allowed', 'Payment reference must include letters or digits.'),
+              );
             }
             referenceNorm = norm;
 
@@ -1948,7 +1951,9 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           if (!booking) return err(appError('not_found'));
 
           if (booking.guest_list_submitted_at !== null) {
-            return err(appError('not_allowed', 'Guest list has already been submitted and locked.'));
+            return err(
+              appError('not_allowed', 'Guest list has already been submitted and locked.'),
+            );
           }
 
           if (input.guests.length > booking.adults + booking.children) {
@@ -2561,7 +2566,8 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           const sub = subIdx !== -1 ? world.subscriptions[subIdx] : undefined;
           if (
             sub &&
-            (sub.status === 'active' || canMove(SUBSCRIPTION_LIFECYCLE, sub.status, 'active', 'super_admin'))
+            (sub.status === 'active' ||
+              canMove(SUBSCRIPTION_LIFECYCLE, sub.status, 'active', 'super_admin'))
           ) {
             world.subscriptions[subIdx] = {
               ...sub,

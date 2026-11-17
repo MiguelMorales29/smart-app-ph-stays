@@ -108,7 +108,9 @@ describe('getDataSource, mediaUrl, and adapter options', () => {
         },
         { mode: 'supabase', storageBaseUrl: 'https://project.supabase.co/' },
       ),
-    ).toBe('https://project.supabase.co/storage/v1/object/public/payment-proofs/acct-1/proofs/file-1.webp');
+    ).toBe(
+      'https://project.supabase.co/storage/v1/object/public/payment-proofs/acct-1/proofs/file-1.webp',
+    );
   });
 
   it('throws a clear Phase 11 message when requesting the HTTP adapter early', async () => {

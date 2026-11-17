@@ -1,10 +1,4 @@
-import {
-  DEMO_IDS,
-  calendarDate,
-  quoteStay,
-  type AppError,
-  type Result,
-} from '@smartapp/core';
+import { DEMO_IDS, calendarDate, quoteStay, type AppError, type Result } from '@smartapp/core';
 import { describe, expect, it } from 'vitest';
 
 import type { DataSource, Session } from '../source.js';
@@ -42,9 +36,7 @@ const SYSTEM_SESSION: Session = { role: 'system' };
 
 function assertOk<T>(result: Result<T>): T {
   if (!result.ok) {
-    throw new Error(
-      `Expected ok result, got error ${result.error.code}: ${result.error.message}`,
-    );
+    throw new Error(`Expected ok result, got error ${result.error.code}: ${result.error.message}`);
   }
   return result.data;
 }
@@ -1146,15 +1138,13 @@ export function runContractTests(makeSource: MakeContractSource): void {
       const { source } = await makeSource();
 
       expect(
-        assertErr(
-          await source.ownerHome({ accountId: DEMO_IDS.ulapSuites.account }, GUEST_SESSION),
-        ).code,
+        assertErr(await source.ownerHome({ accountId: DEMO_IDS.ulapSuites.account }, GUEST_SESSION))
+          .code,
       ).toBe('not_allowed');
 
       expect(
-        assertErr(
-          await source.getThread({ threadToken: null, threadId: null }, GUEST_SESSION),
-        ).code,
+        assertErr(await source.getThread({ threadToken: null, threadId: null }, GUEST_SESSION))
+          .code,
       ).toBe('not_allowed');
 
       expect(
@@ -1169,9 +1159,7 @@ export function runContractTests(makeSource: MakeContractSource): void {
         ).code,
       ).toBe('not_allowed');
 
-      const adminList = assertOk(
-        await source.listOwnerAccounts({ status: null }, ADMIN_SESSION),
-      );
+      const adminList = assertOk(await source.listOwnerAccounts({ status: null }, ADMIN_SESSION));
       expect(adminList.length).toBeGreaterThan(0);
     });
 

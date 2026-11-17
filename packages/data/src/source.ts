@@ -1,9 +1,5 @@
 import { operations } from '@smartapp/core';
-import type {
-  OperationAccess,
-  OperationName,
-  Result,
-} from '@smartapp/core';
+import type { OperationAccess, OperationName, Result } from '@smartapp/core';
 import type { z } from 'zod';
 
 /**
@@ -66,10 +62,7 @@ export function getSessionAccessLevels(session: Session): readonly OperationAcce
   }
 }
 
-export function hasOperationAccess(
-  session: Session,
-  allowed: readonly OperationAccess[],
-): boolean {
+export function hasOperationAccess(session: Session, allowed: readonly OperationAccess[]): boolean {
   const callerAccess = getSessionAccessLevels(session);
   return allowed.some((level) => callerAccess.includes(level));
 }
@@ -110,21 +103,13 @@ export function createValidatedDataSource(
       operations.getUnitCalendar.output,
       handlers.getUnitCalendar,
     ),
-    quoteStay: wrapOp(
-      operations.quoteStay.input,
-      operations.quoteStay.output,
-      handlers.quoteStay,
-    ),
+    quoteStay: wrapOp(operations.quoteStay.input, operations.quoteStay.output, handlers.quoteStay),
     createBookingHold: wrapOp(
       operations.createBookingHold.input,
       operations.createBookingHold.output,
       handlers.createBookingHold,
     ),
-    getThread: wrapOp(
-      operations.getThread.input,
-      operations.getThread.output,
-      handlers.getThread,
-    ),
+    getThread: wrapOp(operations.getThread.input, operations.getThread.output, handlers.getThread),
     postMessage: wrapOp(
       operations.postMessage.input,
       operations.postMessage.output,
@@ -145,11 +130,7 @@ export function createValidatedDataSource(
       operations.cancelBooking.output,
       handlers.cancelBooking,
     ),
-    ownerHome: wrapOp(
-      operations.ownerHome.input,
-      operations.ownerHome.output,
-      handlers.ownerHome,
-    ),
+    ownerHome: wrapOp(operations.ownerHome.input, operations.ownerHome.output, handlers.ownerHome),
     listBookings: wrapOp(
       operations.listBookings.input,
       operations.listBookings.output,

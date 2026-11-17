@@ -18,7 +18,6 @@ import {
   type Clock,
   type DemoWorld,
   type ErrorCode,
-  type FilesRow,
   type InboxThreadItemView,
   type PaymentReviewItemView,
   type PaymentsRow,
@@ -36,8 +35,7 @@ import type { Session } from '../source.js';
 
 export type BookingBoardItem = BookingBoardItemView;
 
-const THREAD_TOKEN_ALPHABET =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const THREAD_TOKEN_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
 export class DemoIdAllocator {
   private readonly counters = new Map<string, number>();
@@ -255,8 +253,7 @@ export function calculatePaidAndBalance(
     if (payment.booking_id !== booking.id || payment.status !== 'approved') {
       continue;
     }
-    sumApproved +=
-      payment.kind === 'refund' ? -payment.amount_centavos : payment.amount_centavos;
+    sumApproved += payment.kind === 'refund' ? -payment.amount_centavos : payment.amount_centavos;
   }
   const paidClamped = Math.max(0, sumApproved);
   const balanceClamped = Math.max(0, booking.total_centavos - paidClamped);
@@ -1155,7 +1152,9 @@ export function buildInboxThreads(
     });
   }
 
-  items.sort((a, b) => (b.last_message_at ?? b.created_at).localeCompare(a.last_message_at ?? a.created_at));
+  items.sort((a, b) =>
+    (b.last_message_at ?? b.created_at).localeCompare(a.last_message_at ?? a.created_at),
+  );
   return { ok: true, data: items };
 }
 
