@@ -17,10 +17,12 @@ import {
   createSwitchClientBundle,
   getSwitchViewAsOptions,
   isOfflineError,
+  parseSwitchStateCookie,
   parseSwitchStateFromSearch,
   resolveInitialSwitchState,
   resolveSwitchClock,
   saveSwitchStateToStorage,
+  serializeSwitchStateCookie,
   serializeSwitchStateToSearch,
 } from './switches.js';
 
@@ -180,5 +182,35 @@ describe('packages/data switches controller', () => {
     if (!offlineRes.ok) {
       expect(isOfflineError(offlineRes.error)).toBe(true);
     }
+
+    const qaBundle = await createSwitchClientBundle(
+      createDefaultSwitchState({ pack: 'qa', clock: 'golden' }),
+      { storefrontOrigin: '' },
+    );
+    const pausedPropRes = await qaBundle.source.getProperty(
+      { slug: 'casa-soriano-paused' },
+      qaBundle.session,
+    );
+    expect(pausedPropRes.ok).toBe(true);
+    if (pausedPropRes.ok) {
+      expect(pausedPropRes.data.account.is_paused).toBe(true);
+    }
+
+    const activePropRes = await qaBundle.source.getProperty(
+      { slug: 'ulap-suites' },
+      qaBundle.session,
+    );
+    expect(activePropRes.ok).toBe(true);
+    if (activePropRes.ok) {
+      expect(activePropRes.data.account.is_paused).toBe(false);
+    }
+  });
+
+  it('serializes and parses switch cookie values safely', () => {
+    const state = createDefaultSwitchState({ as: 'guest', pack: 'qa', clock: 'golden' });
+    const cookieStr = serializeSwitchStateCookie(state);
+    const rawValue = cookieStr.split('=')[1]?.split(';')[0];
+    expect(parseSwitchStateCookie(rawValue)).toEqual(state);
+    expect(parseSwitchStateCookie('not-json')).toBeNull();
   });
 });

@@ -144,7 +144,9 @@ export type PublicReviewSummary = z.infer<typeof publicReviewSummarySchema>;
 export const propertyViewSchema = z.object({
   property: publicPropertySummarySchema,
   page: propertyPagesRow.pick({ version: true, published: true }),
-  account: accountsRow.pick({ is_demo: true }).extend({ is_verified: z.boolean() }),
+  account: accountsRow
+    .pick({ is_demo: true })
+    .extend({ is_verified: z.boolean(), is_paused: z.boolean() }),
   units: z.array(publicUnitCardViewSchema),
   photos: z.array(publicPhotoViewSchema),
   amenities: z.array(publicAmenityViewSchema),

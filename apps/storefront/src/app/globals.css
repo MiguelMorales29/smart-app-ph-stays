@@ -5,3 +5,16 @@
 :root {
   --control-h: 48px;
 }
+
+@layer base {
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}

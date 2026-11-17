@@ -36,6 +36,30 @@ export const GOLDEN_CLOCK_ISO = '2026-12-10T10:00:00+08:00';
 export const DEFAULT_SLOW_LATENCY_MS = 2000;
 export const DEFAULT_ERROR_CODE: ErrorCode = 'not_allowed';
 export const SWITCH_STORAGE_KEY = 'smartapp.dev.switches.v1';
+export const SWITCH_COOKIE_NAME = 'smartapp.dev.switches';
+
+export function serializeSwitchStateCookie(state: SwitchState): string {
+  const payload = JSON.stringify({
+    as: state.as,
+    pack: state.pack,
+    clock: state.clock,
+    latencyMs: state.latencyMs,
+    errorCode: state.errorCode,
+  });
+  return `${SWITCH_COOKIE_NAME}=${encodeURIComponent(payload)}; Path=/; SameSite=Lax`;
+}
+
+export function parseSwitchStateCookie(rawValue: string | null | undefined): SwitchState | null {
+  if (!rawValue) return null;
+  try {
+    const decoded = decodeURIComponent(rawValue);
+    const parsed: unknown = JSON.parse(decoded);
+    const result = switchStateSchema.safeParse(parsed);
+    return result.success ? result.data : null;
+  } catch {
+    return null;
+  }
+}
 
 export const VIEW_AS_KEYS = [
   'guest',

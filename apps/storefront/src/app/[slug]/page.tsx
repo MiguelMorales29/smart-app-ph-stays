@@ -1,17 +1,9 @@
-import { Suspense } from 'react';
+import { PropertyFramedPlaceholder } from '@/components/frames/PropertyFramedPlaceholder';
 
-import { StorefrontPropertyClient } from '@/components/StorefrontPropertyClient';
-
-export default function PropertyPage() {
-  return (
-    <Suspense
-      fallback={
-        <main>
-          <p>Loading property…</p>
-        </main>
-      }
-    >
-      <StorefrontPropertyClient />
-    </Suspense>
-  );
+export default function PropertyHomePage({
+  params,
+}: {
+  readonly params: Promise<{ readonly slug: string }>;
+}) {
+  return <PropertyFramedPlaceholder params={params} title="Property home" phase={4} />;
 }

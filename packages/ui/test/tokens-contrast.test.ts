@@ -10,7 +10,6 @@ interface ContrastPair {
   readonly fg: string;
   readonly bg: string;
   readonly minRatio: number;
-  readonly modes?: readonly ('light' | 'dark')[];
 }
 
 const tokensCssPath = resolve(import.meta.dirname, '../src/styles/tokens.css');
@@ -182,16 +181,10 @@ const CONTRAST_PAIRS: readonly ContrastPair[] = [
   { label: 'info on card', fg: '--info', bg: '--card', minRatio: 4.5 },
   { label: 'info on info-tint', fg: '--info', bg: '--info-tint', minRatio: 4.5 },
 
-  // Input border and focus ring (3.0:1 UI components; dark #6F7581 on #2A2E36 muted is 2.94:1)
+  // Input border and focus ring (3.0:1 UI components)
   { label: 'input on background', fg: '--input', bg: '--background', minRatio: 3.0 },
   { label: 'input on card', fg: '--input', bg: '--card', minRatio: 3.0 },
-  {
-    label: 'input on muted',
-    fg: '--input',
-    bg: '--muted',
-    minRatio: 3.0,
-    modes: ['light'],
-  },
+  { label: 'input on muted', fg: '--input', bg: '--muted', minRatio: 3.0 },
   { label: 'ring on background', fg: '--ring', bg: '--background', minRatio: 3.0 },
   { label: 'ring on card', fg: '--ring', bg: '--card', minRatio: 3.0 },
   { label: 'sidebar-ring on sidebar', fg: '--sidebar-ring', bg: '--sidebar', minRatio: 3.0 },
@@ -225,7 +218,6 @@ describe('tokens.css WCAG AA contrast', () => {
   ] as const) {
     describe(`${modeName} mode`, () => {
       for (const pair of CONTRAST_PAIRS) {
-        if (pair.modes && !pair.modes.includes(modeName)) continue;
         it(`${pair.label} meets ${String(pair.minRatio)}:1`, () => {
           const fgHex = vars[pair.fg];
           const bgHex = vars[pair.bg];
