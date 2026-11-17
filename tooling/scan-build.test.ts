@@ -45,6 +45,7 @@ describe('production build output scan', () => {
           'const guest = "bea.santos@example.com";',
           'const owner = "owner.pending@demo.invalid";',
           'const marker = "__SMARTAPP_DEV_SWITCH_BAR__";',
+          'const kitMarker = "__SMARTAPP_DEV_KIT__";',
         ].join('\n'),
         'utf8',
       );
@@ -55,6 +56,7 @@ describe('production build output scan', () => {
       expect(ids).toContain('demo-customer-email');
       expect(ids).toContain('demo-owner-email');
       expect(ids).toContain('switch-bar-marker');
+      expect(ids).toContain('kit-marker');
     });
   });
 

@@ -11,4 +11,6 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 .obsidian/
+tooling/e2e/playwright-report/
+tooling/e2e/test-results/
 

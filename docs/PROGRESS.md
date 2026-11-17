@@ -24,12 +24,12 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 - [x] P3-B Storefront theme engine and font pairs
 - [x] P3-C Storefront frame and routes
 - [x] P3-D Dashboard and admin frames, router and route index
-- [ ] P3-E Kits, screenshot tests, previews and docs
+- [x] P3-E Kits, screenshot tests, previews and docs
 
 ## Later phases
 
 - [x] 2 Data shapes, demo data and the mock layer
-- [ ] 3 Look and app frames
+- [x] 3 Look and app frames
 - [ ] 4 Owner start and listing (screens)
 - [ ] 5 Public pages and the page editor (screens)
 - [ ] 6 Dates, price and holding a booking (screens)

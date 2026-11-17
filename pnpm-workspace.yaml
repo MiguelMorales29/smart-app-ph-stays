@@ -19,6 +19,7 @@ catalog:
   cn: 0.5.2
   lucide-react: 1.71.0
   '@tanstack/react-router': 1.170.46
+  '@playwright/test': 1.65.0
 
 allowBuilds:
   '@swc/core': true

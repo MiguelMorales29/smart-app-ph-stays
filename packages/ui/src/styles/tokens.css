@@ -1,4 +1,5 @@
-:root {
+:root,
+.light {
   --background: #f9fafd;
   --foreground: #0b1633;
 
@@ -135,7 +136,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root,
+  .light {
     --dur-fast: 0ms;
     --dur-base: 0ms;
     --dur-slow: 0ms;

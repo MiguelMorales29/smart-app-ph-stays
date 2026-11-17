@@ -22,6 +22,16 @@ export function createStorefrontNextConfig(
     cacheComponents: true,
     allowedDevOrigins: ['192.168.*.*', '10.*.*.*'],
     transpilePackages: ['@smartapp/ui', '@smartapp/data'],
+    ...(resolved.APP_ENV === 'production'
+      ? {
+          turbopack: {
+            resolveAlias: {
+              '@/components/kit/StorefrontKitView':
+                './src/components/kit/StorefrontKitDisabled.tsx',
+            },
+          },
+        }
+      : {}),
     env: {
       NEXT_PUBLIC_APP_ENV: resolved.APP_ENV,
       NEXT_PUBLIC_DATA_SOURCE: resolved.DATA_SOURCE,

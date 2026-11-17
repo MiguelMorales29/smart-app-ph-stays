@@ -209,7 +209,7 @@ function collectSourceFiles(dir: string): string[] {
 
 describe('tokens.css WCAG AA contrast', () => {
   const css = readFileSync(tokensCssPath, 'utf8');
-  const lightVars = parseCssVars(extractBlock(css, ':root'));
+  const lightVars = parseCssVars(extractBlock(css, ':root,\n.light'));
   const darkVars = parseCssVars(extractBlock(css, '.dark'));
 
   for (const [modeName, vars] of [

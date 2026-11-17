@@ -60,3 +60,43 @@ jobs:
 
       - name: Scan production build output
         run: node tooling/scan-build.ts
+
+  screenshots:
+    name: Screenshots
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure Chromium browser matches pinned version
+        run: pnpm --filter @smartapp/tooling exec playwright install chromium
+
+      - name: Build shared workspace packages
+        run: pnpm --filter @smartapp/core --filter @smartapp/data build
+
+      - name: Run visual screenshot tests
+        run: pnpm --filter @smartapp/tooling exec playwright test -c e2e/playwright.config.ts
+
+      - name: Upload screenshot diff report on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-screenshot-diffs
+          path: |
+            tooling/e2e/playwright-report
+            tooling/e2e/test-results
+          retention-days: 14

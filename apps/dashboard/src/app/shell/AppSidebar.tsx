@@ -91,14 +91,14 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={isActiveRoutePath(pathname, '/kit')}
-                tooltip="Route index"
-                render={<Link to="/kit/routes" />}
+                tooltip="UI Kit & route index"
+                render={<a href="/kit" />}
                 className="pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
               >
                 <Badge variant="outline" className="px-1.5 text-[10px]">
                   DEV
                 </Badge>
-                <span>Route index</span>
+                <span>UI Kit</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ) : null}

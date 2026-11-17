@@ -3,7 +3,6 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  notFound,
   Outlet,
   redirect,
 } from '@tanstack/react-router';
@@ -289,50 +288,38 @@ const adminPixelsRoute = createRoute({
   component: () => <PlaceholderScreen title="Tracking pixels" phase={9} />,
 });
 
-// Dev & preview only routes (/kit, /kit/routes) loaded via dynamic import so production tree-shakes them.
-const LazyKitPage =
+// Dev & preview only routes (/kit, /kit/routes): omitted from routeTree in production so Vite
+// tree-shakes every kit module and direct hits resolve to NotFoundPage.
+const devOnlyKitRoutes =
   import.meta.env.VITE_APP_ENV !== 'production'
-    ? lazy(() => import('../features/kit/routes-index').then((mod) => ({ default: mod.KitPage })))
-    : null;
-
-const LazyKitRoutesPage =
-  import.meta.env.VITE_APP_ENV !== 'production'
-    ? lazy(() =>
-        import('../features/kit/routes-index').then((mod) => ({ default: mod.KitRoutesPage })),
-      )
-    : null;
-
-const kitRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/kit',
-  beforeLoad: () => {
-    if (import.meta.env.VITE_APP_ENV === 'production') {
-      throw notFound();
-    }
-  },
-  component: () =>
-    LazyKitPage ? (
-      <Suspense fallback={null}>
-        <LazyKitPage />
-      </Suspense>
-    ) : null,
-});
-
-const kitRoutesIndexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/kit/routes',
-  beforeLoad: () => {
-    if (import.meta.env.VITE_APP_ENV === 'production') {
-      throw notFound();
-    }
-  },
-  component: () =>
-    LazyKitRoutesPage ? (
-      <Suspense fallback={null}>
-        <LazyKitRoutesPage />
-      </Suspense>
-    ) : null,
-});
+    ? (() => {
+        const LazyKitPage = lazy(() =>
+          import('../features/kit/routes-index').then((mod) => ({ default: mod.KitPage })),
+        );
+        const LazyKitRoutesPage = lazy(() =>
+          import('../features/kit/routes-index').then((mod) => ({ default: mod.KitRoutesPage })),
+        );
+        const kitRoute = createRoute({
+          getParentRoute: () => rootRoute,
+          path: '/kit',
+          component: () => (
+            <Suspense fallback={null}>
+              <LazyKitPage />
+            </Suspense>
+          ),
+        });
+        const kitRoutesIndexRoute = createRoute({
+          getParentRoute: () => rootRoute,
+          path: '/kit/routes',
+          component: () => (
+            <Suspense fallback={null}>
+              <LazyKitRoutesPage />
+            </Suspense>
+          ),
+        });
+        return [kitRoute, kitRoutesIndexRoute];
+      })()
+    : [];
 
 const routeTree = rootRoute.addChildren([
   rootIndexRoute,
@@ -367,8 +354,7 @@ const routeTree = rootRoute.addChildren([
     adminFlagsRoute,
     adminPixelsRoute,
   ]),
-  kitRoute,
-  kitRoutesIndexRoute,
+  ...devOnlyKitRoutes,
 ]);
 
 export const router = createRouter({
