@@ -87,33 +87,34 @@ describe('listing table schemas', () => {
       tagline: 'Hot spring villa',
       about: 'Family resort in Pansol',
       look: {
-        brand_color: '#1E5E4B',
-        page_color: '#FAF7F2',
-        card_color: '#FFFFFF',
-        logo_shape: 'rounded',
-        font_pair: 'fraunces-plus-jakarta',
+        brandColor: '#008481',
+        pageColor: '#FEF9F1',
+        cardColor: '#D5F4F2',
+        accentColor: '#FA776B',
+        logoShape: 'rounded',
+        fontPair: 'unbounded-plus-jakarta',
         banners: [],
-        banner_seconds: 5,
+        bannerSeconds: 5,
         announcement: null,
         sections: { faq: true },
       },
       install: {
-        home_screen_name: 'Bahay Batis',
-        splash_color: '#1E5E4B',
-        splash_animation: true,
-        show_name: true,
-        show_tagline: true,
+        homeScreenName: 'Bahay Batis',
+        splashColor: '#008481',
+        splashAnimation: true,
+        showName: true,
+        showTagline: true,
       },
       hero: { cover: id3, photos: [id3] },
-      host: { display_name: 'Ate Lorna', photo_file: null, languages: ['Tagalog', 'English'] },
+      host: { displayName: 'Jun Mercado', photoFile: null, languages: ['Tagalog', 'English'] },
       units: [id1],
       highlights: [id2],
       faq: [{ question: 'Is parking free?', answer: 'Yes, up to 3 cars.' }],
       seo: {
         title: 'Bahay Batis',
         description: 'Private villa',
-        share_picture_file: null,
-        hide_from_search: false,
+        sharePictureFile: null,
+        hideFromSearch: false,
       },
     };
     const valid = {
@@ -134,13 +135,13 @@ describe('listing table schemas', () => {
     expect(
       propertyPagesRow.safeParse({
         ...valid,
-        draft: { ...draft, look: { ...draft.look, banner_seconds: 2 } },
+        draft: { ...draft, look: { ...draft.look, bannerSeconds: 2 } },
       }).success,
     ).toBe(false);
     expect(
       propertyPagesRow.safeParse({
         ...valid,
-        draft: { ...draft, install: { ...draft.install, home_screen_name: 'TooLongHomeName' } },
+        draft: { ...draft, install: { ...draft.install, homeScreenName: 'TooLongHomeName' } },
       }).success,
     ).toBe(false);
   });

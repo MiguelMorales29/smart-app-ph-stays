@@ -56,12 +56,14 @@ export type { FileBucket, FilePurpose, FileStatus, FileUploaderKind } from './fi
 export {
   AMENITY_GROUPS,
   CANCELLATION_PRESETS,
+  FONT_PAIRS,
   PROPERTY_STATUSES,
   UNIT_MODES,
   UNIT_STATUSES,
   UNIT_TYPES,
   amenityGroupSchema,
   cancellationPresetSchema,
+  fontPairSchema,
   propertyStatusSchema,
   unitModeSchema,
   unitStatusSchema,
@@ -70,6 +72,7 @@ export {
 export type {
   AmenityGroup,
   CancellationPreset,
+  FontPair,
   PropertyStatus,
   UnitMode,
   UnitStatus,
