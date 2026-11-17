@@ -387,14 +387,14 @@ function BannerImpl(props: BannerImplProps) {
   const dismissible = banner.dismissible ?? DEFAULT_BANNER_DISMISSIBLE;
 
   const contextValue = React.useMemo<BannerContextValue>(
-    () => ({ id: banner.id, variant: banner.variant, dismissible, onClose }),
+    () => ({ id: banner.id, variant: banner.variant ?? null, dismissible, onClose }),
     [banner.id, banner.variant, dismissible, onClose],
   );
 
   const renderProps = React.useMemo<BannerRenderProps>(
     () => ({
       id: banner.id,
-      variant: banner.variant,
+      variant: banner.variant ?? 'default',
       dismissible,
       onClose,
       onRemove,
@@ -507,10 +507,10 @@ function Banner(props: BannerProps) {
 
     const id = store.onBannerAdd({
       content: children,
-      variant: variant ?? undefined,
-      priority,
+      ...(variant !== undefined && variant !== null ? { variant } : {}),
+      ...(priority !== undefined ? { priority } : {}),
       dismissible,
-      duration,
+      ...(duration !== undefined ? { duration } : {}),
       onDismiss: () => {
         onDismissRef.current?.();
         onOpenChangeRef.current?.(false);
