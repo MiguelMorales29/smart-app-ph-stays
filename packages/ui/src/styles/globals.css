@@ -4,6 +4,19 @@
 @import './tokens.css';
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant pointer-coarse (@media (pointer: coarse));
+@custom-variant hover-hover (@media (hover: hover));
+@custom-variant keyboard-open (&:where([data-keyboard='open'], [data-keyboard='open'] *));
+@custom-variant shell-phone (&:where([data-shell='phone'], [data-shell='phone'] *));
+@custom-variant shell-tablet (&:where([data-shell='tablet'], [data-shell='tablet'] *));
+@custom-variant shell-desktop (&:where([data-shell='desktop'], [data-shell='desktop'] *));
+@custom-variant tablet-rail {
+  @media (pointer: coarse) {
+    &:is([data-shell='tablet'] [data-collapsible='icon'] *) {
+      @slot;
+    }
+  }
+}
 
 @theme inline {
   --font-sans: var(--font-sans);
@@ -84,6 +97,45 @@
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility dock-pill {
+  height: var(--dock-height);
+  max-width: var(--dock-max-width);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-offset));
+}
+
+@utility pb-dock {
+  padding-bottom: calc(
+    env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2
+  );
+}
+
+@utility pressable {
+  transition: transform var(--dur-fast) ease-out;
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@utility frost {
+  background-color: var(--background);
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: color-mix(in oklch, var(--background) 84%, transparent);
+    backdrop-filter: blur(12px);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--background);
+    backdrop-filter: none;
+  }
 }
 
 @layer base {
