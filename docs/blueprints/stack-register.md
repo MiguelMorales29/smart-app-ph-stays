@@ -4,6 +4,23 @@ What this system uses, with exact versions. The food app's versions were checked
 
 **Phase 1 versions, checked on 16 November 2026** (newest release at least 7 days old): pnpm 12.18.0, Turborepo 2.11.10, TypeScript 6.0.3 (typescript-eslint 8.72 still supports only below 6.1), Next.js 16.4.6, Vite 8.3.7, React 19.3.1, NestJS 12.4.2, ESLint 10.14.0, Prettier 3.9.10, Vitest 5.1.0, Zod 4.6.7, `@types/node` 24.19.2. The repository's `docs/decisions.md` is the record of what was installed. Tailwind, the component libraries and Supabase are installed in their own phases, not in phase 1.
 
+**Phase 3 UI foundation packages (installed 18 November 2026, >= 7 days old):**
+
+| Package | Version | Licence | Where | Reason |
+| --- | --- | --- | --- | --- |
+| `tailwindcss` | `4.3.5` | MIT | `apps/storefront`, `apps/dashboard`, `packages/ui` | Utility CSS framework and design token theme mapping |
+| `@tailwindcss/postcss` | `4.3.5` | MIT | `apps/storefront` (dev) | PostCSS integration for Tailwind v4 in Next.js |
+| `@tailwindcss/vite` | `4.3.5` | MIT | `apps/dashboard` (dev) | Vite plugin for Tailwind v4 |
+| `@base-ui/react` | `1.9.0` | MIT | `packages/ui` | Unstyled accessible primitives for shadcn `base-nova` |
+| `@base-ui/utils` | `0.5.0` | MIT | `packages/ui` | Direct utilities (`useRefWithInit`, `useValueAsRef`) imported by `@diceui/banner` |
+| `cn` | `0.5.2` | MIT | `packages/ui` (catalog) | Class-name merger used by shadcn `base-nova` and Dice UI registry items |
+| `lucide-react` | `1.71.0` | ISC | `packages/ui` (catalog) | Icon library (`1.74.0` skipped: < 7 days old) |
+| `class-variance-authority` | `0.7.1` | Apache-2.0 | `packages/ui` | Variant class builder used by shadcn and Dice UI components |
+| `tw-animate-css` | `1.4.0` | MIT | `packages/ui` | Tailwind CSS animation utilities |
+| `@fontsource-variable/plus-jakarta-sans` | `5.3.0` | OFL-1.1 | `packages/ui` | Self-hosted platform variable font (`--font-sans`) |
+
+(`shadcn@4.23.0`, MIT, is invoked via `pnpm dlx shadcn@4.23.0` and is not installed as a dependency.)
+
 ## 1. Runtime and tooling (carried over)
 
 | Item | Version | Where it is pinned | Use |

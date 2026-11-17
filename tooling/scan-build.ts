@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 
 export interface BuildScanRule {
   readonly id: string;
@@ -54,7 +54,8 @@ function collectScannableFiles(rootDir: string): string[] {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      if (entry.name === 'cache') {
+      // Skip Next.js cache and Turbopack's build-time worker chunks (.next/build/, e.g. PostCSS IPC runner).
+      if (entry.name === 'cache' || (entry.name === 'build' && basename(rootDir) === '.next')) {
         continue;
       }
       collected.push(...collectScannableFiles(join(rootDir, entry.name)));

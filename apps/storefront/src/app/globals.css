@@ -1,0 +1,6 @@
+@import '@smartapp/ui/styles/globals.css';
+@source "../../../../packages/ui/src";
+
+:root {
+  --control-h: 48px;
+}

@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type ConfigEnv, type UserConfig } from 'vite';
 
@@ -13,7 +14,7 @@ export function createDashboardViteConfig(
   const resolved = resolveDashboardBuildEnv(rawEnv, { isDevServer });
 
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     define: {
       'import.meta.env.VITE_APP_ENV': JSON.stringify(resolved.APP_ENV),
       'import.meta.env.VITE_DATA_SOURCE': JSON.stringify(resolved.DATA_SOURCE),

@@ -58,16 +58,25 @@ describe('production build output scan', () => {
     });
   });
 
-  it('ignores *.map files and cache/ folders while passing clean production bundles', () => {
+  it('ignores *.map files, cache/ folders, and .next/build/ worker chunks while scanning .next/server', () => {
     withTempBuildDir((rootDir) => {
-      const distDir = join(rootDir, 'dist');
-      const cacheDir = join(distDir, 'cache');
+      const nextDir = join(rootDir, '.next');
+      const cacheDir = join(nextDir, 'cache');
+      const buildDir = join(nextDir, 'build', 'chunks');
+      const serverDir = join(nextDir, 'server');
       mkdirSync(cacheDir, { recursive: true });
-      writeFileSync(join(distDir, 'app.js'), 'console.log("Smart App PH production");\n', 'utf8');
-      writeFileSync(join(distDir, 'app.js.map'), 'dec0de @demo.invalid\n', 'utf8');
+      mkdirSync(buildDir, { recursive: true });
+      mkdirSync(serverDir, { recursive: true });
+      writeFileSync(join(serverDir, 'app.js'), 'console.log("Smart App PH production");\n', 'utf8');
+      writeFileSync(join(serverDir, 'app.js.map'), 'dec0de @demo.invalid\n', 'utf8');
       writeFileSync(join(cacheDir, 'cached.js'), 'localhost:3100 @example.com\n', 'utf8');
+      writeFileSync(
+        join(buildDir, '[root-of-the-server]__worker.js'),
+        "host: '127.0.0.1'\n",
+        'utf8',
+      );
 
-      const result = scanBuildDirectories(['dist'], rootDir);
+      const result = scanBuildDirectories(['.next'], rootDir);
       expect(result.filesScanned).toBe(1);
       expect(result.violations).toEqual([]);
     });

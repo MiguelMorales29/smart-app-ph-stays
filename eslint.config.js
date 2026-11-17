@@ -149,6 +149,12 @@ export default [
     },
   },
   {
+    files: ['packages/ui/src/components/**'],
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': 'off',
+    },
+  },
+  {
     files: ['apps/**'],
     ignores: ['apps/api/**'],
     rules: {
