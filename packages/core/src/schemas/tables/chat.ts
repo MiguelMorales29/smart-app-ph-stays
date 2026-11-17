@@ -34,7 +34,8 @@ export const threadsRow = z
       return hasBooking !== hasRental;
     },
     {
-      message: 'A thread must belong to a booking or to a rental (inquiry/lease), never both or neither.',
+      message:
+        'A thread must belong to a booking or to a rental (inquiry/lease), never both or neither.',
     },
   );
 export type ThreadsRow = z.infer<typeof threadsRow>;

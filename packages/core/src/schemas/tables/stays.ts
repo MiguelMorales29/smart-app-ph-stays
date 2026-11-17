@@ -96,7 +96,9 @@ export const bookingLinesRow = z
   .refine(
     (row) => {
       if (row.kind === 'discount') {
-        return row.amount_centavos < 0 && row.amount_centavos === -(row.quantity * row.unit_centavos);
+        return (
+          row.amount_centavos < 0 && row.amount_centavos === -(row.quantity * row.unit_centavos)
+        );
       }
       return row.amount_centavos >= 0 && row.amount_centavos === row.quantity * row.unit_centavos;
     },

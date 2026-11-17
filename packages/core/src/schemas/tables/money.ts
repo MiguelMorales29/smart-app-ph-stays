@@ -44,12 +44,9 @@ export const paymentsRow = z
   .refine((row) => (row.reference_no === null) === (row.reference_norm === null), {
     message: 'reference_no and reference_norm must both be set or both be null.',
   })
-  .refine(
-    (row) => row.method === 'cash' || row.method === 'other' || row.reference_no !== null,
-    {
-      message: 'reference_no is required unless method is cash or other.',
-    },
-  )
+  .refine((row) => row.method === 'cash' || row.method === 'other' || row.reference_no !== null, {
+    message: 'reference_no is required unless method is cash or other.',
+  })
   .refine((row) => row.status !== 'rejected' || row.reject_reason !== null, {
     message: 'reject_reason is required when status is rejected.',
   })

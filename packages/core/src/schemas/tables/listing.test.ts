@@ -190,9 +190,9 @@ describe('listing table schemas', () => {
       updated_at: ts,
     };
     expect(unitStayTermsRow.safeParse(stayTerms).success).toBe(true);
-    expect(unitStayTermsRow.safeParse({ ...stayTerms, min_nights: 10, max_nights: 5 }).success).toBe(
-      false,
-    );
+    expect(
+      unitStayTermsRow.safeParse({ ...stayTerms, min_nights: 10, max_nights: 5 }).success,
+    ).toBe(false);
     expect(unitStayTermsRow.safeParse({ ...stayTerms, down_payment_percent: 5 }).success).toBe(
       false,
     );
@@ -298,9 +298,9 @@ describe('listing table schemas', () => {
     };
     expect(paymentAccountsRow.safeParse(payAcct).success).toBe(true);
     expect(paymentAccountsRow.safeParse({ ...payAcct, bank: null }).success).toBe(false);
-    expect(
-      paymentAccountsRow.safeParse({ ...payAcct, method: 'gcash', bank: 'bpi' }).success,
-    ).toBe(false);
+    expect(paymentAccountsRow.safeParse({ ...payAcct, method: 'gcash', bank: 'bpi' }).success).toBe(
+      false,
+    );
     expect(
       paymentAccountsRow.safeParse({ ...payAcct, bank: 'other', bank_name: null }).success,
     ).toBe(false);

@@ -12,6 +12,7 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 
 - [x] P2-A Demo media, manifest check and Phase 2 decisions
 - [x] P2-B Core basics: money, Manila time, errors, wave 1 closed lists, lifecycles and demo ids
+- [x] P2-C Wave 1 table schemas, view schemas, operation contract, quoteStay and reserved slugs
 
 ## Later phases
 

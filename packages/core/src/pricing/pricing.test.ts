@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { centavos } from '../money/index.js';
 import { calendarDate } from '../time/index.js';
 import { GOLDEN_QUOTE_CASES } from './golden.js';
-import { QUOTE_REFUSAL_REASONS, quoteRefusalReasonSchema, quoteStay, stayQuoteSchema } from './quoteStay.js';
+import {
+  QUOTE_REFUSAL_REASONS,
+  quoteRefusalReasonSchema,
+  quoteStay,
+  stayQuoteSchema,
+} from './quoteStay.js';
 
 describe('pricing / quoteStay', () => {
   it('defines at least 15 golden cases and validates QUOTE_REFUSAL_REASONS', () => {

@@ -34,9 +34,9 @@ describe('platform table schemas', () => {
     };
     expect(profilesRow.safeParse(valid).success).toBe(true);
     expect(profilesRow.safeParse({ ...valid, full_name: '' }).success).toBe(false);
-    expect(profilesRow.safeParse({ ...valid, avatar: { kind: 'initials', text: 'ABCD' } }).success).toBe(
-      false,
-    );
+    expect(
+      profilesRow.safeParse({ ...valid, avatar: { kind: 'initials', text: 'ABCD' } }).success,
+    ).toBe(false);
     expect(profilesRow.safeParse({ ...valid, created_at: '2026-12-10' }).success).toBe(false);
   });
 

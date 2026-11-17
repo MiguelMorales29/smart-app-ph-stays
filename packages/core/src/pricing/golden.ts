@@ -303,7 +303,8 @@ export const GOLDEN_QUOTE_CASES: readonly GoldenQuoteCase[] = [
   },
   {
     id: 'G08_extra_guests_fee',
-    description: '3 weeknights (Mon Dec 14 -> Thu Dec 17) with 3 adults + 2 children (3 extra guests)',
+    description:
+      '3 weeknights (Mon Dec 14 -> Thu Dec 17) with 3 adults + 2 children (3 extra guests)',
     // Hand math:
     // - 3 weeknights @ 250,000 = 750,000
     // - Extra guests: (3 + 2) - 2 = 3 extra guests * 3 nights * 30,000 = 270,000

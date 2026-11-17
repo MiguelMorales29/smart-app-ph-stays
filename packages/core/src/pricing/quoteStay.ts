@@ -1,12 +1,6 @@
 import { z } from 'zod';
 
-import {
-  centavos,
-  centavosSchema,
-  percentOf,
-  signedCentavos,
-  sum,
-} from '../money/index.js';
+import { centavos, centavosSchema, percentOf, signedCentavos, sum } from '../money/index.js';
 import type { Centavos } from '../money/index.js';
 import { bookingLinesRow, unitStayTermsRow, unitsRow } from '../schemas/tables/index.js';
 import { rateOverridesRow, unitFeesRow, weekdayRatesRow } from '../schemas/tables/price.js';
@@ -245,9 +239,7 @@ export function quoteStay(input: QuoteStayInput): QuoteStayOutcome {
   }
 
   const feesSubtotalCentavos = sum(feeAmounts);
-  const totalCentavos = centavos(
-    nightsSubtotalCentavos - discountCentavos + feesSubtotalCentavos,
-  );
+  const totalCentavos = centavos(nightsSubtotalCentavos - discountCentavos + feesSubtotalCentavos);
   const requiredCentavos = percentOf(totalCentavos, terms.down_payment_percent);
 
   return {
