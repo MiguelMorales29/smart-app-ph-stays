@@ -1,0 +1,200 @@
+import { Link, useNavigate } from '@tanstack/react-router';
+import {
+  ChevronsUpDownIcon,
+  LaptopIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  MoonIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  SunIcon,
+  UserIcon,
+  WifiIcon,
+  WifiOffIcon,
+} from 'lucide-react';
+import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
+import { Button } from '@smartapp/ui/components/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
+import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
+import { useDashboard } from '@/app/dashboard-context';
+import { THEME_MODES, useTheme, type ThemeMode } from '@/app/theme';
+
+function initialsFromLabel(label: string): string {
+  const cleaned = label.replace(/\([^)]*\)/g, '').trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? 'S';
+  const second = parts[1]?.[0] ?? '';
+  return `${first}${second}`.toUpperCase();
+}
+
+function isThemeMode(value: string): value is ThemeMode {
+  return value === 'light' || value === 'dark' || value === 'system';
+}
+
+const THEME_LABELS: Readonly<Record<ThemeMode, string>> = {
+  light: 'Light',
+  dark: 'Dark',
+  system: 'System',
+};
+
+function ThemeIcon({ mode }: { readonly mode: ThemeMode }) {
+  if (mode === 'light') return <SunIcon className="size-4" aria-hidden="true" />;
+  if (mode === 'dark') return <MoonIcon className="size-4" aria-hidden="true" />;
+  return <LaptopIcon className="size-4" aria-hidden="true" />;
+}
+
+export function AccountMenu({
+  placement,
+  admin = false,
+}: {
+  readonly placement: 'sidebar' | 'top-bar';
+  readonly admin?: boolean | undefined;
+}) {
+  const navigate = useNavigate();
+  const { client, forcedOffline } = useDashboard();
+  const { theme, setTheme } = useTheme();
+  const online = !forcedOffline && (typeof window === 'undefined' ? true : window.navigator.onLine);
+  const displayName = client?.ownerLabel ?? 'Account';
+  const roleLabel =
+    client?.session.role === 'super_admin'
+      ? 'Super admin'
+      : client?.session.role === 'owner'
+        ? 'Property owner'
+        : 'Signed out';
+
+  const avatar = (
+    <Avatar className="size-8 shrink-0">
+      <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
+        {initialsFromLabel(displayName)}
+      </AvatarFallback>
+    </Avatar>
+  );
+
+  return (
+    <DropdownMenu>
+      {placement === 'sidebar' ? (
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuButton
+              size="lg"
+              aria-label="Account menu"
+              className="aria-expanded:bg-muted pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-1.5!"
+            />
+          }
+        >
+          {avatar}
+          <div className="grid flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-medium">{displayName}</span>
+            <span className="truncate text-xs text-muted-foreground">{roleLabel}</span>
+          </div>
+          <ChevronsUpDownIcon className="ml-auto size-4 shrink-0" aria-hidden="true" />
+        </DropdownMenuTrigger>
+      ) : (
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label="Account menu"
+            />
+          }
+        >
+          {avatar}
+        </DropdownMenuTrigger>
+      )}
+      <DropdownMenuContent
+        side={placement === 'sidebar' ? 'right' : 'bottom'}
+        align="end"
+        sideOffset={6}
+        className="min-w-60"
+      >
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="p-0 font-normal">
+            <div className="flex items-center gap-2.5 px-2 py-2 text-left text-sm">
+              {avatar}
+              <div className="grid min-w-0 flex-1 leading-tight">
+                <span className="truncate font-medium text-foreground">{displayName}</span>
+                <span className="truncate text-xs text-muted-foreground">{roleLabel}</span>
+              </div>
+            </div>
+            <p
+              role="status"
+              className="flex items-center gap-1.5 px-2 pb-2 text-xs text-muted-foreground"
+            >
+              {online ? (
+                <WifiIcon aria-hidden="true" className="size-3.5 text-success" />
+              ) : (
+                <WifiOffIcon aria-hidden="true" className="size-3.5 text-warning" />
+              )}
+              {online ? 'Online' : 'Offline'}
+            </p>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={theme}
+            onValueChange={(nextValue) => {
+              if (isThemeMode(nextValue)) {
+                setTheme(nextValue);
+              }
+            }}
+          >
+            {THEME_MODES.map((mode) => (
+              <DropdownMenuRadioItem key={mode} value={mode} className="min-h-10">
+                <ThemeIcon mode={mode} />
+                <span>{THEME_LABELS[mode]}</span>
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        {!admin ? (
+          <>
+            <DropdownMenuItem className="min-h-10" render={<Link to="/settings/account" />}>
+              <UserIcon aria-hidden="true" />
+              <span>My account</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="min-h-10" render={<Link to="/settings" />}>
+              <SettingsIcon aria-hidden="true" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <DropdownMenuItem className="min-h-10" render={<Link to="/home" />}>
+            <LayoutDashboardIcon aria-hidden="true" />
+            <span>Owner dashboard</span>
+          </DropdownMenuItem>
+        )}
+        {client?.session.role === 'super_admin' && !admin ? (
+          <DropdownMenuItem className="min-h-10" render={<Link to="/admin" />}>
+            <ShieldCheckIcon aria-hidden="true" />
+            <span>Super admin</span>
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="min-h-10"
+          onClick={() => {
+            void navigate({ to: '/login' });
+          }}
+        >
+          <LogOutIcon aria-hidden="true" />
+          <span>Sign out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
