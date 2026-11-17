@@ -79,4 +79,5 @@ Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one b
 - [P2-E](P2-E-data-layer.md) · `ag/p2e-data-layer` · [PR #9](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/9) · 2026-11-17
 - [P2-F](P2-F-switches.md) · `ag/p2f-switches` · [PR #10](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/10) · 2026-11-17
 - [P3-0](P3-0-housekeeping.md) · `ag/p3-0-housekeeping` · 2026-11-18
-- [P3-A](P3-A-ui-foundation.md) · `ag/p3a-ui-foundation` · 2026-11-18
+- [P3-A](P3-A-ui-foundation.md) · `ag/p3a-ui-foundation` · [PR #12](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/12) · 2026-11-18
+- [P3-B](P3-B-theme-engine.md) · `ag/p3b-theme-engine` · 2026-11-18
