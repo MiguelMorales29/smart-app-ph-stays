@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type ConfigEnv, type UserConfig } from 'vite';
 
-import { resolveDashboardBuildEnv } from './src/env-config';
+import { resolveDashboardBuildEnv } from './src/env-config.js';
 
 export function createDashboardViteConfig(
   configEnv: Pick<ConfigEnv, 'command' | 'mode'>,

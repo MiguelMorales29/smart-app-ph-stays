@@ -24,7 +24,7 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
   ) {
     const switches = await import('@smartapp/data/switches');
     const state = switches.resolveInitialSwitchState(search, window.sessionStorage, {
-      as: 'owner_ulap',
+      as: 'owner:ulap-suites',
     });
     const bundle = await switches.createSwitchClientBundle(state, {
       storefrontOrigin: env.STOREFRONT_ORIGIN,

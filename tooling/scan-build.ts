@@ -121,8 +121,7 @@ export function scanBuildDirectories(
 function main(): void {
   const repoRoot = resolve(import.meta.dirname, '..');
   const targets = process.argv.slice(2);
-  const dirs =
-    targets.length > 0 ? targets : ['apps/dashboard/dist', 'apps/storefront/.next'];
+  const dirs = targets.length > 0 ? targets : ['apps/dashboard/dist', 'apps/storefront/.next'];
 
   const result = scanBuildDirectories(dirs, repoRoot);
 

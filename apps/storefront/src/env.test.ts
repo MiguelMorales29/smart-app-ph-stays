@@ -22,9 +22,7 @@ describe('storefront environment validation', () => {
   });
 
   it('fails next build with no settings instead of falling back to silent demo defaults', () => {
-    expect(() =>
-      resolveStorefrontBuildEnv({}, { isDevServer: false }),
-    ).toThrow(/APP_ENV/);
+    expect(() => resolveStorefrontBuildEnv({}, { isDevServer: false })).toThrow(/APP_ENV/);
 
     expect(() =>
       createStorefrontNextConfig(PHASE_PRODUCTION_BUILD, {

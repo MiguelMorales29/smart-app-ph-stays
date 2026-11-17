@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { ErrorCode } from '@smartapp/core';
+import type * as SwitchesModule from '@smartapp/data/switches';
 import type {
   ClockKey,
   ClockOption,
@@ -18,7 +19,7 @@ interface LoadedSwitchUi {
   readonly clockOptions: readonly ClockOption[];
   readonly errorCodeOptions: readonly ErrorCode[];
   readonly state: SwitchState;
-  readonly controller: typeof import('@smartapp/data/switches');
+  readonly controller: typeof SwitchesModule;
 }
 
 export function DashboardSwitchBar() {
@@ -34,7 +35,7 @@ export function DashboardSwitchBar() {
       const state = controller.resolveInitialSwitchState(
         window.location.search,
         window.sessionStorage,
-        { as: 'owner_ulap' },
+        { as: 'owner:ulap-suites' },
       );
       const clock = controller.resolveSwitchClock(state.clock);
       setLoaded({
@@ -61,10 +62,7 @@ export function DashboardSwitchBar() {
   function applyNextState(next: SwitchState) {
     if (!loaded) return;
     loaded.controller.saveSwitchStateToStorage(window.sessionStorage, next);
-    const nextSearch = loaded.controller.serializeSwitchStateToSearch(
-      next,
-      window.location.search,
-    );
+    const nextSearch = loaded.controller.serializeSwitchStateToSearch(next, window.location.search);
     const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;
     window.history.replaceState(null, '', nextUrl);
     setLoaded({ ...loaded, state: next });

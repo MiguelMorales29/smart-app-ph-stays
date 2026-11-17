@@ -18,13 +18,11 @@ describe('dashboard environment validation', () => {
   });
 
   it('fails vite build with no settings instead of falling back to silent demo defaults', () => {
-    expect(() =>
-      resolveDashboardBuildEnv({}, { isDevServer: false }),
-    ).toThrow(/APP_ENV/);
+    expect(() => resolveDashboardBuildEnv({}, { isDevServer: false })).toThrow(/APP_ENV/);
 
-    expect(() =>
-      createDashboardViteConfig({ command: 'build', mode: 'production' }, {}),
-    ).toThrow(/APP_ENV/);
+    expect(() => createDashboardViteConfig({ command: 'build', mode: 'production' }, {})).toThrow(
+      /APP_ENV/,
+    );
   });
 
   it('requires DATA_SOURCE=http when APP_ENV=production', () => {

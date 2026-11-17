@@ -99,10 +99,7 @@ export function App() {
         }
 
         if (client.session.role === 'super_admin') {
-          const ownersRes = await client.source.listOwnerAccounts(
-            { status: null },
-            client.session,
-          );
+          const ownersRes = await client.source.listOwnerAccounts({ status: null }, client.session);
           if (!active) return;
 
           if (!ownersRes.ok) {

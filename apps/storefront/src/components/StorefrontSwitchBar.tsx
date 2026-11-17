@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import type * as SwitchesModule from '@smartapp/data/switches';
 import type {
   ClockKey,
   ClockOption,
@@ -20,7 +21,7 @@ interface LoadedSwitchUi {
   readonly clockOptions: readonly ClockOption[];
   readonly errorCodeOptions: readonly ErrorCode[];
   readonly state: SwitchState;
-  readonly controller: typeof import('@smartapp/data/switches');
+  readonly controller: typeof SwitchesModule;
 }
 
 export function StorefrontSwitchBar() {
@@ -62,10 +63,7 @@ export function StorefrontSwitchBar() {
   function applyNextState(next: SwitchState) {
     if (!loaded) return;
     loaded.controller.saveSwitchStateToStorage(window.sessionStorage, next);
-    const nextSearch = loaded.controller.serializeSwitchStateToSearch(
-      next,
-      window.location.search,
-    );
+    const nextSearch = loaded.controller.serializeSwitchStateToSearch(next, window.location.search);
     const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;
     window.history.replaceState(null, '', nextUrl);
     setLoaded({ ...loaded, state: next });
