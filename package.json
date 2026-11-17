@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "demo:print": "pnpm --silent --filter @smartapp/core build && node tooling/demo-print.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

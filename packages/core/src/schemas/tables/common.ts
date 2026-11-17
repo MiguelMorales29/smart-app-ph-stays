@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { uuidSchema } from '../../ids/index.js';
+import { fontPairSchema } from '../../lists/index.js';
 import { centavosSchema } from '../../money/index.js';
 import { calendarDateSchema, nightsBetween } from '../../time/index.js';
 
@@ -88,7 +89,7 @@ export const propertyPageBannerSchema = z.object({
 export const propertyPageAnnouncementSchema = z.object({
   text: z.string().min(1).max(200),
   tone: z.enum(['info', 'warning', 'success']),
-  end_date: calendarDateSchema.nullable(),
+  endDate: calendarDateSchema.nullable(),
 });
 
 export const propertyPageDraftSchema = z.object({
@@ -96,30 +97,31 @@ export const propertyPageDraftSchema = z.object({
   tagline: z.string().max(80).nullable(),
   about: z.string().max(600).nullable(),
   look: z.object({
-    brand_color: hexColorSchema,
-    page_color: hexColorSchema,
-    card_color: hexColorSchema,
-    logo_shape: z.enum(['circle', 'rounded']),
-    font_pair: z.string().min(1).max(40),
+    brandColor: hexColorSchema,
+    pageColor: hexColorSchema,
+    cardColor: hexColorSchema,
+    accentColor: hexColorSchema,
+    logoShape: z.enum(['circle', 'rounded']),
+    fontPair: fontPairSchema,
     banners: z.array(propertyPageBannerSchema).max(3),
-    banner_seconds: z.int().min(3).max(10),
+    bannerSeconds: z.int().min(3).max(10),
     announcement: propertyPageAnnouncementSchema.nullable(),
     sections: z.record(z.string(), z.boolean()),
   }),
   install: z.object({
-    home_screen_name: z.string().min(1).max(12),
-    splash_color: hexColorSchema,
-    splash_animation: z.boolean(),
-    show_name: z.boolean(),
-    show_tagline: z.boolean(),
+    homeScreenName: z.string().min(1).max(12),
+    splashColor: hexColorSchema,
+    splashAnimation: z.boolean(),
+    showName: z.boolean(),
+    showTagline: z.boolean(),
   }),
   hero: z.object({
     cover: uuidSchema.nullable(),
     photos: z.array(uuidSchema).max(5),
   }),
   host: z.object({
-    display_name: z.string().min(1).max(80),
-    photo_file: uuidSchema.nullable(),
+    displayName: z.string().min(1).max(80),
+    photoFile: uuidSchema.nullable(),
     languages: z.array(z.string().min(1).max(40)),
   }),
   units: z.array(uuidSchema).max(4),
@@ -128,15 +130,15 @@ export const propertyPageDraftSchema = z.object({
     .array(
       z.object({
         question: z.string().min(1).max(200),
-        answer: z.string().min(1).max(1000),
+        answer: z.string().min(1).max(300),
       }),
     )
     .max(10),
   seo: z.object({
     title: z.string().max(60).nullable(),
     description: z.string().max(155).nullable(),
-    share_picture_file: uuidSchema.nullable(),
-    hide_from_search: z.boolean(),
+    sharePictureFile: uuidSchema.nullable(),
+    hideFromSearch: z.boolean(),
   }),
 });
 

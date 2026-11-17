@@ -8,6 +8,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@smartapp/core": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "10.14.0",
     "typescript": "catalog:",
