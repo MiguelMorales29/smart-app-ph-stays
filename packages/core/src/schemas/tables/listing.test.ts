@@ -92,7 +92,7 @@ describe('listing table schemas', () => {
         cardColor: '#D5F4F2',
         accentColor: '#FA776B',
         logoShape: 'rounded',
-        fontPair: 'unbounded-plus-jakarta',
+        fontPair: 'bold',
         banners: [],
         bannerSeconds: 5,
         announcement: null,

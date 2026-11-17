@@ -60,7 +60,7 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       cardColor: '#FFE7DE',
       accentColor: '#2F6AE0',
       logoShape: 'rounded',
-      fontPair: 'young-serif-plus-jakarta',
+      fontPair: 'homey',
       banners: media.banners,
       bannerSeconds: 5,
       announcement: {
