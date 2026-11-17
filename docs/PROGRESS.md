@@ -23,7 +23,7 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 - [x] P3-A UI foundation: Tailwind, shadcn, tokens, platform theme and Phase 3 components
 - [x] P3-B Storefront theme engine and font pairs
 - [x] P3-C Storefront frame and routes
-- [ ] P3-D Dashboard and admin frames, router and route index
+- [x] P3-D Dashboard and admin frames, router and route index
 - [ ] P3-E Kits, screenshot tests, previews and docs
 
 ## Later phases
