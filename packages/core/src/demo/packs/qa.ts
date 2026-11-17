@@ -18,7 +18,7 @@ import { appendBrandToWorld, createEmptyDemoWorld, seedPlatformBase } from './sh
 import type { DemoWorld } from './shared.js';
 
 export const QA_EIGHTY_CHAR_EMOJI_ENYE_NAME =
-  'Señora Maria Concepcion Villavicencio-Montemayor de la Peña 🌟 Quezon City Habita';
+  'Señora Maria Concepcion Villavicencio-Montemayor de la Peña 🌟 Quezon City Habit';
 
 export function buildQaPack(clock: Clock): DemoWorld {
   const today = manilaToday(clock);
