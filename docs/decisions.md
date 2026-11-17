@@ -39,6 +39,7 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D30 threads.inquiry_id and lease_id stay nullable uuids ready for wave 2; createInquiry and BK-10 move to wave 2 with RN-01 because the inquiries table is wave 2.
 - D31 Page look gains accentColor, for the 60/30/10 rule in OW-11.
 - D32 Font pairs gain unbounded-plus-jakarta and young-serif-plus-jakarta (10 pairs in total); Bahay Batis and Tita Lorna's Dorm use them, closing O6. Installing the Unbounded and Young Serif font packages waits for Phase 3.
+- D33 Approving a GCash, Maya or bank payment without wallet_checked returns not_allowed with details { reason: "wallet_not_checked" }, keeping the 7 blueprint error codes.
 
 ## Open (not phase 1)
 
