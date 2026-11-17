@@ -11,6 +11,7 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 ## Phase 2. Data shapes, demo data and the mock layer
 
 - [x] P2-A Demo media, manifest check and Phase 2 decisions
+- [x] P2-B Core basics: money, Manila time, errors, wave 1 closed lists, lifecycles and demo ids
 
 ## Later phases
 
