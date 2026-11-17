@@ -11,3 +11,4 @@ One line per merged task, newest at the bottom.
 - 2026-11-17 P2-C Added 48 Wave 1 table row schemas, view schemas, 45-operation contract, `quoteStay` calculator with 16 golden cases, `RESERVED_SLUGS`, and recorded `D28`–`D30`.
 - 2026-11-17 P2-D Added `@smartapp/core` demo world (4 demo brands, `marketing`/`qa`/`empty`/`busy` packs, story builder, invariants & snapshot tests), `pnpm demo:print`, `docs/demo-data.md`, and recorded `D31`–`D32` (closing `O6`).
 - 2026-11-17 P2-E Added `@smartapp/data` (`DataSource` contract wrapper, `Session`, dynamic `getDataSource`, `mediaUrl`, `createMemorySource` imitating Wave 1 database rules, and 19 portable contract tests) and recorded `D33`.
+- 2026-11-17 P2-F Added Zod env checks blocking silent build defaults and `production`+`memory`, `@smartapp/data/switches` + `@smartapp/data/http`, preview ribbon, placeholder pages wired to `packages/data`, extended `tooling/scan-build.ts`, and closed Phase 2.

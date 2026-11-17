@@ -169,7 +169,7 @@ Each table below lists its own columns. The standard columns from section 2 are 
 
 | Column | Type | Rule |
 | --- | --- | --- |
-| `slug` | text | Unique across the platform. Lower-case letters, digits and hyphens, 3 to 60 |
+| `slug` | text | Unique across the platform. Lower-case letters, digits and hyphens, 3 to 40 (changed from 60; D28). Reserved slugs include `demo-media` (D23) |
 | `name` | text | 1 to 80 |
 | `tagline` | text | Optional, up to 80; set in the editor |
 | `description` | text | Up to 4,000 |
@@ -219,7 +219,7 @@ The names follow Airbnb's, but the rules are simplified. Under any preset, the o
 **Added 14 November 2026 with the page editor (Feature blueprint, section 7a); decided.**
 
 - `draft_rev` integer, not null, default 0. Counts up on each draft save. A save that carries an older number is refused, so two tabs cannot overwrite each other. `version` now only counts publishes, and `publish_property_page` refuses a publish when someone published first.
-- **Keys of `draft` and `published`** (shaped like the food app's `StorefrontContent`): `logo`, `tagline` (up to 80) and `about` (up to 600), which Publish copies to `properties`; `look` with `brandColor`, `pageColor`, `cardColor`, `logoShape` (circle or rounded), `fontPair` (8 pairs), `banners` (up to 3: photo, alt up to 120, title up to 40, line up to 90, one link), `bannerSeconds` (3 to 10, default 5), `announcement` (text up to 200, tone info, warning or success, end date) and `sections` (one show or hide switch per part); `install` (home-screen name up to 12, splash colour, splash animation, show name, show tagline); `hero` (cover and order of the first five photos); `host` (display name, photo file, languages); `units` (up to 4 featured unit ids); `highlights` (up to 6 amenity ids); `faq` (up to 10); `seo` (title up to 60, description up to 155, share picture file, hide from search). Light or dark is worked out from `pageColor`, so it is not stored.
+- **Keys of `draft` and `published`** (shaped like the food app's `StorefrontContent`): `logo`, `tagline` (up to 80) and `about` (up to 600), which Publish copies to `properties`; `look` with `brandColor`, `pageColor`, `accentColor` (for the 60/30/10 rule in OW-11; D31), `cardColor`, `logoShape` (circle or rounded), `fontPair` (10 pairs: 8 original pairs plus `unbounded-plus-jakarta` and `young-serif-plus-jakarta`, closing O6; D32), `banners` (up to 3: photo, alt up to 120, title up to 40, line up to 90, one link), `bannerSeconds` (3 to 10, default 5), `announcement` (text up to 200, tone info, warning or success, end date) and `sections` (one show or hide switch per part); `install` (home-screen name up to 12, splash colour, splash animation, show name, show tagline); `hero` (cover and order of the first five photos); `host` (display name, photo file, languages); `units` (up to 4 featured unit ids); `highlights` (up to 6 amenity ids); `faq` (up to 10); `seo` (title up to 60, description up to 155, share picture file, hide from search). Light or dark is worked out from `pageColor`, so it is not stored.
 - **Not stored here on purpose:** check-in and check-out times, house rules, prices, the cancellation preset, reply time and the Verified badge. The page reads them live from their own tables, so the page can never disagree with a booking.
 - **On `properties`:** `old_slugs text[]` (wave 1; old addresses keep redirecting; a GIN index lets `change_slug` check them). The slug is changed only through `change_slug`, never by a direct edit. Settings-owned facts the page shows: `contact jsonb` (phone, Messenger, Facebook, Instagram, TikTok, Viber, WhatsApp, Google review link), `show_exact_location boolean` default false, `reply_hours jsonb` and `viewing_hours jsonb` (up to 4 ranges a day, none past midnight, the same rules as the food app's Hours). `custom_domain text unique` and `domain_verified_at timestamptz` arrive in wave 3.
 
@@ -231,7 +231,7 @@ The names follow Airbnb's, but the rules are simplified. Under any preset, the o
 | `slug` | text | Unique within the property |
 | `name` | text | 1 to 80 |
 | `mode` | text | `short_stay` or `long_term`. Fixed once the unit has a booking or lease |
-| `unit_type` | text | `entire_place`, `private_room`, `bed_space` |
+| `unit_type` | text | `entire_place`, `private_room`, `bed_space`. A bed space is stored as one unit per bed (e.g. "Room 2A · Bed 1") until O4 is settled (D24) |
 | `description` | text | Up to 4,000 |
 | `max_guests` | smallint | At least 1 |
 | `bedrooms`, `beds` | smallint | Zero or more |
@@ -308,13 +308,14 @@ Keys: unique `(property_id, slug)`; unique `(account_id, id)` for owner-safe for
 | Column | Type | Rule |
 | --- | --- | --- |
 | `method` | text | `gcash`, `maya`, `bank` |
-| `bank_name` | text | Required when the method is `bank` |
+| `bank` | text | Required closed-list bank code (`BANKS`) when the method is `bank` (D29) |
+| `bank_name` | text | Optional bank label, required only when `bank` is `other` (D29) |
 | `account_name`, `account_number` | text | Shown only after a hold is placed |
 | `qr_file_id` | uuid | Optional QR image, to `files` |
 | `instructions` | text | Optional, up to 300 |
 | `is_active`, `sort_order` | boolean, integer |  |
 
-**Added 14 November 2026:** `method` also allows `qr_ph`; `bank` (text) from a closed list (BDO, BPI, Metrobank, Landbank, PNB, Security Bank, UnionBank, RCBC, China Bank, EastWest, GoTyme, SeaBank, other bank), required for banks; at most 3 bank accounts and one of each other method per owner; `is_sample` (boolean) for demo details the owner must replace. At least one way to pay stays on.
+**Added 14 November 2026 (updated D29):** `method` stays `gcash`, `maya`, `bank`, `qr_ph` (with payments recorded as `gcash`, `maya`, `bank`, `cash`, or `other`); `bank` (text) from a closed list (`BDO`, `BPI`, `Metrobank`, `Landbank`, `PNB`, `Security Bank`, `UnionBank`, `RCBC`, `China Bank`, `EastWest`, `GoTyme`, `SeaBank`, `other`), replaces `bank_name` as the required field for banks while keeping `bank_name` optional and required only when `bank` is `other` (D29); at most 3 bank accounts and one of each other method per owner; `is_sample` (boolean) for demo details the owner must replace (D18). At least one way to pay stays on.
 
 **Changing where money goes.** A new or edited payment account is labelled "new" on the property page for 7 days. The owner also gets an email, the change appears in the activity list, and guests with an open booking see a status line in their conversation. Together these catch a stolen login that swaps in a different account number.
 
@@ -503,7 +504,7 @@ A payment row is never deleted and its amount never changes. Only its status mov
 | --- | --- | --- |
 | `customer_id` | uuid | To `customers` |
 | `booking_id` | uuid | Set for a stay; unique |
-| `inquiry_id`, `lease_id` | uuid | Set for a question or a rental. When an inquiry becomes a lease, the same thread gains the lease |
+| `inquiry_id`, `lease_id` | uuid | Set for a question or a rental (nullable UUIDs in wave 1, populated when inquiries and leases ship in wave 2; D30). When an inquiry becomes a lease, the same thread gains the lease |
 | `token_hash` | bytea | Unique. The SHA-256 fingerprint of a 43-character link token. The token itself is never stored: it is shown once when made, and a new link replaces the old one |
 | `status` | text | `open` or `closed`. A closed thread can be read but not written to |
 | `closed_at` | timestamptz | Set by the owner, or by a timed job 30 days after checkout or move-out |
@@ -545,7 +546,7 @@ The API fills in the placeholders before the message is saved, so a sent message
 | --- | --- | --- |
 | `bucket` | text | `listing-media`, `payment-proofs`, `documents` |
 | `path` | text | Unique. `<account>/<folder>/<uuid>.<ext>`, never renamed |
-| `purpose` | text | `unit_photo`, `property_photo`, `logo`, `payment_qr`, `proof`, `subscription_proof`, `reward_image`, `message_photo` |
+| `purpose` | text | `unit_photo`, `property_photo`, `logo`, `payment_qr`, `proof`, `subscription_proof`, `reward_image`, `message_photo`, `guest_id`, `data_export` (10 purposes; `guest_id` and `data_export` added for `booking_guests.id_file_id` and `data_exports.file_id`; D27) |
 | `mime` | text | Checked by the API from the file's first bytes |
 | `size_bytes` | bigint | Counts toward the owner's storage pool |
 | `width`, `height` | integer | For images |
@@ -1092,7 +1093,7 @@ Four records have a status, and each status can change only in the ways drawn he
 | `in_review` | `issued` | The proof is rejected, or only part was approved | Owner | The balance stays due |
 | `issued` | `void` | The bill was a mistake | Owner | A reason is required |
 
-**Subscription.** `trial` to `active` when the first plan payment is approved. `active` to `paused` when the grace period ends. `paused` to `active` when a payment is approved. Any state to `cancelled` by the owner's request.
+**Subscription.** `null` to `trial` when `super_admin` approves an account (D26). `trial` to `active` when the first plan payment is approved, or `trial` to `paused` by `system` when trial + 7-day grace end unpaid (D26). `active` to `paused` when the grace period ends. `paused` to `active` when a payment is approved. Any state to `cancelled` by owner request or by `super_admin` when closing an account (D26).
 
 ## 10. Data flows, level 2
 
@@ -1195,7 +1196,7 @@ The API has two ways to reach the database, the same split the food app uses. Si
 | `hold_limit` | The customer already has two unpaid holds with this owner |
 | `reference_used` | That payment reference is already on another payment |
 | `invalid_move` | The status cannot change that way |
-| `not_allowed` | The account is paused, or the customer is blocked |
+| `not_allowed` | The account is paused, the customer is blocked, or approving a GCash/Maya/bank payment before `wallet_checked` is true (`details: { reason: "wallet_not_checked" }`; D33) |
 | `not_found` | Also used when the row belongs to another owner |
 
 ## 12. Security, files and retention
@@ -1482,6 +1483,7 @@ Decided on 14 November 2026, on the founder's instruction to answer these as co-
 | Points mode | Added on Lex's request (14 November 2026): each card picks stamps or points; stamps stay the recommended default for stays |
 | Meta Pixel and Conversions API | Decided on 15 November 2026 in its own tab: one consented Pixel on owner pages, server events through a queue, the token in Railway secrets, new table `meta_attribution` (62 tables) |
 | Lessons from the RSVP app's Meta bugs | No Pixel for super admin or impersonation sessions; admin-triggered events use only saved owner data (`triggered_by`); `review_plan_payment` refuses a future paid date; no browser Purchase (15 November 2026) |
+| Phase 2 data & demo hardening (`D18`–`D33`) | Fenced live demo accounts (`is_demo = true`, `dec0de` UUID prefix, `marketing` pack only on live, literal deterministic IDs; D18, D20, D25); `packages/data` `DataSource` boundary (D19); injectable Manila clock with Intl API (D21, D22); `/demo-media` assets & reserved `demo-media` slug (D23); one unit per bed (D24); `trial -> paused` and `super_admin` cancel moves (D26); `guest_id` and `data_export` file purposes (D27); 3–40 char slugs (D28); `payment_accounts.bank` vs optional `bank_name` (D29); `BK-10`/`createInquiry` moved to wave 2 (D30); `accentColor` (D31) and 10 font pairs closing O6 (D32); `not_allowed` + `{ reason: "wallet_not_checked" }` on unverified wallet approval (D33) |
 
 **Tested on 14 November 2026.** The occupancy table in section 4 was run on a local Postgres 16 server against 14 cases, and every case behaved as designed:
 

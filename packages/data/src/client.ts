@@ -1,5 +1,6 @@
 import type { AppError, Clock, DemoPack, ErrorCode } from '@smartapp/core';
 
+import { getHttpDataSource } from './http-client.js';
 import type { DataSource } from './source.js';
 
 export type DataClientConfig =
@@ -38,7 +39,8 @@ export async function getDataSource(config: DataClientConfig): Promise<DataSourc
     });
   }
 
-  throw new Error(
-    `HTTP DataSource adapter (for ${config.apiBaseUrl}) is not implemented yet; it arrives in Phase 11.`,
-  );
+  return getHttpDataSource({
+    apiBaseUrl: config.apiBaseUrl,
+    ...(config.validateOutput !== undefined ? { validateOutput: config.validateOutput } : {}),
+  });
 }

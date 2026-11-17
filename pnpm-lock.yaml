@@ -309,12 +309,18 @@ importers:
       '@smartapp/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@smartapp/data':
+        specifier: workspace:*
+        version: link:../../packages/data
       react:
         specifier: 'catalog:'
         version: 19.3.1
       react-dom:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -343,6 +349,9 @@ importers:
       '@smartapp/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@smartapp/data':
+        specifier: workspace:*
+        version: link:../../packages/data
       next:
         specifier: 16.4.5
         version: 16.4.5(@babel/core@7.29.13)(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -352,6 +361,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
