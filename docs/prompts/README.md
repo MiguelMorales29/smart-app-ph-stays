@@ -66,3 +66,10 @@ Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one b
 - It pushed to `main`, or skipped the pull request.
 - It switched Next.js to webpack, or changed the Node version, on its own.
 - It says "done" without pasting the command output.
+
+## Prompt log
+
+- [P1-A](P1-A-root-tooling-packages-ci.md) · `ag/p1a-root` · [PR #1](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/1) · 2026-11-16
+- [P1-B](P1-B-apps-and-health.md) · `ag/p1b-apps` · [PR #3](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/3) · 2026-11-16
+- [P1-C](P1-C-walls-scan-verify.md) · `ag/p1c-verify` · [PR #4](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/4) · 2026-11-16
+- [P2-A](P2-A-demo-media.md) · `ag/p2a-demo-media` · [PR #5](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/5) · 2026-11-17

@@ -8,6 +8,10 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 - [x] P1-B The three apps with placeholder pages and the API health check
 - [x] P1-C Lint-wall tests, build scan, phone check and final verification
 
+## Phase 2. Data shapes, demo data and the mock layer
+
+- [x] P2-A Demo media, manifest check and Phase 2 decisions
+
 ## Later phases
 
 - [ ] 2 Data shapes, demo data and the mock layer
