@@ -12,9 +12,19 @@ export interface DashboardClientState {
   readonly clock: Clock;
   readonly accountId: string | null;
   readonly isPendingOwner: boolean;
+  readonly isPausedOwner: boolean;
+  readonly ownerLabel: string;
+  readonly propertyName: string;
   readonly pack: string;
   readonly as: string;
   readonly errorCode: ErrorCode;
+}
+
+function propertyNameFromAs(asKey: string, label: string): string {
+  if (asKey === 'super-admin') return 'Super admin';
+  const match = /\(([^)]+)\)/.exec(label);
+  if (match?.[1]) return match[1];
+  return label;
 }
 
 export async function loadDashboardClient(search: string): Promise<DashboardClientState> {
@@ -29,6 +39,21 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
     const bundle = await switches.createSwitchClientBundle(state, {
       storefrontOrigin: env.STOREFRONT_ORIGIN,
     });
+    const options = switches.getSwitchViewAsOptions(bundle.clock);
+    const activeOption = options.find((opt) => opt.key === state.as);
+    const ownerLabel = activeOption?.label ?? 'Owner';
+    const propertyName = propertyNameFromAs(state.as, ownerLabel);
+
+    let isPausedOwner = false;
+    if (bundle.session.role === 'owner' && state.as.startsWith('owner:')) {
+      const candidateSlug = state.as.slice('owner:'.length);
+      if (candidateSlug && candidateSlug !== 'pending') {
+        const propRes = await bundle.source.getProperty({ slug: candidateSlug }, bundle.session);
+        if (propRes.ok && propRes.data) {
+          isPausedOwner = propRes.data.account.is_paused;
+        }
+      }
+    }
 
     return {
       mode: 'memory',
@@ -38,6 +63,9 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
       clock: bundle.clock,
       accountId: bundle.accountId,
       isPendingOwner: bundle.isPendingOwner,
+      isPausedOwner,
+      ownerLabel,
+      propertyName,
       pack: state.pack,
       as: state.as,
       errorCode: state.errorCode,
@@ -56,6 +84,9 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
     clock: systemClock,
     accountId: null,
     isPendingOwner: false,
+    isPausedOwner: false,
+    ownerLabel: 'Account',
+    propertyName: 'My Property',
     pack: 'http',
     as: 'guest',
     errorCode: 'not_allowed',

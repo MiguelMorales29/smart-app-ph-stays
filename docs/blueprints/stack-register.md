@@ -69,7 +69,7 @@ What this system uses, with exact versions. The food app's versions were checked
 | @tailwindcss/vite | 4.3.3 | dashboard | Tailwind plugin for Vite |
 | @vitejs/plugin-react | 6.1.2 | dashboard | React plugin for Vite |
 | Serwist | 9.5.13 (with `@serwist/turbopack` 9.5.13) | storefront | Service worker, offline shell, push |
-| TanStack Router | 1.170.42 | dashboard | Routes |
+| `@tanstack/react-router` | 1.170.46 | dashboard (`MIT`) | Code-based routes (no router plugin) |
 | TanStack Query | 5.104.1 | dashboard, storefront | Server state and cache |
 | NestJS core | 12.1.2 (Express) | `apps/api` | API tier |
 | @nestjs/config | 12.0.1 | `apps/api` | Settings from the environment |

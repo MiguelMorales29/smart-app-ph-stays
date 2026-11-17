@@ -82,3 +82,4 @@ Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one b
 - [P3-A](P3-A-ui-foundation.md) · `ag/p3a-ui-foundation` · [PR #12](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/12) · 2026-11-18
 - [P3-B](P3-B-theme-engine.md) · `ag/p3b-theme-engine` · 2026-11-18
 - [P3-C](P3-C-storefront-frame.md) · `ag/p3c-storefront-frame` · 2026-11-18
+- [P3-D](P3-D-dashboard-frames.md) · `ag/p3d-dashboard-frames` · 2026-11-18

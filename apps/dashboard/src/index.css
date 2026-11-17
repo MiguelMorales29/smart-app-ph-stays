@@ -1,2 +1,15 @@
 @import '@smartapp/ui/styles/globals.css';
 @source "../../../packages/ui/src";
+
+@layer base {
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}

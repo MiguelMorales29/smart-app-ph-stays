@@ -18,6 +18,7 @@ catalog:
   '@types/react-dom': 19.3.0
   cn: 0.5.2
   lucide-react: 1.71.0
+  '@tanstack/react-router': 1.170.46
 
 allowBuilds:
   '@swc/core': true

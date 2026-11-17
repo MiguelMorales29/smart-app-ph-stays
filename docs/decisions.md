@@ -51,6 +51,7 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D41 shadcn base-nova on Base UI is the base; Dice UI items are added one at a time; ReUI, Magic UI and EvilCharts registries are configured but nothing is installed until a page's research step picks it; no paid (Pro) item, ever.
 - P3-A approved packages (2026-11-18): `tailwindcss@4.3.5` (MIT), `@tailwindcss/postcss@4.3.5` (MIT), `@tailwindcss/vite@4.3.5` (MIT), `@base-ui/react@1.9.0` (MIT), `@base-ui/utils@0.5.0` (MIT, needed directly by `@diceui/banner`), `cn@0.5.2` (MIT, catalog; replaces separate `clsx` + `tailwind-merge`), `lucide-react@1.71.0` (ISC, catalog; `1.74.0` skipped under `minimumReleaseAge`), `class-variance-authority@0.7.1` (Apache-2.0), `tw-animate-css@1.4.0` (MIT), `@fontsource-variable/plus-jakarta-sans@5.3.0` (OFL-1.1); `shadcn@4.23.0` (MIT) run only via `pnpm dlx`.
 - P3-B approved font packages (2026-11-18): `@fontsource-variable/fredoka`, `nunito`, `bricolage-grotesque`, `dm-sans`, `fraunces`, `figtree`, `playfair-display`, `manrope`, `baloo-2`, `sora`, `outfit`, `unbounded` and `@fontsource/young-serif` (all `5.3.0`, OFL-1.1), loaded only via `packages/ui/src/styles/property-fonts.css` for the storefront so the dashboard CSS stays platform-font only.
+- P3-D approved packages (2026-11-18): `@tanstack/react-router@1.170.46` (MIT, catalog; code-based routes, no router plugin), plus `lucide-react` (`catalog:`) in `apps/dashboard`.
 
 ## Open (not phase 1)
 

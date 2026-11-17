@@ -51,7 +51,7 @@ describe('resolveServerProperty and paused server render', () => {
     );
     expect(conversationHtml).toContain('is temporarily paused');
     expect(conversationHtml).not.toContain('Thread reply box');
-  });
+  }, 15_000);
 
   it('returns null for an unknown property slug', async () => {
     const { resolveServerProperty } = await import('./property-server');

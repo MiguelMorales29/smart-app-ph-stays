@@ -60,6 +60,10 @@
 
   --radius: 0.625rem;
   --control-h: 44px;
+  --dock-height: 4rem;
+  --dock-max-width: 24rem;
+  --dock-offset: 0.75rem;
+  --shell-header-height: 3.5rem;
 
   --dur-fast: 120ms;
   --dur-base: 200ms;
