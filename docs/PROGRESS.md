@@ -17,6 +17,15 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 - [x] P2-E Data layer: DataSource contract wrapper, memory adapter, dynamic client loader, mediaUrl and 19 contract tests
 - [x] P2-F Switches, env validation, preview ribbon, placeholder pages, and extended production build scan
 
+## Phase 3. Look and app frames
+
+- [x] P3-0 Housekeeping before Phase 3
+- [ ] P3-A UI foundation: Tailwind, shadcn, tokens, platform theme and Phase 3 components
+- [ ] P3-B Storefront theme engine and font pairs
+- [ ] P3-C Storefront frame and routes
+- [ ] P3-D Dashboard and admin frames, router and route index
+- [ ] P3-E Kits, screenshot tests, previews and docs
+
 ## Later phases
 
 - [x] 2 Data shapes, demo data and the mock layer
