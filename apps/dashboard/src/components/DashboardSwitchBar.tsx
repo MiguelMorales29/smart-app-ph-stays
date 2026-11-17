@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import type { ErrorCode } from '@smartapp/core';
 import type * as SwitchesModule from '@smartapp/data/switches';
+import { DevSwitchPanel, type DevSwitchField } from '@smartapp/ui/compositions/dev-switch-panel';
 import type {
   ClockKey,
   ClockOption,
@@ -69,96 +70,60 @@ export function DashboardSwitchBar() {
     window.dispatchEvent(new Event('smartapp:switch-change'));
   }
 
-  return (
-    <aside
-      aria-label="Developer view and scenario switches"
-      data-switch-marker={loaded.marker}
-      style={{
-        padding: '8px',
-        borderBottom: '1px solid #d4d4d8',
-        backgroundColor: '#f4f4f5',
-        fontSize: '13px',
-      }}
-    >
-      <strong>Dev Switches</strong>{' '}
-      <label>
-        View as:{' '}
-        <select
-          aria-label="View as"
-          value={loaded.state.as}
-          onChange={(event) => {
-            const nextAs = loaded.controller.viewAsKeySchema.safeParse(event.target.value);
-            if (nextAs.success) {
-              applyNextState({ ...loaded.state, as: nextAs.data satisfies ViewAsKey });
-            }
-          }}
-        >
-          {loaded.viewAsOptions.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>{' '}
-      <label>
-        Scenario:{' '}
-        <select
-          aria-label="Scenario"
-          value={loaded.state.pack}
-          onChange={(event) => {
-            const nextPack = loaded.controller.scenarioKeySchema.safeParse(event.target.value);
-            if (nextPack.success) {
-              applyNextState({ ...loaded.state, pack: nextPack.data satisfies ScenarioKey });
-            }
-          }}
-        >
-          {loaded.scenarioOptions.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>{' '}
-      <label>
-        Clock:{' '}
-        <select
-          aria-label="Clock"
-          value={loaded.state.clock}
-          onChange={(event) => {
-            const nextClock = loaded.controller.clockKeySchema.safeParse(event.target.value);
-            if (nextClock.success) {
-              applyNextState({ ...loaded.state, clock: nextClock.data satisfies ClockKey });
-            }
-          }}
-        >
-          {loaded.clockOptions.map((option) => (
-            <option key={option.key} value={option.key}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>{' '}
-      {loaded.state.pack === 'error' ? (
-        <label>
-          Error code:{' '}
-          <select
-            aria-label="Error code"
-            value={loaded.state.errorCode}
-            onChange={(event) => {
-              const found = loaded.errorCodeOptions.find((code) => code === event.target.value);
-              if (found) {
-                applyNextState({ ...loaded.state, errorCode: found });
-              }
-            }}
-          >
-            {loaded.errorCodeOptions.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-    </aside>
-  );
+  const state = loaded.state;
+  const controller = loaded.controller;
+  const scenarioLabel =
+    loaded.scenarioOptions.find((option) => option.key === state.pack)?.label ?? state.pack;
+  const fields: DevSwitchField[] = [
+    {
+      id: 'as',
+      label: 'View as',
+      value: state.as,
+      options: loaded.viewAsOptions.map((option) => ({ value: option.key, label: option.label })),
+      onChange: (value) => {
+        const nextAs = controller.viewAsKeySchema.safeParse(value);
+        if (nextAs.success) applyNextState({ ...state, as: nextAs.data satisfies ViewAsKey });
+      },
+    },
+    {
+      id: 'pack',
+      label: 'Scenario',
+      value: state.pack,
+      options: loaded.scenarioOptions.map((option) => ({ value: option.key, label: option.label })),
+      onChange: (value) => {
+        const nextPack = controller.scenarioKeySchema.safeParse(value);
+        if (nextPack.success) {
+          applyNextState({ ...state, pack: nextPack.data satisfies ScenarioKey });
+        }
+      },
+    },
+    {
+      id: 'clock',
+      label: 'Clock',
+      value: state.clock,
+      options: loaded.clockOptions.map((option) => ({ value: option.key, label: option.label })),
+      onChange: (value) => {
+        const nextClock = controller.clockKeySchema.safeParse(value);
+        if (nextClock.success) {
+          applyNextState({ ...state, clock: nextClock.data satisfies ClockKey });
+        }
+      },
+    },
+    ...(state.pack === 'error'
+      ? [
+          {
+            id: 'errorCode',
+            label: 'Error code',
+            value: state.errorCode,
+            options: loaded.errorCodeOptions.map((code) => ({ value: code, label: code })),
+            onChange: (value: string) => {
+              const found = loaded.errorCodeOptions.find((code) => code === value);
+              if (found) applyNextState({ ...state, errorCode: found });
+            },
+          },
+        ]
+      : []),
+  ];
+
+  return <DevSwitchPanel marker={loaded.marker} summary={scenarioLabel} fields={fields} />;
 }

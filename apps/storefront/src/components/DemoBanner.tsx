@@ -14,7 +14,7 @@ export function DemoBanner({ isDemo }: { readonly isDemo: boolean }) {
       aria-label="Demo property indicator"
       className="rounded-none border-x-0 border-t-0 px-4 py-2"
     >
-      <BannerContent className="mx-auto w-full max-w-5xl justify-center">
+      <BannerContent className="mx-auto w-full max-w-5xl flex-row items-center justify-center gap-2">
         <BannerIcon>
           <InfoIcon className="size-4" />
         </BannerIcon>

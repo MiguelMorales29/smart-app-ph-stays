@@ -119,6 +119,31 @@
   );
 }
 
+/* Floating developer switches (preview and local builds only). Sits above the
+   phone bottom dock and the storefront action bar instead of taking layout space. */
+@utility dev-pill-anchor {
+  position: fixed;
+  right: calc(env(safe-area-inset-right, 0px) + 1rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dev-pill-lift, 1rem));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+:root:has([data-slot='bottom-dock']) {
+  --dev-pill-lift: calc(var(--dock-height) + var(--dock-offset) * 2);
+}
+
+:root:has([data-slot='property-action-bar'] > *) {
+  --dev-pill-lift: 5.5rem;
+}
+
+/* Leave room under the last line of every page so the floating pill never hides it. */
+body:has([data-slot='dev-switch-panel']) {
+  padding-bottom: calc(var(--dev-pill-lift, 1rem) + 3.5rem);
+}
+
 @utility pressable {
   transition: transform var(--dur-fast) ease-out;
   &:active {
@@ -129,7 +154,9 @@
 @utility frost {
   background-color: var(--background);
   @supports (backdrop-filter: blur(1px)) {
-    background-color: color-mix(in oklch, var(--background) 84%, transparent);
+    /* Mix in sRGB, not OKLCH: in OKLCH the transparent side has hue 0, which pulls the
+       blue-grey background toward red and made the glass look brown/pink. */
+    background-color: color-mix(in srgb, var(--background) 84%, transparent);
     backdrop-filter: blur(12px);
   }
   @media (prefers-reduced-transparency: reduce) {

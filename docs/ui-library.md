@@ -45,6 +45,10 @@ Installed in P3-A with `pnpm dlx shadcn@4.23.0 add` (`base-nova` preset; registr
 
 _(Plus `use-mobile.ts` installed in `packages/ui/src/hooks/` as a transitive dependency of `Sidebar`.)_
 
+## Shared compositions added after P3-E
+
+- `DevSwitchPanel` (`packages/ui/src/compositions/dev-switch-panel.tsx`, D42): the floating "Preview" pill and switch panel used by both apps' switch gates. **Use for:** preview and local builds on sample data only, loaded lazily by `DashboardSwitchGate` / `StorefrontSwitchGate`. **Don't:** render it in production code paths or put it inside a page layout.
+
 ## Selection Rationale ("How it was chosen")
 
 - **`base-nova` over Radix-only defaults:** Single consistent accessible primitive foundation (`@base-ui/react@1.9.0`) matching D41 and the reference food app architecture, with clean `render` prop composition for TanStack Router `<Link>` and Next.js `<Link>`.
@@ -53,11 +57,12 @@ _(Plus `use-mobile.ts` installed in `packages/ui/src/hooks/` as a transitive dep
 
 ## Installed Component Edits Log
 
-| File                                    | Phase | What changed & Why                                                                                                                                                                                                                                                               |
-| --------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/ui/src/components/banner.tsx` | P3-C  | Normalized nullable/optional `variant`, `priority`, and `duration` props in `contextValue`, `renderProps`, and `store.onBannerAdd(...)` so TypeScript with `exactOptionalPropertyTypes: true` compiles cleanly when imported by `apps/storefront`. No runtime behaviour changed. |
+| File                                    | Phase     | What changed & Why                                                                                                                                                                                                                                                               |
+| --------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/ui/src/components/banner.tsx` | P3 polish | `info`, `success`, `warning` and `destructive` variants now use the D35 status tokens (`bg-*-tint`, `text-foreground`, status-coloured icon) instead of raw Tailwind `blue/green/yellow/red-50/950`, which ignored the platform palette and showed brown in dark mode (D43).     |
+| `packages/ui/src/components/banner.tsx` | P3-C      | Normalized nullable/optional `variant`, `priority`, and `duration` props in `contextValue`, `renderProps`, and `store.onBannerAdd(...)` so TypeScript with `exactOptionalPropertyTypes: true` compiles cleanly when imported by `apps/storefront`. No runtime behaviour changed. |
 
-_(No other files in `packages/ui/src/components/` were modified in P3-A, P3-B, P3-C, P3-D, or P3-E.)_
+_(No other files in `packages/ui/src/components/` were modified in P3-A to P3-E or the P3 polish pass.)_
 
 ## Shortlist for Phases 4–9 (Not Installed Yet)
 

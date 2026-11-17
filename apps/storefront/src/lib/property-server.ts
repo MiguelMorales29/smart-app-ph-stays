@@ -1,4 +1,4 @@
-import type { PropertyView } from '@smartapp/core';
+import { propertySlugSchema, type PropertyView } from '@smartapp/core';
 import { getHttpDataSource } from '@smartapp/data/http';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
@@ -17,6 +17,11 @@ export async function resolveServerProperty(
   slug: string,
   switchCookieValue?: string | null,
 ): Promise<PropertyView | null> {
+  // A link that cannot be a property slug (capitals, dots, "favicon.ico") is simply not found.
+  // Without this guard the data contract throws on the input and the page answers with a 500.
+  if (!propertySlugSchema.safeParse(slug).success) {
+    return null;
+  }
   if (
     process.env.NEXT_PUBLIC_DATA_SOURCE === 'memory' &&
     process.env.NEXT_PUBLIC_APP_ENV !== 'production'

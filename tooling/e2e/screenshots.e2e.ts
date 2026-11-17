@@ -25,6 +25,10 @@ async function waitForPageReady(page: Page, waitForLoading = true): Promise<void
   if (waitForLoading) {
     await expect(page.locator('[data-slot="loading-state"]')).toHaveCount(0, { timeout: 20_000 });
   }
+  // The floating Preview pill loads lazily; wait for it so every baseline includes it.
+  await page
+    .locator('[data-slot="dev-switch-panel"]')
+    .waitFor({ state: 'visible', timeout: 20_000 });
   await page.evaluate(() => document.fonts.ready);
 }
 

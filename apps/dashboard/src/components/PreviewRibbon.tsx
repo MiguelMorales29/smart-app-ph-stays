@@ -2,7 +2,9 @@ import { Banner, BannerIcon, BannerTitle } from '@smartapp/ui/components/banner'
 import { FlaskConicalIcon } from 'lucide-react';
 
 export function PreviewRibbon() {
-  if (import.meta.env.VITE_APP_ENV !== 'preview') {
+  // On sample data the floating Preview pill already says this; the ribbon is only for
+  // previews that run on real data (from Phase 10).
+  if (import.meta.env.VITE_APP_ENV !== 'preview' || import.meta.env.VITE_DATA_SOURCE === 'memory') {
     return null;
   }
 

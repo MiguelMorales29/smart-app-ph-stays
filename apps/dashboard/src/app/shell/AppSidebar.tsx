@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Building2Icon, ChevronsUpDownIcon } from 'lucide-react';
+import { Building2Icon, ChevronsUpDownIcon, ShapesIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
 import {
   Sidebar,
@@ -95,10 +95,11 @@ export function AppSidebar() {
                 render={<a href="/kit" />}
                 className="pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
               >
-                <Badge variant="outline" className="px-1.5 text-[10px]">
+                <ShapesIcon aria-hidden="true" />
+                <span>UI Kit</span>
+                <Badge variant="outline" className="ml-auto px-1.5 text-[10px]">
                   DEV
                 </Badge>
-                <span>UI Kit</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ) : null}

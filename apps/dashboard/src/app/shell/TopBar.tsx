@@ -63,7 +63,10 @@ export function TopBar({
           {page.parent ? (
             <Fragment>
               <BreadcrumbItem>
-                <BreadcrumbLink render={<Link to={page.parent.to} />}>
+                <BreadcrumbLink
+                  className="inline-flex items-center pointer-coarse:min-h-11"
+                  render={<Link to={page.parent.to} />}
+                >
                   {page.parent.title}
                 </BreadcrumbLink>
               </BreadcrumbItem>

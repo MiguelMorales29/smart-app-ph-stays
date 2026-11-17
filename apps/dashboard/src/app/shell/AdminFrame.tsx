@@ -48,13 +48,13 @@ export function AdminFrame() {
       data-shell={formFactor}
       className="min-h-dvh bg-background text-foreground"
     >
-      <OfflineBanner forceOffline={forcedOffline} />
       <DashboardSwitchGate />
-      <PreviewRibbon />
 
       <SidebarProvider open={sidebarOpen} onOpenChange={onSidebarOpenChange}>
         {formFactor !== 'phone' ? <AdminSidebar /> : null}
         <SidebarInset className="min-w-0">
+          <OfflineBanner forceOffline={forcedOffline} />
+          <PreviewRibbon />
           <div className="flex items-center justify-between border-b border-border bg-primary-tint/40 px-4 py-1.5 text-xs">
             <div className="flex items-center gap-2">
               <Badge variant="default">Super admin</Badge>
@@ -75,7 +75,7 @@ export function AdminFrame() {
             ) : !isSuperAdmin ? (
               <NotAllowedState
                 title="Super admin access required"
-                message="Switch View As to Super Admin in the developer bar, or sign in with the founder account."
+                message="Open the Preview pill, set View as to Super admin, or sign in with the founder account."
                 action={
                   <Button
                     className="min-h-11 sm:min-h-9"

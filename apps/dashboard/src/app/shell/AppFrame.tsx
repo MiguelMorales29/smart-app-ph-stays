@@ -54,13 +54,13 @@ export function AppFrame() {
       data-shell={formFactor}
       className="min-h-dvh bg-background text-foreground"
     >
-      <OfflineBanner forceOffline={forcedOffline} />
       <DashboardSwitchGate />
-      <PreviewRibbon />
 
       <SidebarProvider open={sidebarOpen} onOpenChange={onSidebarOpenChange}>
         {formFactor !== 'phone' ? <AppSidebar /> : null}
         <SidebarInset className="min-w-0">
+          <OfflineBanner forceOffline={forcedOffline} />
+          <PreviewRibbon />
           <TopBar formFactor={formFactor} page={page} />
           {client?.isPausedOwner ? (
             <PausedAccountBanner
