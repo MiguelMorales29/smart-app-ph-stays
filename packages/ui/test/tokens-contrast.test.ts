@@ -197,7 +197,8 @@ const CONTRAST_PAIRS: readonly ContrastPair[] = [
   { label: 'sidebar-ring on sidebar', fg: '--sidebar-ring', bg: '--sidebar', minRatio: 3.0 },
 ];
 
-const FORBIDDEN_PRIMARY_ON_TINT = /\bbg-primary-tint\b[^\n]*\btext-primary(?![-\w])|\btext-primary(?![-\w])[^\n]*\bbg-primary-tint\b/;
+const FORBIDDEN_PRIMARY_ON_TINT =
+  /\bbg-primary-tint\b[^\n]*\btext-primary(?![-\w])|\btext-primary(?![-\w])[^\n]*\bbg-primary-tint\b/;
 
 function collectSourceFiles(dir: string): string[] {
   if (!existsSync(dir)) return [];
