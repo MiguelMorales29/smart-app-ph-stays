@@ -163,6 +163,16 @@ export { FEE_BASES, FEE_KINDS, feeBasisSchema, feeKindSchema } from './pricing.j
 export type { FeeBasis, FeeKind } from './pricing.js';
 
 export {
+  RESERVED_SLUGS,
+  SLUG_PATTERN,
+  isReservedSlug,
+  propertySlugSchema,
+  reservedSlugSchema,
+  unitSlugSchema,
+} from './slugs.js';
+export type { ReservedSlug } from './slugs.js';
+
+export {
   META_ACTION_SOURCES,
   META_DELIVERY_ENTITY_TYPES,
   META_DELIVERY_STATUSES,

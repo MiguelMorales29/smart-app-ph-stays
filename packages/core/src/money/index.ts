@@ -4,12 +4,20 @@ export const centavosSchema = z.int().min(0).brand<'Centavos'>();
 
 export type Centavos = z.infer<typeof centavosSchema>;
 
+export const signedCentavosSchema = z.int().brand<'SignedCentavos'>();
+
+export type SignedCentavos = z.infer<typeof signedCentavosSchema>;
+
 const pesoNumberFormat = new Intl.NumberFormat('en-PH', {
   maximumFractionDigits: 0,
 });
 
 export function centavos(value: number): Centavos {
   return centavosSchema.parse(value);
+}
+
+export function signedCentavos(value: number): SignedCentavos {
+  return signedCentavosSchema.parse(value);
 }
 
 export function pesos(amount: number): Centavos {
@@ -27,7 +35,7 @@ export function pesos(amount: number): Centavos {
   return centavosSchema.parse(rounded);
 }
 
-export function formatPeso(amount: Centavos | number): string {
+export function formatPeso(amount: Centavos | SignedCentavos | number): string {
   if (!Number.isSafeInteger(amount)) {
     throw new RangeError('Centavos amount must be a safe integer.');
   }
