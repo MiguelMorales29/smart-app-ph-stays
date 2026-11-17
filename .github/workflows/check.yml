@@ -44,12 +44,19 @@ jobs:
       - name: Run typecheck, lint and tests
         run: pnpm check
 
-      - name: Build packages
+      - name: Build packages (preview)
+        env:
+          APP_ENV: preview
+          DATA_SOURCE: memory
         run: pnpm build
 
-      - name: Scan build output for development addresses
+      - name: Build production front ends
+        env:
+          APP_ENV: production
+          DATA_SOURCE: http
         run: |
-          if grep -rnE "localhost:3100|localhost:5174|localhost:4100|127\.0\.0\.1" apps/dashboard/dist apps/storefront/.next --exclude="*.map" --exclude-dir=cache; then
-            echo "Dev address found in a production build"
-            exit 1
-          fi
+          rm -rf apps/storefront/.next apps/dashboard/dist
+          pnpm --filter @smartapp/storefront --filter @smartapp/dashboard build
+
+      - name: Scan production build output
+        run: node tooling/scan-build.ts
