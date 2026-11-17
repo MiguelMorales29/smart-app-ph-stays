@@ -1,0 +1,52 @@
+name: Update screenshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-screenshots:
+    name: Update screenshots
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure Chromium browser matches pinned version
+        run: pnpm --filter @smartapp/tooling exec playwright install chromium
+
+      - name: Build shared workspace packages
+        run: pnpm --filter @smartapp/core --filter @smartapp/data build
+
+      - name: Update screenshot baselines
+        run: pnpm --filter @smartapp/tooling exec playwright test -c e2e/playwright.config.ts --update-snapshots
+
+      - name: Commit and push updated baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tooling/e2e/__screenshots__
+          if git diff --cached --quiet; then
+            echo "No screenshot baseline changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(e2e): update screenshot baselines"
+          git push origin HEAD:${{ github.ref_name }}
