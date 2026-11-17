@@ -503,11 +503,11 @@ Demo data has one source and two uses, so a screen can never look finished on da
 
 | Item | Rule |
 | --- | --- |
-| Fixtures | Four demo properties live in `packages/core/src/demo`, typed by the same Zod schemas the API uses |
-| Seed | One script loads those fixtures into the development database through the API's own services |
-| Mock adapters | Allowed only for `/kit` and unit tests, in `packages/data/src/mocks`. Screens never import them |
-| Done | A screen counts as done only against the seeded development database |
-| Reset | One command wipes and reseeds the development database; it can never run against live |
+| Fixtures | Four demo properties live in `packages/core/src/demo`, typed by the same Zod schemas the API uses. Demo IDs are committed literal UUIDs prefixed with `dec0de` (`D20`), built relative to an injectable Manila clock via the built-in `Intl` API (`D21` golden clock `2026-12-10T10:00:00+08:00`, `D22`), across four packs: `marketing`, `qa`, `empty`, `busy` (`D25`). Demo images live in `apps/storefront/public/demo-media` (`/demo-media`, slug reserved; `D23`). |
+| Seed | One script loads those fixtures into the development database through the API's own services (`D19`). Live demo accounts (`is_demo = true`, `marketing` pack only) require an explicit `--live` flag and are fenced: never billed/paused/counted/Meta/emailed, `noindex`, `"Demo · not a real property"` ribbon, `is_sample` accounts, allow-listed test emails (`D18`, `D25`). |
+| Mock adapters | Allowed in `packages/data` behind the shared `DataSource` interface (`D19`) and unit tests in `packages/data/src/mocks`. Screens call `@smartapp/data` only and never import mocks directly (`D19`). HTTP adapter + NestJS routes replace mocks in Phase 11 (`D19`). |
+| Done | A screen counts as done only against the seeded development database (`D19`) |
+| Reset | One command wipes and reseeds the development database; `--live` only resets `dec0de` demo accounts (`D18`) |
 
 **Updated 16 November 2026.** During the screens-first stage of each wave (Build roadmap tab), the mock adapters in `packages/data` also feed the screens. Two rows above still hold: screens never import the mocks themselves, and a screen counts as done only against the seeded development database.
 

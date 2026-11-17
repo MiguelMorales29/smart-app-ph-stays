@@ -67,10 +67,10 @@ describe('packages/data switches controller', () => {
     }
 
     const options = getSwitchViewAsOptions(clock);
-    const pendingOpt = options.find((opt) => opt.key === 'owner_pending');
-    const ulapOpt = options.find((opt) => opt.key === 'owner_ulap');
-    const beaOpt = options.find((opt) => opt.key === 'member_bea');
-    const adminOpt = options.find((opt) => opt.key === 'super_admin');
+    const pendingOpt = options.find((opt) => opt.key === 'owner:pending');
+    const ulapOpt = options.find((opt) => opt.key === 'owner:ulap-suites');
+    const beaOpt = options.find((opt) => opt.key === 'member:bea-santos');
+    const adminOpt = options.find((opt) => opt.key === 'super-admin');
 
     expect(pendingOpt?.label).toContain(pendingProfile.full_name);
     expect(pendingOpt?.label).toContain(pendingAccount.name);
@@ -83,7 +83,7 @@ describe('packages/data switches controller', () => {
   it('parses and serializes URL query parameters and syncs with sessionStorage', () => {
     const storage = createMemoryStorage();
     const saved = createDefaultSwitchState({
-      as: 'owner_bahay',
+      as: 'owner:bahay-batis',
       pack: 'busy',
       clock: 'golden',
     });
@@ -91,22 +91,22 @@ describe('packages/data switches controller', () => {
     expect(storage.getItem(SWITCH_STORAGE_KEY)).toBeTruthy();
 
     const fromStorage = resolveInitialSwitchState('', storage);
-    expect(fromStorage.as).toBe('owner_bahay');
+    expect(fromStorage.as).toBe('owner:bahay-batis');
     expect(fromStorage.pack).toBe('busy');
     expect(fromStorage.clock).toBe('golden');
 
     const overriddenByUrl = resolveInitialSwitchState(
-      '?as=super_admin&pack=error&clock=%2B1d&error=dates_taken&other=keep',
+      '?as=super-admin&pack=error&clock=%2B1d&error=dates_taken&other=keep',
       storage,
     );
-    expect(overriddenByUrl.as).toBe('super_admin');
+    expect(overriddenByUrl.as).toBe('super-admin');
     expect(overriddenByUrl.pack).toBe('error');
     expect(overriddenByUrl.clock).toBe('+1d');
     expect(overriddenByUrl.errorCode).toBe('dates_taken');
 
     const search = serializeSwitchStateToSearch(overriddenByUrl, '?other=keep');
     expect(search).toContain('other=keep');
-    expect(search).toContain('as=super_admin');
+    expect(search).toContain('as=super-admin');
     expect(search).toContain('pack=error');
     expect(search).toContain('error=dates_taken');
 
@@ -125,7 +125,7 @@ describe('packages/data switches controller', () => {
 
   it('creates empty, error, offline, and guest-link client bundles cleanly', async () => {
     const guestLinkBundle = await createSwitchClientBundle(
-      createDefaultSwitchState({ as: 'guest_link', pack: 'marketing', clock: 'golden' }),
+      createDefaultSwitchState({ as: 'guest:link', pack: 'marketing', clock: 'golden' }),
       { storefrontOrigin: '' },
     );
     expect(guestLinkBundle.hasBookingLink).toBe(true);
@@ -149,7 +149,7 @@ describe('packages/data switches controller', () => {
 
     const errorBundle = await createSwitchClientBundle(
       createDefaultSwitchState({
-        as: 'owner_ulap',
+        as: 'owner:ulap-suites',
         pack: 'error',
         errorCode: 'hold_limit',
         clock: 'golden',

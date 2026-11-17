@@ -39,14 +39,14 @@ export const SWITCH_STORAGE_KEY = 'smartapp.dev.switches.v1';
 
 export const VIEW_AS_KEYS = [
   'guest',
-  'guest_link',
-  'member_bea',
-  'owner_ulap',
-  'owner_bahay',
-  'owner_ilaw',
-  'owner_lorna',
-  'owner_pending',
-  'super_admin',
+  'guest:link',
+  'member:bea-santos',
+  'owner:ulap-suites',
+  'owner:bahay-batis',
+  'owner:ilaw-residences',
+  'owner:tita-lorna-dorm',
+  'owner:pending',
+  'super-admin',
 ] as const;
 
 export const viewAsKeySchema = z.enum(VIEW_AS_KEYS);
@@ -162,56 +162,56 @@ export function getSwitchViewAsOptions(clock: Clock = systemClock): readonly Vie
       isPendingOwner: false,
     },
     {
-      key: 'guest_link',
+      key: 'guest:link',
       label: 'Guest with booking link',
       role: 'guest',
       accountId: null,
       isPendingOwner: false,
     },
     {
-      key: 'member_bea',
+      key: 'member:bea-santos',
       label: `Member — ${beaName}`,
       role: 'member',
       accountId: ulap.account.id,
       isPendingOwner: false,
     },
     {
-      key: 'owner_ulap',
+      key: 'owner:ulap-suites',
       label: `${findProfileName(baseProfiles.brandOwnerProfiles, DEMO_IDS.people.owners.ulapSuites, ulap.account.name)} (${ulap.account.name})`,
       role: 'owner',
       accountId: ulap.account.id,
       isPendingOwner: false,
     },
     {
-      key: 'owner_bahay',
+      key: 'owner:bahay-batis',
       label: `${findProfileName(baseProfiles.brandOwnerProfiles, DEMO_IDS.people.owners.bahayBatis, bahay.account.name)} (${bahay.account.name})`,
       role: 'owner',
       accountId: bahay.account.id,
       isPendingOwner: false,
     },
     {
-      key: 'owner_ilaw',
+      key: 'owner:ilaw-residences',
       label: `${findProfileName(baseProfiles.brandOwnerProfiles, DEMO_IDS.people.owners.ilawResidences, ilaw.account.name)} (${ilaw.account.name})`,
       role: 'owner',
       accountId: ilaw.account.id,
       isPendingOwner: false,
     },
     {
-      key: 'owner_lorna',
+      key: 'owner:tita-lorna-dorm',
       label: `${findProfileName(baseProfiles.brandOwnerProfiles, DEMO_IDS.people.owners.titaLornaDorm, lorna.account.name)} (${lorna.account.name})`,
       role: 'owner',
       accountId: lorna.account.id,
       isPendingOwner: false,
     },
     {
-      key: 'owner_pending',
+      key: 'owner:pending',
       label: `Pending — ${pendingOwnerName} (${pendingAccount.name})`,
       role: 'owner',
       accountId: pendingAccount.id,
       isPendingOwner: true,
     },
     {
-      key: 'super_admin',
+      key: 'super-admin',
       label: `Super admin — ${superAdminName}`,
       role: 'super_admin',
       accountId: null,
@@ -360,7 +360,7 @@ export function resolveSwitchSession(
         isPendingOwner: false,
         hasBookingLink: false,
       };
-    case 'guest_link': {
+    case 'guest:link': {
       return {
         session: { role: 'guest' },
         accountId: null,
@@ -368,7 +368,7 @@ export function resolveSwitchSession(
         hasBookingLink: world.threads.some((thread) => thread.status === 'open'),
       };
     }
-    case 'member_bea': {
+    case 'member:bea-santos': {
       const beaCustomer = world.customers.find(
         (customer) => customer.profile_id === DEMO_IDS.people.memberBeaProfile,
       );
@@ -383,7 +383,7 @@ export function resolveSwitchSession(
         hasBookingLink: false,
       };
     }
-    case 'owner_ulap':
+    case 'owner:ulap-suites':
       return {
         session: {
           role: 'owner',
@@ -394,7 +394,7 @@ export function resolveSwitchSession(
         isPendingOwner: false,
         hasBookingLink: false,
       };
-    case 'owner_bahay':
+    case 'owner:bahay-batis':
       return {
         session: {
           role: 'owner',
@@ -405,7 +405,7 @@ export function resolveSwitchSession(
         isPendingOwner: false,
         hasBookingLink: false,
       };
-    case 'owner_ilaw':
+    case 'owner:ilaw-residences':
       return {
         session: {
           role: 'owner',
@@ -416,7 +416,7 @@ export function resolveSwitchSession(
         isPendingOwner: false,
         hasBookingLink: false,
       };
-    case 'owner_lorna':
+    case 'owner:tita-lorna-dorm':
       return {
         session: {
           role: 'owner',
@@ -427,7 +427,7 @@ export function resolveSwitchSession(
         isPendingOwner: false,
         hasBookingLink: false,
       };
-    case 'owner_pending':
+    case 'owner:pending':
       return {
         session: {
           role: 'owner',
@@ -438,7 +438,7 @@ export function resolveSwitchSession(
         isPendingOwner: true,
         hasBookingLink: false,
       };
-    case 'super_admin':
+    case 'super-admin':
       return {
         session: {
           role: 'super_admin',
@@ -487,7 +487,7 @@ export async function createSwitchClientBundle(
   let hasBookingLink = resolved.hasBookingLink;
 
   if (
-    validState.as === 'guest_link' &&
+    validState.as === 'guest:link' &&
     validState.pack !== 'error' &&
     validState.pack !== 'offline' &&
     validState.pack !== 'slow'

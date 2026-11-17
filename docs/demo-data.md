@@ -49,3 +49,24 @@ Following `D18` and `D19`:
    - Demo accounts are fenced (`D18`): never billed, never paused by jobs, excluded from platform revenue/owner totals, excluded from Meta Pixel/CAPI delivery, and dropped by the notifications outbox so no real emails are sent.
    - Public demo pages emit `noindex`, show a `"Demo · not a real property"` ribbon, mark all payment accounts `is_sample = true`, and allow only allow-listed test emails to complete a booking hold.
    - Before each founder video or sales demo, a reset command restores the `dec0de` demo accounts to a fresh `marketing` pack anchored to that day's Manila date.
+
+## How to use the switches
+
+Both `apps/storefront` and `apps/dashboard` render a developer switch bar whenever `DATA_SOURCE=memory` and `APP_ENV !== 'production'`. In `APP_ENV=production` (`DATA_SOURCE=http` required), the switch bar, `@smartapp/data/switches`, and demo data are stripped from production bundles and enforced by `node tooling/scan-build.ts`.
+
+- **View as (`?as=`):**
+  - `guest` (storefront default): public visitor browsing.
+  - `guest:link`: guest holding a private booking thread token (rotated in memory from the active pack).
+  - `member:bea-santos`: joined member from `people.ts`.
+  - `owner:ulap-suites` (dashboard default), `owner:bahay-batis`, `owner:ilaw-residences`, `owner:tita-lorna-dorm`: owner of each demo brand (names derived from `people.ts` and the brand configs).
+  - `owner:pending`: unapproved pending owner from `people.ts`.
+  - `super-admin`: platform admin from `people.ts`.
+- **Scenario (`?pack=`):**
+  - `marketing` (default), `qa`, `empty`, `busy` switch the active `DemoPack`.
+  - `error` (`?error=<ErrorCode>`): causes `DataSource` calls to fail with the selected core `ErrorCode` (`not_allowed`, `dates_taken`, `hold_limit`, etc.).
+  - `slow`: adds 2,000 ms latency per call so loading states stay visible.
+  - `offline`: simulates offline failures so offline states and retry buttons appear.
+- **Clock (`?clock=`):**
+  - `now` (system time), `golden` (`2026-12-10T10:00:00+08:00`), `+1h`, `+1d`.
+- **Sharing state:** Selections write to both `window.sessionStorage` and URL search params (for example `?as=owner:ulap-suites&pack=qa&clock=golden`), with URL query params taking priority so a copied link opens the exact same role, scenario, and clock.
+- **Preview ribbon:** Setting `APP_ENV=preview` renders a fixed `"Preview · sample data"` indicator on both apps.

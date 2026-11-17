@@ -139,7 +139,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | BK-07 | Chat messages with the owner | 1 | M | `post_message` |
 | BK-08 | Cancel before check-in, with the owner's policy shown first | 1 | M | `cancel_booking` |
 | BK-09 | Find my booking: re-send links by email | 1 | M |  |
-| BK-10 | Ask a question before booking | 1 | S | `create_inquiry` |
+| BK-10 | Ask a question before booking (moved to wave 2 with `RN-01`; `D30`) | 2 | S | `create_inquiry` |
 | BK-11 | Weekly and monthly discounts shown in the breakdown | 1 | S | `quote_stay` |
 | BK-12 | Notify me: web push for status changes | 1 | S | `push_subscriptions` |
 | BK-13 | Ask to change dates in the chat; the owner moves the booking | 1 | S | `change_booking_dates` |
@@ -188,7 +188,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | OW-08 | Units: details, photos in order, amenities, terms, arrival details | 1 | M | Listing tables |
 | OW-09 | Prices: base rate, weekday rates, dated prices, fees, discounts, preparation nights | 1 | M | Price tables |
 | OW-10 | Guests and members: list, history, private notes | 1 | S | `customers` |
-| OW-11 | Editor: draft and publish the property page: brand and 60/30/10 colours, install look (icon and splash), sections and web address (section 7a) | 1 | M | `property_pages` |
+| OW-11 | Editor: draft and publish the property page: brand and 60/30/10 colours (`accentColor` added; `D31`), install look (icon and splash), sections and web address (section 7a) | 1 | M | `property_pages` |
 | OW-12 | Settings: payment accounts, policies, notices, privacy contact | 1 | M |  |
 | OW-13 | Plan: trial, due and overdue banners; pay the plan with proof; storage used | 1 | M | `subscription_payments` |
 | OW-14 | Activity list for the account | 1 | S | `audit_logs` |
@@ -443,7 +443,7 @@ The splash has two layers.
 ### Web address
 
 1. Wave 1 keeps the planned address `stay.webserbisyo.com/<slug>` (System blueprint 8.4), the same path style as the food app. One certificate, no DNS work per owner, and each property still installs as its own app through its own manifest, with `id` and `scope` set to `/<slug>/`.
-2. The owner can change the slug through `change_slug`: 3 to 40 characters, a–z, 0–9 and hyphens, no reserved word (admin, api, app, host, stay, www, help, login and others). Old slugs keep redirecting permanently, so printed QR codes and shared links keep working. Up to 3 changes a year.
+2. The owner can change the slug through `change_slug`: 3 to 40 characters (`D28`), a–z, 0–9 and hyphens, no reserved word (admin, api, app, host, stay, www, help, login, `demo-media` (`D23`) and others). Old slugs keep redirecting permanently, so printed QR codes and shared links keep working. Up to 3 changes a year.
 3. No subdomains such as `<slug>.webserbisyo.com`. A wildcard needs its own certificate and DNS setup and a reserved list against our own subdomains, and gives owners little more than the path.
 4. An owner's own domain (`www.theirplace.com`) is a paid add-on in wave 3, added through the Vercel Domains API: the owner adds a DNS record, we verify it, Vercel issues the certificate. Vercel's Pro plan allows unlimited custom domains per project (Hobby stops at 50) and limits additions to 100 an hour, so a simple queue is enough.
 
@@ -453,7 +453,7 @@ The splash has two layers.
 | --- | --- | --- |
 | E1 | The 15 parts above, in a fixed order with show or hide switches | Same shape as the food app (E11), plus what rental sites need |
 | E2 | Reuse the food editor's engine whole: preview frame, autosave, Undo, conflict answers, Publish list, phone dock and sheet | Already built and approved; only the parts and words change |
-| E3 | Reuse Style (8 styles from the logo, fine-tune, magnifier, logo clean-up) and Fonts (8 pairs) as they are | Same reason; works on the device with no AI |
+| E3 | Reuse Style (8 styles from the logo, fine-tune, magnifier, logo clean-up, plus `accentColor` for OW-11; `D31`) and Fonts (10 pairs: 8 original pairs plus `unbounded-plus-jakarta` and `young-serif-plus-jakarta`, closing O6; `D32`) as they are | Same reason; works on the device with no AI |
 | E4 | Banners reuse the food carousel; hero photos never move by themselves | Changed from the first draft of this section, which kept banners still by default. The food carousel already has a Pause button and stays still for reduced motion, which is what WCAG 2.2.2 asks. Hero photos are a gallery, and NN/g found people miss content in moving carousels |
 | E5 | Contact, location and hours live in Settings; the editor only shows or hides them and links there | The food app does the same (E12, T64), so one fact has one home |
 | E6 | Two-layer splash, colour from the 60 by default, 5 CSS animations | Extends R51 without slowing the app or breaking on iPhone |
@@ -729,7 +729,7 @@ Every number below is enforced by the server. A page may show the limit, but it 
 ### Money rules
 
 1. **Pesos only.** Amounts are stored in centavos and shown in pesos.
-2. **Philippine time only.** A night, a due day and "today" all mean Manila time, whatever the phone's clock says.
+2. **Philippine time only.** A night, a due day and "today" all mean Manila time (`Asia/Manila` `+08:00`, via built-in `Intl` API; `D22`), whatever the phone's clock says.
 3. **The price is frozen at the hold.** The booking keeps its own copy of every price line. A later price change never alters an existing booking.
 4. **The app moves no money.** Customers pay the owner directly. The app records the proof, the decision and the receipt. A payment gateway is a later feature.
 5. **Refunds are recorded, not sent.** The owner sends the money outside the app and records it.
@@ -750,7 +750,7 @@ The database stores four plan states: trial, active, paused and cancelled. "Due"
 | Paused | Reply, review payments, manage existing bookings, pay the plan | Contact details only; no new bookings |
 | Cancelled | Sign in and export | Nothing |
 
-A demo account is a separate flag. It is never billed, never paused, and never counted in platform totals.
+A demo account is a separate flag (`is_demo = true` with `dec0de` IDs, `marketing` pack only on live, `is_sample` payment accounts, `"Demo · not a real property"` ribbon, `noindex`, and allow-listed test emails; `D18`, `D24` one unit per bed space, `D25`, `D26`, `D27`, `D29`, `D33`). It is never billed, never paused, and never counted in platform totals.
 
 ### Reports
 
