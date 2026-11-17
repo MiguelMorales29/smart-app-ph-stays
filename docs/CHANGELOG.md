@@ -12,3 +12,4 @@ One line per merged task, newest at the bottom.
 - 2026-11-17 P2-D Added `@smartapp/core` demo world (4 demo brands, `marketing`/`qa`/`empty`/`busy` packs, story builder, invariants & snapshot tests), `pnpm demo:print`, `docs/demo-data.md`, and recorded `D31`–`D32` (closing `O6`).
 - 2026-11-17 P2-E Added `@smartapp/data` (`DataSource` contract wrapper, `Session`, dynamic `getDataSource`, `mediaUrl`, `createMemorySource` imitating Wave 1 database rules, and 19 portable contract tests) and recorded `D33`.
 - 2026-11-17 P2-F Added Zod env checks blocking silent build defaults and `production`+`memory`, `@smartapp/data/switches` + `@smartapp/data/http`, preview ribbon, placeholder pages wired to `packages/data`, extended `tooling/scan-build.ts`, and closed Phase 2.
+- 2026-11-18 P3-0 Housekeeping before Phase 3: updated `AGENTS.md` for Phase 3, added `CLAUDE.md`, rewrote `docs/README.md`, ignored `.obsidian/`, and added Phase 3 tracking.

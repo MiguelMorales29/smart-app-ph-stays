@@ -6,9 +6,11 @@ This file is the rule book for every AI coder in this repository. It stays short
 
 ## Where we are
 
-**Phase 1 of 16: repository and stack.** No database, no sign-in, no features, no UI components yet. The phases are in `docs/blueprints/build-roadmap.md`; progress is ticked in `docs/PROGRESS.md`.
+**Phase 3 of 16: look and app frames.** Phase 2 is done: the demo world is in `packages/core/src/demo`, the data layer in `packages/data`, and the switches are described in `docs/demo-data.md`. No database, no sign-in and no features yet; the UI foundation and components arrive in Phase 3 (P3-A). The phases are in `docs/blueprints/build-roadmap.md`; progress is ticked in `docs/PROGRESS.md`.
 
 Order of work (decided 2026-11-16): inside each wave, the screens are built first on mock data, then the real database and API for the same screens. A page on mock data is **UI approved**; it is **Done** only when it runs on the real database.
+
+Decisions in `docs/decisions.md` override the blueprint snapshots in `docs/blueprints/`.
 
 ## Shape
 

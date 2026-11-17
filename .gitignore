@@ -10,4 +10,5 @@ coverage/
 *.pem
 *.tsbuildinfo
 next-env.d.ts
+.obsidian/
 
