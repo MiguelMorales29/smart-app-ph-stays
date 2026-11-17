@@ -3,10 +3,10 @@ import {
   ACTIVE_WAVE,
   ADMIN_NAV_ITEMS,
   DASHBOARD_NAV_ITEMS,
-  DASHBOARD_ROUTE_CATALOG,
   SETTINGS_NAV_ITEMS,
   resolveNavCount,
 } from './nav-config';
+import { DASHBOARD_ROUTE_CATALOG } from '../features/kit/route-catalog';
 
 describe('dashboard navigation & route catalog', () => {
   it('keeps the Feature blueprint §6 menu order and hides Wave 2-3 items', () => {
