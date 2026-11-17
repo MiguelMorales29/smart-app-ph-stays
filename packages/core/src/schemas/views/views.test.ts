@@ -64,7 +64,7 @@ describe('view schemas', () => {
         viewing_hours: null,
       },
       page: { version: 1, published: null },
-      account: { is_demo: true, is_verified: true },
+      account: { is_demo: true, is_verified: true, is_paused: false },
       units: [],
       photos: [],
       amenities: [],

@@ -474,6 +474,7 @@ export function buildPropertyView(
   if (!page || page.published === null || !account) {
     return err(appError('not_found'));
   }
+  const subscription = world.subscriptions.find((s) => s.account_id === account.id);
 
   const filesById = new Map(world.files.map((f) => [f.id, f]));
   const mapPhoto = (p: DemoWorld['listing_photos'][number]) => {
@@ -621,6 +622,7 @@ export function buildPropertyView(
       account: {
         is_demo: account.is_demo,
         is_verified: account.verified_at !== null,
+        is_paused: subscription?.status === 'paused',
       },
       units: unitCards,
       photos: propertyPhotos,
