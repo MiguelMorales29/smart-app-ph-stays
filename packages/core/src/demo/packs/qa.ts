@@ -8,11 +8,7 @@ import {
   buildUlapSuitesBrand,
 } from '../brands/index.js';
 import { DEMO_IDS, makeDemoUuid } from '../ids.js';
-import {
-  buildAccountCustomers,
-  buildBaseProfiles,
-  buildExtraStateOwners,
-} from '../people.js';
+import { buildAccountCustomers, buildBaseProfiles, buildExtraStateOwners } from '../people.js';
 import { AccountStoryBuilder } from '../story.js';
 import { appendBrandToWorld, createEmptyDemoWorld, seedPlatformBase } from './shared.js';
 import type { DemoWorld } from './shared.js';

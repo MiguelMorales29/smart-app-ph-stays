@@ -37,6 +37,8 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - D28 Slugs are 3 to 40 characters; the Database blueprint's 60 is changed to 40.
 - D29 On payment_accounts, bank (from BANKS) replaces bank_name as the required field when method is bank; bank_name is kept only as an optional label, required when bank is "other".
 - D30 threads.inquiry_id and lease_id stay nullable uuids ready for wave 2; createInquiry and BK-10 move to wave 2 with RN-01 because the inquiries table is wave 2.
+- D31 Page look gains accentColor, for the 60/30/10 rule in OW-11.
+- D32 Font pairs gain unbounded-plus-jakarta and young-serif-plus-jakarta (10 pairs in total); Bahay Batis and Tita Lorna's Dorm use them, closing O6. Installing the Unbounded and Young Serif font packages waits for Phase 3.
 
 ## Open (not phase 1)
 
@@ -45,6 +47,5 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - O3 Installed library components get their own folder and one relaxed lint and type rule set from the first install, instead of one exception per file as in the food app. Decide in phase 3.
 - O4 How bed spaces count toward the plan's 5 included units.
 - O5 Day-use stays (for example a Pansol day swim, 8 am to 5 pm) have no model.
-- O6 Unbounded and Young Serif are not in the 8 owner font pairs.
 - O7 Check that the five demo brand names are not real businesses before public videos.
 - O8 The RA 9653 rent cap is extended only to 31 December 2026; the lease warning must be easy to change.

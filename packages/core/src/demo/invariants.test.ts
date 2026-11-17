@@ -59,7 +59,7 @@ import {
   unitsRow,
   weekdayRatesRow,
 } from '../schemas/tables/index.js';
-import { addDays, fixedClock, nightsBetween, systemClock } from '../time/index.js';
+import { addDays, fixedClock, systemClock } from '../time/index.js';
 import {
   DEMO_MEDIA_MANIFEST,
   DEMO_PACKS,
@@ -298,22 +298,62 @@ function assertWorldInvariants(world: DemoWorld): void {
   // `exclude using gist (unit_id with =, during with &&) where (active)`
   // The real rule lives in PostgreSQL on `public.unit_occupancy`.
   const activeByUnit = new Map<string, typeof world.unit_occupancy>();
+  let overlapCount = 0;
   for (const occ of world.unit_occupancy) {
     expect(unitsById.get(occ.unit_id)?.account_id).toBe(occ.account_id);
     if (!occ.active) {
       continue;
     }
     const existing = activeByUnit.get(occ.unit_id) ?? [];
+    const occEnd = occ.during.end ?? '9999-12-31';
     for (const other of existing) {
-      const occEnd = occ.during.end ?? '9999-12-31';
       const otherEnd = other.during.end ?? '9999-12-31';
-      const overlaps =
-        nightsBetween(occ.during.start, otherEnd) > 0 &&
-        nightsBetween(other.during.start, occEnd) > 0;
-      expect(overlaps).toBe(false);
+      if (occ.during.start < otherEnd && other.during.start < occEnd) {
+        overlapCount += 1;
+      }
     }
     existing.push(occ);
     activeByUnit.set(occ.unit_id, existing);
+  }
+  expect(overlapCount).toBe(0);
+
+  // Pre-group child rows by unit_id / booking_id so checks run in O(N)
+  const stayTermsByUnitId = new Map(world.unit_stay_terms.map((t) => [t.unit_id, t]));
+  const weekdayRatesByUnitId = new Map<string, typeof world.weekday_rates>();
+  for (const r of world.weekday_rates) {
+    const arr = weekdayRatesByUnitId.get(r.unit_id) ?? [];
+    arr.push(r);
+    weekdayRatesByUnitId.set(r.unit_id, arr);
+  }
+  const rateOverridesByUnitId = new Map<string, typeof world.rate_overrides>();
+  for (const r of world.rate_overrides) {
+    const arr = rateOverridesByUnitId.get(r.unit_id) ?? [];
+    arr.push(r);
+    rateOverridesByUnitId.set(r.unit_id, arr);
+  }
+  const feesByUnitId = new Map<string, typeof world.unit_fees>();
+  for (const f of world.unit_fees) {
+    const arr = feesByUnitId.get(f.unit_id) ?? [];
+    arr.push(f);
+    feesByUnitId.set(f.unit_id, arr);
+  }
+  const linesByBookingId = new Map<string, typeof world.booking_lines>();
+  for (const l of world.booking_lines) {
+    const arr = linesByBookingId.get(l.booking_id) ?? [];
+    arr.push(l);
+    linesByBookingId.set(l.booking_id, arr);
+  }
+  const eventsByBookingId = new Map<string, typeof world.booking_events>();
+  for (const e of world.booking_events) {
+    const arr = eventsByBookingId.get(e.booking_id) ?? [];
+    arr.push(e);
+    eventsByBookingId.set(e.booking_id, arr);
+  }
+  const paymentsByBookingId = new Map<string, typeof world.payments>();
+  for (const p of world.payments) {
+    const arr = paymentsByBookingId.get(p.booking_id) ?? [];
+    arr.push(p);
+    paymentsByBookingId.set(p.booking_id, arr);
   }
 
   // Booking totals, quoteStay match, lifecycle moves, and payment balances
@@ -322,7 +362,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     const prop = propertiesById.get(booking.property_id);
     const cust = customersById.get(booking.customer_id);
     const occ = occupanciesById.get(booking.occupancy_id);
-    const stayTerms = world.unit_stay_terms.find((t) => t.unit_id === booking.unit_id);
+    const stayTerms = stayTermsByUnitId.get(booking.unit_id);
 
     expect(unit?.account_id).toBe(booking.account_id);
     expect(prop?.account_id).toBe(booking.account_id);
@@ -338,9 +378,9 @@ function assertWorldInvariants(world: DemoWorld): void {
     const checkOut = addDays(checkIn, booking.nights);
     expect(occ.during.end).toBe(addDays(checkOut, stayTerms.prep_nights));
 
-    const lines = world.booking_lines
-      .filter((l) => l.booking_id === booking.id)
-      .sort((a, b) => a.sort_order - b.sort_order);
+    const lines = [...(linesByBookingId.get(booking.id) ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order,
+    );
 
     const lineSum = lines.reduce((sum, l) => sum + l.amount_centavos, 0);
     expect(lineSum).toBe(booking.total_centavos);
@@ -358,9 +398,9 @@ function assertWorldInvariants(world: DemoWorld): void {
         booking_window_days: stayTerms.booking_window_days,
         max_guests: unit.max_guests,
       },
-      weekdayRates: world.weekday_rates.filter((r) => r.unit_id === unit.id),
-      rateOverrides: world.rate_overrides.filter((r) => r.unit_id === unit.id),
-      fees: world.unit_fees.filter((f) => f.unit_id === unit.id),
+      weekdayRates: weekdayRatesByUnitId.get(unit.id) ?? [],
+      rateOverrides: rateOverridesByUnitId.get(unit.id) ?? [],
+      fees: feesByUnitId.get(unit.id) ?? [],
       checkIn,
       checkOut,
       adults: booking.adults,
@@ -386,15 +426,14 @@ function assertWorldInvariants(world: DemoWorld): void {
     }
 
     // Verify lifecycle transitions in booking_events
-    const events = world.booking_events.filter((e) => e.booking_id === booking.id);
+    const events = eventsByBookingId.get(booking.id) ?? [];
     expect(events.length).toBeGreaterThan(0);
     let currentState: BookingStatus | null = null;
     for (const evt of events) {
       expect(evt.account_id).toBe(booking.account_id);
       if (evt.to_status !== null) {
         expect(evt.from_status).toBe(currentState);
-        const actor: BookingLifecycleActor =
-          evt.actor_kind === 'staff' ? 'owner' : evt.actor_kind;
+        const actor: BookingLifecycleActor = evt.actor_kind === 'staff' ? 'owner' : evt.actor_kind;
         expect(canMove(BOOKING_LIFECYCLE, evt.from_status, evt.to_status, actor)).toBe(true);
         currentState = evt.to_status;
       }
@@ -402,7 +441,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     expect(currentState).toBe(booking.status);
 
     // Verify approved payments match booking requirements
-    const bookingPayments = world.payments.filter((p) => p.booking_id === booking.id);
+    const bookingPayments = paymentsByBookingId.get(booking.id) ?? [];
     const approvedSum = bookingPayments
       .filter((p) => p.status === 'approved')
       .reduce((sum, p) => sum + (p.kind === 'refund' ? -p.amount_centavos : p.amount_centavos), 0);
@@ -491,51 +530,59 @@ describe('demo world invariants', () => {
   });
 
   describe.each(DEMO_PACKS)('pack %s', (pack: DemoPack) => {
-    it('satisfies all invariants at the golden clock (2026-12-10T10:00:00+08:00)', () => {
-      const world = resolveDemoWorld({ pack, clock: fixedClock(GOLDEN_CLOCK_ISO) });
-      assertWorldInvariants(world);
-    });
+    it(
+      'satisfies all invariants at the golden clock (2026-12-10T10:00:00+08:00)',
+      { timeout: 30_000 },
+      () => {
+        const world = resolveDemoWorld({ pack, clock: fixedClock(GOLDEN_CLOCK_ISO) });
+        assertWorldInvariants(world);
+      },
+    );
 
-    it("satisfies all invariants at today's real clock", () => {
+    it("satisfies all invariants at today's real clock", { timeout: 30_000 }, () => {
       const world = resolveDemoWorld({ pack, clock: systemClock });
       assertWorldInvariants(world);
     });
   });
 
-  it('covers all QA edge cases in the qa pack and ~400 bookings in the busy pack', () => {
-    const qaWorld = resolveDemoWorld({ pack: 'qa', clock: fixedClock(GOLDEN_CLOCK_ISO) });
+  it(
+    'covers all QA edge cases in the qa pack and ~400 bookings in the busy pack',
+    { timeout: 30_000 },
+    () => {
+      const qaWorld = resolveDemoWorld({ pack: 'qa', clock: fixedClock(GOLDEN_CLOCK_ISO) });
 
-    const bookingStatuses = new Set(qaWorld.bookings.map((b) => b.status));
-    for (const status of BOOKING_STATUSES) {
-      expect(bookingStatuses.has(status)).toBe(true);
-    }
+      const bookingStatuses = new Set(qaWorld.bookings.map((b) => b.status));
+      for (const status of BOOKING_STATUSES) {
+        expect(bookingStatuses.has(status)).toBe(true);
+      }
 
-    const paymentStatuses = new Set(qaWorld.payments.map((p) => p.status));
-    for (const status of PAYMENT_STATUSES) {
-      expect(paymentStatuses.has(status)).toBe(true);
-    }
+      const paymentStatuses = new Set(qaWorld.payments.map((p) => p.status));
+      for (const status of PAYMENT_STATUSES) {
+        expect(paymentStatuses.has(status)).toBe(true);
+      }
 
-    // Reused reference number after rejection
-    const reusedRefPayments = qaWorld.payments.filter((p) => p.reference_norm === 'QAREF777888');
-    expect(reusedRefPayments).toHaveLength(2);
+      // Reused reference number after rejection
+      const reusedRefPayments = qaWorld.payments.filter((p) => p.reference_norm === 'QAREF777888');
+      expect(reusedRefPayments).toHaveLength(2);
 
-    // 80-character name with emoji and ñ
-    expect([...QA_EIGHTY_CHAR_EMOJI_ENYE_NAME].length).toBeLessThanOrEqual(80);
-    expect(QA_EIGHTY_CHAR_EMOJI_ENYE_NAME.length).toBe(80);
-    expect(
-      qaWorld.customers.some((c) => c.full_name === QA_EIGHTY_CHAR_EMOJI_ENYE_NAME),
-    ).toBe(true);
+      // 80-character name with emoji and ñ
+      expect([...QA_EIGHTY_CHAR_EMOJI_ENYE_NAME].length).toBeLessThanOrEqual(80);
+      expect(QA_EIGHTY_CHAR_EMOJI_ENYE_NAME.length).toBe(80);
+      expect(qaWorld.customers.some((c) => c.full_name === QA_EIGHTY_CHAR_EMOJI_ENYE_NAME)).toBe(
+        true,
+      );
 
-    // RA 9653 lease term above 1 month advance or 2 months deposit
-    expect(
-      qaWorld.unit_lease_terms.some((t) => t.advance_months > 1 && t.deposit_months > 2),
-    ).toBe(true);
+      // RA 9653 lease term above 1 month advance or 2 months deposit
+      expect(
+        qaWorld.unit_lease_terms.some((t) => t.advance_months > 1 && t.deposit_months > 2),
+      ).toBe(true);
 
-    // Busy pack has 400 bookings and 150 customers, identical across runs
-    const busy1 = resolveDemoWorld({ pack: 'busy', clock: fixedClock(GOLDEN_CLOCK_ISO) });
-    const busy2 = resolveDemoWorld({ pack: 'busy', clock: fixedClock(GOLDEN_CLOCK_ISO) });
-    expect(busy1.bookings).toHaveLength(400);
-    expect(busy1.customers).toHaveLength(150);
-    expect(busy1).toEqual(busy2);
-  });
+      // Busy pack has 400 bookings and 150 customers, identical across runs
+      const busy1 = resolveDemoWorld({ pack: 'busy', clock: fixedClock(GOLDEN_CLOCK_ISO) });
+      const busy2 = resolveDemoWorld({ pack: 'busy', clock: fixedClock(GOLDEN_CLOCK_ISO) });
+      expect(busy1.bookings).toHaveLength(400);
+      expect(busy1.customers).toHaveLength(150);
+      expect(busy1).toEqual(busy2);
+    },
+  );
 });

@@ -1,5 +1,10 @@
 import { centavos } from '../../money/index.js';
-import type { PropertyPageDraft, UnitAmenitiesRow, UnitLeaseTermsRow, UnitsRow } from '../../schemas/tables/index.js';
+import type {
+  PropertyPageDraft,
+  UnitAmenitiesRow,
+  UnitLeaseTermsRow,
+  UnitsRow,
+} from '../../schemas/tables/index.js';
 import { addDays, manilaWallTime } from '../../time/index.js';
 import type { CalendarDate } from '../../time/index.js';
 import { DEMO_IDS, makeDemoUuid } from '../ids.js';
@@ -89,12 +94,7 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       photoFile: null,
       languages: ['Tagalog', 'English'],
     },
-    units: [
-      ids.units.room2aBed1,
-      ids.units.room2aBed2,
-      ids.units.room3bBed1,
-      ids.units.room3bBed2,
-    ],
+    units: [ids.units.room2aBed1, ids.units.room2aBed2, ids.units.room3bBed1, ids.units.room3bBed2],
     highlights: [
       DEMO_IDS.amenities.wifi,
       DEMO_IDS.amenities.aircon,
@@ -173,7 +173,8 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       deposit_months: 1,
       reservation_fee_centavos: centavos(0),
       available_from: addDays(today, 3),
-      inclusions: 'All-in water, fiber Wi-Fi, night air-con (8 pm to 6 am), 24/7 study hall, and common kitchen.',
+      inclusions:
+        'All-in water, fiber Wi-Fi, night air-con (8 pm to 6 am), 24/7 study hall, and common kitchen.',
       created_at: createdAt,
       updated_at: createdAt,
     });
@@ -221,7 +222,8 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       deposit_months: 1,
       reservation_fee_centavos: centavos(0),
       available_from: addDays(today, 3),
-      inclusions: 'All-in water, fiber Wi-Fi, night air-con (8 pm to 6 am), 24/7 study hall, and common kitchen.',
+      inclusions:
+        'All-in water, fiber Wi-Fi, night air-con (8 pm to 6 am), 24/7 study hall, and common kitchen.',
       created_at: createdAt,
       updated_at: createdAt,
     });
@@ -324,7 +326,8 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       map_url: 'https://maps.google.com/?q=14.6112,120.9895',
       checkin_time: '14:00',
       checkout_time: '12:00',
-      arrival_info: 'Blue metal gate beside the corner sari-sari store on P. Noval. Look for Ate Lorna at the logbook desk.',
+      arrival_info:
+        'Blue metal gate beside the corner sari-sari store on P. Noval. Look for Ate Lorna at the logbook desk.',
       cancellation_preset: 'moderate',
       cancellation_note: null,
       privacy_contact: 'owner.tita-lorna-dorm@demo.invalid',
@@ -402,7 +405,8 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
         account_name: 'SAMPLE · Lorna Macaraeg',
         account_number: '0917 000 0000',
         qr_file_id: null,
-        instructions: 'Send monthly rent via GCash and upload the receipt screenshot for your stamp.',
+        instructions:
+          'Send monthly rent via GCash and upload the receipt screenshot for your stamp.',
         is_active: true,
         is_sample: true,
         sort_order: 0,

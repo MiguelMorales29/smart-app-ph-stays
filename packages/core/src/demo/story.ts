@@ -118,7 +118,12 @@ export class AccountStoryBuilder {
   public readonly outbox: NotificationsOutboxRow[] = [];
   public readonly auditLogs: AuditLogsRow[] = [];
 
-  public constructor(brand: BrandBundle, today: CalendarDate, clock: Clock, groupHexOverride?: string) {
+  public constructor(
+    brand: BrandBundle,
+    today: CalendarDate,
+    clock: Clock,
+    groupHexOverride?: string,
+  ) {
     this.brand = brand;
     this.today = today;
     const now = clock.now();
@@ -605,10 +610,16 @@ export class AccountStoryBuilder {
     if (!canMove(PAYMENT_LIFECYCLE, null, 'submitted', 'customer')) {
       throw new Error('Lifecycle refused null -> submitted payment move');
     }
-    if (params.status === 'approved' && !canMove(PAYMENT_LIFECYCLE, 'submitted', 'approved', 'owner')) {
+    if (
+      params.status === 'approved' &&
+      !canMove(PAYMENT_LIFECYCLE, 'submitted', 'approved', 'owner')
+    ) {
       throw new Error('Lifecycle refused submitted -> approved payment move');
     }
-    if (params.status === 'rejected' && !canMove(PAYMENT_LIFECYCLE, 'submitted', 'rejected', 'owner')) {
+    if (
+      params.status === 'rejected' &&
+      !canMove(PAYMENT_LIFECYCLE, 'submitted', 'rejected', 'owner')
+    ) {
       throw new Error('Lifecycle refused submitted -> rejected payment move');
     }
     if (
@@ -812,7 +823,9 @@ export class AccountStoryBuilder {
       at: string,
     ): void => {
       if (!canMove(BOOKING_LIFECYCLE, fromStatus, toStatus, actor)) {
-        throw new Error(`Invalid booking lifecycle move ${fromStatus ?? '(new)'} -> ${toStatus} by ${actor}`);
+        throw new Error(
+          `Invalid booking lifecycle move ${fromStatus ?? '(new)'} -> ${toStatus} by ${actor}`,
+        );
       }
       const eventId = makeDemoUuid(this.groupHex, '0015', this.eventSeq);
       this.eventSeq += 1;
@@ -833,14 +846,38 @@ export class AccountStoryBuilder {
     if (params.source === 'manual') {
       pushStep('created', null, 'confirmed', 'owner', params.createdAt);
       if (params.targetStatus === 'checked_in') {
-        pushStep('checked_in', 'confirmed', 'checked_in', 'owner', params.checkedInAt ?? params.createdAt);
+        pushStep(
+          'checked_in',
+          'confirmed',
+          'checked_in',
+          'owner',
+          params.checkedInAt ?? params.createdAt,
+        );
       } else if (params.targetStatus === 'completed') {
-        pushStep('checked_in', 'confirmed', 'checked_in', 'owner', params.checkedInAt ?? params.createdAt);
-        pushStep('completed', 'checked_in', 'completed', 'owner', params.checkedOutAt ?? params.createdAt);
+        pushStep(
+          'checked_in',
+          'confirmed',
+          'checked_in',
+          'owner',
+          params.checkedInAt ?? params.createdAt,
+        );
+        pushStep(
+          'completed',
+          'checked_in',
+          'completed',
+          'owner',
+          params.checkedOutAt ?? params.createdAt,
+        );
       } else if (params.targetStatus === 'cancelled') {
         const cancelActor: BookingLifecycleActor =
           params.cancelledBy === 'system' ? 'owner' : params.cancelledBy;
-        pushStep('cancelled', 'confirmed', 'cancelled', cancelActor, params.cancelledAt ?? params.createdAt);
+        pushStep(
+          'cancelled',
+          'confirmed',
+          'cancelled',
+          cancelActor,
+          params.cancelledAt ?? params.createdAt,
+        );
       }
       return;
     }
@@ -859,7 +896,13 @@ export class AccountStoryBuilder {
     if (params.targetStatus === 'cancelled') {
       const cancelActor: BookingLifecycleActor =
         params.cancelledBy === 'system' ? 'customer' : params.cancelledBy;
-      pushStep('cancelled', 'held', 'cancelled', cancelActor, params.cancelledAt ?? params.createdAt);
+      pushStep(
+        'cancelled',
+        'held',
+        'cancelled',
+        cancelActor,
+        params.cancelledAt ?? params.createdAt,
+      );
       return;
     }
 
@@ -874,20 +917,44 @@ export class AccountStoryBuilder {
       return;
     }
 
-    pushStep('confirmed', 'in_review', 'confirmed', 'owner', params.confirmedAt ?? params.createdAt);
+    pushStep(
+      'confirmed',
+      'in_review',
+      'confirmed',
+      'owner',
+      params.confirmedAt ?? params.createdAt,
+    );
 
     if (params.targetStatus === 'confirmed') {
       return;
     }
 
     if (params.targetStatus === 'checked_in') {
-      pushStep('checked_in', 'confirmed', 'checked_in', 'owner', params.checkedInAt ?? params.createdAt);
+      pushStep(
+        'checked_in',
+        'confirmed',
+        'checked_in',
+        'owner',
+        params.checkedInAt ?? params.createdAt,
+      );
       return;
     }
 
     if (params.targetStatus === 'completed') {
-      pushStep('checked_in', 'confirmed', 'checked_in', 'owner', params.checkedInAt ?? params.createdAt);
-      pushStep('completed', 'checked_in', 'completed', 'owner', params.checkedOutAt ?? params.createdAt);
+      pushStep(
+        'checked_in',
+        'confirmed',
+        'checked_in',
+        'owner',
+        params.checkedInAt ?? params.createdAt,
+      );
+      pushStep(
+        'completed',
+        'checked_in',
+        'completed',
+        'owner',
+        params.checkedOutAt ?? params.createdAt,
+      );
     }
   }
 

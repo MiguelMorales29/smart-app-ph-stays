@@ -38,7 +38,10 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
   const studioFog = DEMO_IDS.ulapSuites.units.studioFog;
   const taalView = DEMO_IDS.ulapSuites.units.taalView1br;
 
-  const mustCustomer = (map: Readonly<Record<string, (typeof ulapCustomers.customers)[0]>>, key: string) => {
+  const mustCustomer = (
+    map: Readonly<Record<string, (typeof ulapCustomers.customers)[0]>>,
+    key: string,
+  ) => {
     const c = map[key];
     if (!c) {
       throw new Error(`Missing demo customer: ${key}`);

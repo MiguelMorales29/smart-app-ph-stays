@@ -90,7 +90,8 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
       },
       {
         question: 'Is there a corkage fee for food and drinks?',
-        answer: 'Zero corkage! You have full use of the kitchen, rice cookers, refrigerator, and charcoal grill.',
+        answer:
+          'Zero corkage! You have full use of the kitchen, rice cookers, refrigerator, and charcoal grill.',
       },
     ],
     seo: {

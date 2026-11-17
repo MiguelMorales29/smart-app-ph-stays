@@ -312,7 +312,8 @@ export function buildBrandMediaFromManifest(params: {
       });
 
       const suffixNumber = Number(entry.name.slice(matchedPrefix.length + 1));
-      const unitSortOrder = Number.isInteger(suffixNumber) && suffixNumber > 0 ? suffixNumber - 1 : 0;
+      const unitSortOrder =
+        Number.isInteger(suffixNumber) && suffixNumber > 0 ? suffixNumber - 1 : 0;
 
       for (const unitId of targetUnitIds) {
         const photoId = makeDemoUuid(groupHex, '0007', photoSeq);

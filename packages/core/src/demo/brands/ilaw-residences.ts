@@ -90,7 +90,8 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       },
       {
         question: 'Are pets allowed in the building?',
-        answer: 'Yes, up to 2 small house-trained pets with updated vaccination records are welcome.',
+        answer:
+          'Yes, up to 2 small house-trained pets with updated vaccination records are welcome.',
       },
     ],
     seo: {
@@ -210,7 +211,8 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       map_url: 'https://maps.google.com/?q=14.5714,121.0578',
       checkin_time: '14:00',
       checkout_time: '12:00',
-      arrival_info: 'Keycard lobby entrance on San Rafael St. Press #01 on the intercom for viewing.',
+      arrival_info:
+        'Keycard lobby entrance on San Rafael St. Press #01 on the intercom for viewing.',
       cancellation_preset: 'firm',
       cancellation_note: null,
       privacy_contact: 'owner.ilaw-residences@demo.invalid',
@@ -308,7 +310,8 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         deposit_months: 2,
         reservation_fee_centavos: centavos(300000),
         available_from: addDays(today, 5),
-        inclusions: 'Building dues, common area maintenance, bicycle rack, and rooftop deck access.',
+        inclusions:
+          'Building dues, common area maintenance, bicycle rack, and rooftop deck access.',
         created_at: createdAt,
         updated_at: createdAt,
       },
@@ -321,7 +324,8 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         deposit_months: 2,
         reservation_fee_centavos: centavos(300000),
         available_from: addDays(today, 10),
-        inclusions: 'Building dues, common area maintenance, bicycle rack, and rooftop deck access.',
+        inclusions:
+          'Building dues, common area maintenance, bicycle rack, and rooftop deck access.',
         created_at: createdAt,
         updated_at: createdAt,
       },
