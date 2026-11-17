@@ -20,7 +20,7 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 ## Phase 3. Look and app frames
 
 - [x] P3-0 Housekeeping before Phase 3
-- [ ] P3-A UI foundation: Tailwind, shadcn, tokens, platform theme and Phase 3 components
+- [x] P3-A UI foundation: Tailwind, shadcn, tokens, platform theme and Phase 3 components
 - [ ] P3-B Storefront theme engine and font pairs
 - [ ] P3-C Storefront frame and routes
 - [ ] P3-D Dashboard and admin frames, router and route index
