@@ -8,5 +8,9 @@ Map of the `docs/` folder and what each file or directory is the source of truth
 - [demo-data.md](./demo-data.md): Demo world packs, switches, and environment flags.
 - [demo-media.md](./demo-media.md): Demo media rules, aspect ratios, and storage/serving conventions.
 - [demo-media-manifest.csv](./demo-media-manifest.csv): Manifest of committed demo media files and their metadata.
+- [design-tokens.md](./design-tokens.md): What every colour, font, radius and motion token means (platform and property looks).
+- [ui-library.md](./ui-library.md): Installed components, shared compositions, edits made to installed files, and the shortlist for later phases.
+- [previews.md](./previews.md): The Vercel preview setup and links.
+- `../.agents/skills/`: Skills agents load automatically for UI work: `smartapp-ui` (brand and components), `smartapp-ui-writing` (words on screen), `smartapp-ui-check` (brand guard, screenshots, responsive UI scan). `.claude/skills` points to the same folder.
 - [blueprints/](./blueprints/): Dated Markdown snapshots of the master plan tabs (read only when a prompt names one).
 - [prompts/](./prompts/): Saved task prompts and their index.

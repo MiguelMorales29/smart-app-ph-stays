@@ -88,8 +88,17 @@ jobs:
       - name: Build shared workspace packages
         run: pnpm --filter @smartapp/core --filter @smartapp/data build
 
-      - name: Run visual screenshot tests
+      - name: Run visual screenshot tests and the responsive UI scan
         run: pnpm --filter @smartapp/tooling exec playwright test -c e2e/playwright.config.ts
+
+      - name: Upload UI scan report and page screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ui-scan-report
+          path: tooling/e2e/test-results/ui-scan
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload screenshot diff report on failure
         if: failure()
