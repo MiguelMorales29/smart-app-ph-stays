@@ -28,6 +28,20 @@ The phases come from `docs/blueprints/build-roadmap.md`. A page is **UI approved
 - [x] UI skills and guards: `.agents/skills` (smartapp-ui, -writing, -check), brand guard test, responsive UI scan in CI (D44)
 - [x] P3 polish: floating developer switches, banner tokens, glass fix, storefront home cards, invalid-slug 404s, favicons
 
+## Phase 4. Owner start and listing (screens)
+
+Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
+
+- [ ] P4-0 Owner data contract, error reasons, schema additions, PH input helpers, form schemas, data hooks
+- [ ] P4-1 Phone and platform fixes: manifest, viewport, scroll restoration, notch, 16 px inputs, autofill, motion tokens, UI-scan rules
+- [ ] P4-2 Components and compositions (D55), DiceBear avatars, Fluent pictures
+- [ ] P4-3 Sign-up (with Google), login, forgot password, waiting for approval
+- [ ] P4-4 Onboarding and the home checklist
+- [ ] P4-5 Units and photos
+- [ ] P4-6 Prices, amenities and booking rules
+- [ ] P4-7 Settings and the property switcher
+- [ ] P4-8 Close-out: owner journey test, component tests, budget, docs
+
 ## Later phases
 
 - [x] 2 Data shapes, demo data and the mock layer

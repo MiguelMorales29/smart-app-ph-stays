@@ -45,7 +45,13 @@ Put each surface on the layer below it in this table: a card sits on the page, a
 1. **Find the frame.** Every route already has one: `AuthFrame`, `FocusFrame`, `AppFrame` or `AdminFrame` in the dashboard, `LandingFrame`, `PropertyFrame` or `ConversationFrame` in the storefront (see `/kit/routes`). Put your page inside it; don't build page chrome (headers, docks, sidebars, banners) inside a feature.
 2. **Reuse a composition** from `packages/ui/src/compositions` before anything else: `LoadingState`, `EmptyState`, `ErrorState`, `NotAllowedState`, `OfflineBanner`, `PausedAccountBanner`, `BookingStatusBadge` / `PaymentStatusBadge`, `BottomDock`, `NavDrawer`, `PropertyTheme`. These already handle light/dark, phone/desktop and accessibility.
 3. **Then an installed component** from `packages/ui/src/components` (list in `docs/ui-library.md`).
-4. **Missing piece? Install it** (next section). Never hand-build something a library provides, and never copy a component into `apps/*`; if it needs different behaviour, wrap it in the app (D34).
+4. **Missing piece? Follow the sourcing order (D60).**
+   1. Install it from shadcn, ReUI or Dice UI (next section).
+   2. None has it: find a free item in another library that works on Base UI (or uses no Radix), has an open licence (MIT, Apache-2.0, ISC, CC0) and doesn't need the `motion` package. Propose it with its licence and size, and wait for the founder's yes.
+   3. Last resort: rebuild it as a composition in `packages/ui/src/compositions` from installed parts and tokens, using the beautiful reference only as a picture (screenshots, sizes, behaviour). Say so in the plan first.
+
+   Never copy code from a paid ("Pro") item or a site without an open licence, never scrape a site's code or compiled CSS, and never hand-build something a library on our list already provides. Open-licence code may be read and adapted with its licence notice kept at the top of the file. Never copy a component into `apps/*`; if it needs different behaviour, wrap it in the app (D34).
+
 5. **Cover every state** the screen can be in: loading, empty, error, offline, not allowed, paused account, long Filipino names and addresses, big ₱ amounts. The demo packs (`?pack=empty`, `busy`, `error`, `slow`, `offline`) exist so you can see each one.
 
 ## Installing or editing a component
