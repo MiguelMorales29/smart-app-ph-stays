@@ -26,6 +26,20 @@ The system already exists. This skill tells you where it lives and how to work w
 
 Work out which look your screen uses before writing anything, because the token names differ (`bg-primary` vs `bg-property-10`).
 
+## Surfaces come in layers, in both modes
+
+Depth comes from stepping through surface layers, not from one flat colour plus heavy shadows. Each mode has its own order:
+
+| Layer                             | Token                      | Light                                               | Dark                 |
+| --------------------------------- | -------------------------- | --------------------------------------------------- | -------------------- |
+| Navigation rail                   | `bg-sidebar`               | light grey `#F1F3F9`                                | darkest `#14171D`    |
+| Page                              | `bg-background`            | off-white `#F9FAFD`                                 | `#1B1E24`            |
+| Card, panel                       | `bg-card`                  | white `#FFFFFF` (brightest)                         | `#23262D`            |
+| Menu, popover, floating           | `bg-popover` / `bg-raised` | white, separated by `shadow-md` and `border-border` | `#2C3039` (lightest) |
+| Quiet fill (inputs, chips, hover) | `bg-muted`                 | `#EDF0F6`                                           | `#2A2E36`            |
+
+Put each surface on the layer below it in this table: a card sits on the page, a menu floats over a card. Never place a surface on the same colour as what is behind it (a white card on a white popover, a `bg-card` box inside a `bg-card` panel): it disappears in one mode even if it looks fine in the other. When two surfaces must share a colour, separate them with `border-border` or use `bg-muted` for the inner one. Pure black (`#000`) and pure white text on dark are never used; dark text is off-white `--foreground`.
+
 ## Building a screen: the order
 
 1. **Find the frame.** Every route already has one: `AuthFrame`, `FocusFrame`, `AppFrame` or `AdminFrame` in the dashboard, `LandingFrame`, `PropertyFrame` or `ConversationFrame` in the storefront (see `/kit/routes`). Put your page inside it; don't build page chrome (headers, docks, sidebars, banners) inside a feature.
