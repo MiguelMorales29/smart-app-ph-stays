@@ -2,6 +2,8 @@
 
 Every UI primitive in this repository lives once in `packages/ui/src/components/`, installed through the shadcn CLI (`shadcn@4.23.0`) using `style: "base-nova"` on Base UI (D34, D39, D41). App-specific skins use CSS variables (`tokens.css` and `PropertyTheme`), and shared compositions live in `packages/ui/src/compositions/`.
 
+Agents: follow the `smartapp-ui` skill (`.agents/skills/smartapp-ui/SKILL.md`), which includes the checklist for installing or editing a component.
+
 Live interactive previews and dark/light/brand checks live in the development-only UI kits:
 
 - Dashboard kit (`/kit` with `Base`, `Dashboard`, and `Tokens` tabs, plus `/kit/routes`)
@@ -45,9 +47,22 @@ Installed in P3-A with `pnpm dlx shadcn@4.23.0 add` (`base-nova` preset; registr
 
 _(Plus `use-mobile.ts` installed in `packages/ui/src/hooks/` as a transitive dependency of `Sidebar`.)_
 
-## Shared compositions added after P3-E
+## Shared Compositions (`packages/ui/src/compositions/`)
 
-- `DevSwitchPanel` (`packages/ui/src/compositions/dev-switch-panel.tsx`, D42): the floating "Preview" pill and switch panel used by both apps' switch gates. **Use for:** preview and local builds on sample data only, loaded lazily by `DashboardSwitchGate` / `StorefrontSwitchGate`. **Don't:** render it in production code paths or put it inside a page layout.
+Reuse these before reaching for a raw component; they already handle light/dark, phone/desktop and accessibility.
+
+| Composition                                | Use for                                                                             | Don't                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `LoadingState`                             | Skeleton placeholders while data loads (`layout` page, cards or list)               | Show a lone spinner for a whole page                         |
+| `EmptyState`                               | No data yet: one sentence and one action                                            | Leave a blank area or an empty table                         |
+| `ErrorState`                               | A load failed: what happened plus "Try again"                                       | Show raw error codes as the main message                     |
+| `NotAllowedState`                          | The viewer's role cannot open this page                                             | Hide the page silently                                       |
+| `OfflineBanner`                            | Connection lost; place it inside the content area (`SidebarInset` in the dashboard) | Put it above the sidebar layout, where the sidebar covers it |
+| `PausedAccountBanner`                      | Subscription paused notice in the dashboard                                         | Use for general warnings (use `Alert`)                       |
+| `BookingStatusBadge`, `PaymentStatusBadge` | Every booking and payment status (icon + word + D35 colour)                         | Build status pills by hand or use mint for status            |
+| `BottomDock`, `NavDrawer`                  | Phone navigation and its "More" drawer                                              | Use on tablet or desktop                                     |
+| `PropertyTheme`, `PropertyThemeDocument`   | Applying an owner's palette and font pair to storefront pages                       | Hard-code a property's colours                               |
+| `DevSwitchPanel` (D42)                     | The floating "Preview" pill, loaded lazily by the switch gates on sample data only  | Render it in production code paths or inside a page layout   |
 
 ## Selection Rationale ("How it was chosen")
 

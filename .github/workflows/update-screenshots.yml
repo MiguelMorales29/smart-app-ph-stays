@@ -37,7 +37,7 @@ jobs:
         run: pnpm --filter @smartapp/core --filter @smartapp/data build
 
       - name: Update screenshot baselines
-        run: pnpm --filter @smartapp/tooling exec playwright test -c e2e/playwright.config.ts --update-snapshots
+        run: pnpm --filter @smartapp/tooling exec playwright test -c e2e/playwright.config.ts screenshots.e2e.ts --update-snapshots
 
       - name: Commit and push updated baselines
         run: |

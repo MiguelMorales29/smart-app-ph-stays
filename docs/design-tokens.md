@@ -1,6 +1,8 @@
 # Design Tokens & Theme System
 
-The token layer lives in [tokens.css](file:///Users/alexandermorales/Project/smart-app-ph-stays/packages/ui/src/styles/tokens.css), mapped to Tailwind v4 theme variables in [globals.css](file:///Users/alexandermorales/Project/smart-app-ph-stays/packages/ui/src/styles/globals.css) and verified by automated WCAG AA tests in [tokens-contrast.test.ts](file:///Users/alexandermorales/Project/smart-app-ph-stays/packages/ui/test/tokens-contrast.test.ts).
+Agents: the `smartapp-ui` skill (`.agents/skills/smartapp-ui/SKILL.md`) explains how to use these tokens; this file explains what they mean.
+
+The token layer lives in [tokens.css](../packages/ui/src/styles/tokens.css), mapped to Tailwind v4 theme variables in [globals.css](../packages/ui/src/styles/globals.css) and verified by automated WCAG AA tests in [tokens-contrast.test.ts](../packages/ui/test/tokens-contrast.test.ts).
 
 ## 1. Platform Theme (Dashboard & Super Admin, D35 & D36)
 
