@@ -2,16 +2,24 @@
  * Responsive UI scan (skill: .agents/skills/smartapp-ui-check).
  *
  * Opens every dashboard route (from the route catalog, so new routes are scanned automatically)
- * and every storefront route at phone, tablet and desktop sizes, in light and dark for the
- * dashboard. Each page fails on HARD problems:
+ * and every storefront route. Each page fails on HARD problems:
  *   - JavaScript errors or console errors
  *   - failed requests (4xx/5xx), apart from the deliberate not-found pages
  *   - the page scrolling sideways (horizontal overflow)
+ *   - touch inputs under 16 px at phone size, and serious or critical axe violations
  * and records SOFT findings (text covered by another layer, tap targets under 24 px) in
  * `test-results/ui-scan/report.md` for a human to review. Viewport screenshots are saved next to
  * the report so the founder or an agent can look at every page without running the apps.
+ *
+ * Two depths (UI_SCAN env):
+ *   - quick (default, every pull request): dashboard at phone (light and dark) and desktop
+ *     (light); storefront at phone and desktop; axe at phone size only.
+ *   - full (on demand: the "Full UI scan" workflow, or at the end of a phase): phone, tablet and
+ *     desktop, dashboard in light and dark, axe everywhere.
+ * UI_SCAN_PATHS (optional, comma-separated path prefixes) limits the scan to some routes, for
+ * example "/signup,/login,/onboarding,/units,/settings" for one phase's pages.
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { AxeBuilder } from '@axe-core/playwright';
@@ -21,11 +29,38 @@ const DASHBOARD_ORIGIN = 'http://127.0.0.1:5174';
 const STOREFRONT_ORIGIN = 'http://127.0.0.1:3100';
 const OUT_DIR = resolve(import.meta.dirname, 'test-results/ui-scan');
 
-const SIZES = [
+const ALL_SIZES = [
   { name: 'phone', width: 360, height: 800 },
   { name: 'tablet', width: 768, height: 1024 },
   { name: 'desktop', width: 1280, height: 800 },
 ] as const;
+
+type Size = (typeof ALL_SIZES)[number];
+
+const FULL = process.env.UI_SCAN === 'full';
+const SIZES: readonly Size[] = FULL
+  ? ALL_SIZES
+  : ALL_SIZES.filter((size) => size.name !== 'tablet');
+const PATH_FILTER = (process.env.UI_SCAN_PATHS ?? '')
+  .split(',')
+  .map((prefix) => prefix.trim())
+  .filter(Boolean);
+
+function wanted(path: string): boolean {
+  if (PATH_FILTER.length === 0) return true;
+  return PATH_FILTER.some((prefix) => path === prefix || path.startsWith(prefix));
+}
+
+/** Which colour schemes a dashboard page is scanned in at this size. */
+function themesFor(size: Size): readonly ('light' | 'dark')[] {
+  if (FULL || size.name === 'phone') return ['light', 'dark'];
+  return ['light'];
+}
+
+/** axe is slow (about 1-2 s a page), so the quick scan runs it at phone size only. */
+function runsAxe(size: Size): boolean {
+  return FULL || size.name === 'phone';
+}
 
 const NOT_FOUND_PATHS = ['/this-page-does-not-exist', '/no-such-place'];
 
@@ -42,7 +77,7 @@ function dashboardPaths(): string[] {
     '/kit?tab=dashboard',
     '/kit?tab=tokens',
     NOT_FOUND_PATHS[0] ?? '',
-  ];
+  ].filter(wanted);
 }
 
 /** Storefront routes: every page under app/[slug] for one property, the other demo brands, and edge cases. */
@@ -64,7 +99,7 @@ const STOREFRONT_PATHS = [
   '/tita-lorna-dorm',
   '/no-such-place',
   '/favicon.ico',
-];
+].filter(wanted);
 
 interface ScanResult {
   readonly app: string;
@@ -76,33 +111,10 @@ interface ScanResult {
   readonly screenshot: string;
 }
 
-// Results are appended to a JSON-lines file as each page finishes, because Playwright starts a
-// fresh worker after a failed test and anything held only in memory would be lost.
+// Results are appended to a JSON-lines file as each page finishes (pages run in several workers,
+// and a failed test restarts its worker); ui-scan-report.ts turns the file into report.md after
+// the run (Playwright globalTeardown).
 const RESULTS_FILE = resolve(OUT_DIR, 'results.jsonl');
-
-function isScanResult(value: unknown): value is ScanResult {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'app' in value &&
-    'path' in value &&
-    'hard' in value &&
-    Array.isArray(value.hard)
-  );
-}
-
-function readResults(): ScanResult[] {
-  if (!existsSync(RESULTS_FILE)) return [];
-  const byKey = new Map<string, ScanResult>();
-  for (const line of readFileSync(RESULTS_FILE, 'utf8').split('\n')) {
-    if (!line.trim()) continue;
-    const parsed: unknown = JSON.parse(line);
-    if (!isScanResult(parsed)) continue;
-    const result = parsed;
-    byKey.set(`${result.app} ${result.path} ${result.size} ${result.theme}`, result);
-  }
-  return [...byKey.values()];
-}
 
 function fileName(app: string, path: string, size: string, theme: string): string {
   const slug = path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'root';
@@ -198,7 +210,7 @@ async function scan(
   page: Page,
   app: 'dashboard' | 'storefront',
   path: string,
-  size: (typeof SIZES)[number],
+  size: Size,
   theme: 'light' | 'dark',
 ): Promise<void> {
   const hard: string[] = [];
@@ -233,8 +245,10 @@ async function scan(
     hard.push(`touch input font-size under 16px: ${smallInputs.join(', ')}`);
   }
 
-  const axeResults = await new AxeBuilder({ page }).exclude('[data-contrast-sample]').analyze();
-  for (const violation of axeResults.violations) {
+  const axeViolations = runsAxe(size)
+    ? (await new AxeBuilder({ page }).exclude('[data-contrast-sample]').analyze()).violations
+    : [];
+  for (const violation of axeViolations) {
     if (violation.impact !== 'serious' && violation.impact !== 'critical') continue;
     const targets = violation.nodes
       .slice(0, 3)
@@ -251,14 +265,16 @@ async function scan(
   expect(hard, `${app} ${path} at ${size.name} (${theme})`).toEqual([]);
 }
 
+mkdirSync(OUT_DIR, { recursive: true });
+
 test.describe('UI scan', () => {
-  test.beforeAll(() => {
-    mkdirSync(OUT_DIR, { recursive: true });
-  });
+  // Pages are independent, so they run in parallel across workers; a failure is a real problem,
+  // not flakiness, so it is not retried (a retry only doubled the time of a red run).
+  test.describe.configure({ mode: 'parallel', retries: 0 });
 
   for (const size of SIZES) {
     const isPhone = size.name === 'phone';
-    for (const theme of ['light', 'dark'] as const) {
+    for (const theme of themesFor(size)) {
       for (const path of dashboardPaths()) {
         test(`dashboard ${path} (${size.name}, ${theme})`, async ({ browser }) => {
           const context = await browser.newContext({
@@ -293,34 +309,4 @@ test.describe('UI scan', () => {
       });
     }
   }
-
-  test.afterAll(() => {
-    const results = readResults();
-    const withHard = results.filter((result) => result.hard.length > 0);
-    const withSoft = results.filter((result) => result.soft.length > 0);
-    const lines = [
-      '# UI scan report',
-      '',
-      `Pages scanned: ${results.length}. Hard problems: ${withHard.length}. Soft findings to review: ${withSoft.length}.`,
-      '',
-      '## Hard problems (these fail CI)',
-      '',
-      ...(withHard.length === 0
-        ? ['None.']
-        : withHard.map(
-            (r) => `- ${r.app} \`${r.path}\` ${r.size} ${r.theme}: ${r.hard.join(' | ')}`,
-          )),
-      '',
-      '## Soft findings (review the screenshot; fix if a real person would be blocked)',
-      '',
-      ...(withSoft.length === 0
-        ? ['None.']
-        : withSoft.map(
-            (r) =>
-              `- ${r.app} \`${r.path}\` ${r.size} ${r.theme}: ${r.soft.join(' | ')} (${r.screenshot})`,
-          )),
-      '',
-    ];
-    writeFileSync(resolve(OUT_DIR, 'report.md'), lines.join('\n'));
-  });
 });

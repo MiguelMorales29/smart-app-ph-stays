@@ -13,7 +13,10 @@ export default defineConfig({
     ['html', { outputFolder: resolve(import.meta.dirname, 'playwright-report'), open: 'never' }],
   ],
   fullyParallel: false,
-  workers: 1,
+  // The UI scan runs its pages in parallel (see ui-scan.e2e.ts); screenshot tests stay serial.
+  workers: process.env.CI ? 3 : 1,
+  globalSetup: resolve(import.meta.dirname, 'ui-scan-setup.ts'),
+  globalTeardown: resolve(import.meta.dirname, 'ui-scan-report.ts'),
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   expect: {

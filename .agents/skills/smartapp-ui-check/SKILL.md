@@ -25,7 +25,8 @@ Two jobs must be green before merging (`gh pr checks <number> --watch`):
 - **Check**: format, typecheck, lint, unit tests, preview and production builds, and the production build scan (no demo data, dev switches or kit code in production bundles).
 - **Screenshots**: Playwright in the official container, two parts:
   - `tooling/e2e/screenshots.e2e.ts` compares 24 key screens with the baselines in `tooling/e2e/__screenshots__/`.
-  - `tooling/e2e/ui-scan.e2e.ts` opens every dashboard route (read from `apps/dashboard/src/features/kit/route-catalog.ts`, so add new routes there) and every storefront route at 360, 768 and 1280 px, dashboard in light and dark. A page fails on JavaScript or console errors, failed requests, or sideways scrolling.
+  - `tooling/e2e/ui-scan.e2e.ts` opens every dashboard route (read from `apps/dashboard/src/features/kit/route-catalog.ts`, so add new routes there) and every storefront route. On pull requests it runs the **quick** scan: phone (360 px, light and dark) and desktop (1280 px, light), with the axe accessibility check at phone size. A page fails on JavaScript or console errors, failed requests, sideways scrolling, touch inputs under 16 px, or serious/critical axe violations.
+- **Full UI scan** (on demand, about 15 minutes): every page at 360, 768 and 1280 px, dashboard in light and dark, axe everywhere. Run it at the end of a phase, when something looks broken, or before a demo: `gh workflow run full-ui-scan.yml --ref <branch>` (optional `-f paths=/signup,/units` to scan only some routes). Locally: `UI_SCAN=full` and `UI_SCAN_PATHS=...` do the same.
 
 ## 3. Reading the results
 

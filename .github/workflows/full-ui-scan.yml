@@ -1,0 +1,59 @@
+name: Full UI scan
+
+# On demand only: every page at phone, tablet and desktop, dashboard in light and dark, with the
+# axe accessibility check everywhere. Run it when something looks broken, at the end of a phase,
+# or before a demo: GitHub → Actions → "Full UI scan" → Run workflow (pick the branch), or
+# `gh workflow run full-ui-scan.yml --ref <branch>`. Optional `paths` limits it to some routes.
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'Only these route prefixes, comma-separated (empty = every page)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  full-ui-scan:
+    name: Full UI scan
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure Chromium browser matches pinned version
+        run: pnpm --filter @smartapp/tooling exec playwright install chromium
+
+      - name: Build shared workspace packages
+        run: pnpm --filter @smartapp/core --filter @smartapp/data build
+
+      - name: Run the full responsive UI scan
+        env:
+          UI_SCAN: full
+          UI_SCAN_PATHS: ${{ inputs.paths }}
+        run: pnpm --filter @smartapp/tooling exec playwright test -c e2e/playwright.config.ts ui-scan
+
+      - name: Upload UI scan report and page screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: full-ui-scan-report
+          path: tooling/e2e/test-results/ui-scan
+          retention-days: 14
+          if-no-files-found: ignore
