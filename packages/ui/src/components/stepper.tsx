@@ -142,8 +142,6 @@ function Stepper({
   return (
     <StepperContext.Provider value={contextValue}>
       <div
-        role="tablist"
-        aria-orientation={orientation}
         data-slot="stepper"
         className={cn('w-full', className)}
         data-orientation={orientation}
@@ -214,7 +212,6 @@ function StepperTrigger({ className, children, tabIndex, render, ...props }: Ste
   const { step, isDisabled } = useStepItem();
   const isSelected = activeStep === step;
   const id = `stepper-tab-${step}`;
-  const panelId = `stepper-panel-${step}`;
 
   // Register this trigger for keyboard navigation
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -263,11 +260,9 @@ function StepperTrigger({ className, children, tabIndex, render, ...props }: Ste
   };
 
   const defaultProps = {
-    role: 'tab',
     id,
-    'aria-selected': isSelected,
-    'aria-controls': panelId,
-    tabIndex: typeof tabIndex === 'number' ? tabIndex : isSelected ? 0 : -1,
+    'aria-current': isSelected ? ('step' as const) : undefined,
+    tabIndex: typeof tabIndex === 'number' ? tabIndex : 0,
     'data-slot': 'stepper-trigger',
     'data-state': state,
     'data-loading': isLoading,

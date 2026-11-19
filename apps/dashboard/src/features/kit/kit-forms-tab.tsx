@@ -205,12 +205,12 @@ function ChoicesDemo() {
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      <Toggle aria-label="Show only listed">Listed only</Toggle>
+      <Toggle>Listed only</Toggle>
       <NumberField defaultValue={2} min={1} max={20}>
         <Label>Guests</Label>
         <NumberFieldGroup>
           <NumberFieldDecrement />
-          <NumberFieldInput />
+          <NumberFieldInput aria-label="Guests" />
           <NumberFieldIncrement />
         </NumberFieldGroup>
       </NumberField>

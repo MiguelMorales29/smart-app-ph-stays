@@ -626,6 +626,7 @@ function FileUpload(props: FileUploadProps) {
               id={inputId}
               aria-labelledby={labelId}
               aria-describedby={dropzoneId}
+              aria-hidden="true"
               ref={inputRef}
               tabIndex={-1}
               accept={accept}

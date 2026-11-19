@@ -109,7 +109,9 @@ export function SlugField({
     <div data-slot="slug-field" className="flex flex-col gap-1.5">
       <InputGroup>
         <InputGroupAddon>
-          <InputGroupText className="max-w-40 truncate">{host ? `${host}/` : '/'}</InputGroupText>
+          <InputGroupText className="max-w-40 truncate text-foreground">
+            {host ? `${host}/` : '/'}
+          </InputGroupText>
         </InputGroupAddon>
         <InputGroupInput
           id={inputId}

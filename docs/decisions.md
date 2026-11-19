@@ -87,7 +87,7 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 
 - `@axe-core/playwright@4.14.0` (MPL-2.0) in `tooling` devDependencies only for automated accessibility checks in `tooling/e2e/ui-scan.e2e.ts`.
 
-- P4-2 approved packages (2026-11-20, all in `packages/ui`): `react-day-picker@10.0.2` (MIT), `date-fns@4.4.0` (MIT), `@dnd-kit/core@6.3.1`, `@dnd-kit/sortable@10.0.0`, `@dnd-kit/utilities@3.2.2` (MIT), `@lucide/lab@0.12.0` (ISC), `canvas-confetti@1.9.4` (ISC) with `@types/canvas-confetti@1.9.0` (MIT, dev), `@dicebear/core@9.4.2` (MIT) and `@dicebear/notionists@9.4.2` (MIT code, CC0 1.0 artwork). `@dicebear/styles` was not used (every style in one 7.7 MB package).
+- P4-2 approved packages (2026-11-20, all in `packages/ui`): `react-day-picker@10.0.2` (MIT), `date-fns@4.4.0` (MIT), `@dnd-kit/core@6.3.1`, `@dnd-kit/sortable@10.0.0`, `@dnd-kit/utilities@3.2.2` (MIT), `@lucide/lab@0.12.0` (ISC), `canvas-confetti@1.9.4` (ISC) with `@types/canvas-confetti@1.9.0` (MIT, dev), `@dicebear/core@9.4.3` (MIT) and `@dicebear/notionists@9.4.3` (MIT code, CC0 1.0 artwork). `@dicebear/styles` was not used (every style in one 7.7 MB package).
 
 - P4-3 (2026-11-20): the contract gains `listPlans` (public: plan name, price, included units, trial days, for the sign-up sell panel and later the owner landing page), `requestSignupCode` and `verifySignupCode` (public; the sign-up email check, demo code 123456), and `applyAsOwner.placeName` (becomes the account name). Real enforcement that an application's email was verified moves to the API in Phase 11.
 
