@@ -2,7 +2,13 @@ import { Link } from '@tanstack/react-router';
 import { CheckIcon, ChevronRightIcon, ClockIcon } from 'lucide-react';
 import type { SetupChecklistView, SetupStepKey } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
-import { CircularProgressCombined } from '@smartapp/ui/components/circular-progress';
+import {
+  CircularProgress,
+  CircularProgressIndicator,
+  CircularProgressRange,
+  CircularProgressTrack,
+  CircularProgressValueText,
+} from '@smartapp/ui/components/circular-progress';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { cn } from '@smartapp/ui/lib/utils';
 import { useSetupChecklistQuery } from '@/data/setup/reads';
@@ -125,12 +131,23 @@ export function SetupChecklistCard() {
       className="rounded-xl border border-border bg-card p-4 shadow-xs sm:p-5"
     >
       <div className="flex items-center gap-4">
-        <CircularProgressCombined
+        <CircularProgress
           value={done}
           max={rows.length}
-          label="Setup"
+          size={64}
+          thickness={6}
+          aria-label="Setup progress"
           getValueText={(value, _min, max) => `${value} of ${max} done`}
-        />
+          className="shrink-0"
+        >
+          <CircularProgressIndicator>
+            <CircularProgressTrack />
+            <CircularProgressRange />
+          </CircularProgressIndicator>
+          <CircularProgressValueText aria-hidden="true" className="tabular">
+            {done}/{rows.length}
+          </CircularProgressValueText>
+        </CircularProgress>
         <div className="min-w-0 flex-1 space-y-2">
           <h2 id="setup-title" className="font-heading text-lg font-semibold">
             Get your page ready

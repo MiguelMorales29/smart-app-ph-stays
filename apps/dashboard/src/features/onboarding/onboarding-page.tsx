@@ -193,7 +193,7 @@ function StepFrame({
         {onBack ? (
           <Button type="button" variant="outline" className="min-h-11" onClick={onBack}>
             <ArrowLeftIcon aria-hidden="true" />
-            Back
+            <span className={onSkip ? 'sr-only sm:not-sr-only' : undefined}>Back</span>
           </Button>
         ) : null}
         {onSkip ? (
@@ -299,6 +299,7 @@ export function OnboardingPage() {
   const units = useOwnerUnitsQuery(propertyId);
   const payments = usePaymentAccountsQuery();
   const checklist = useSetupChecklistQuery(propertyId);
+  const [livePlace, setLivePlace] = useState<{ name: string; place: string } | null>(null);
   const resumeStep = checklist.data ? firstUnfinishedStep(checklist.data.items) : null;
   const step: OnboardingStep = search.step ?? resumeStep ?? 1;
 
@@ -346,7 +347,12 @@ export function OnboardingPage() {
         <ApprovalBanner onboarding />
         <ProgressBar step={step} />
         {step === 1 ? (
-          <PlaceStep account={account.data} property={prop} onDone={() => goTo(2)} />
+          <PlaceStep
+            account={account.data}
+            property={prop}
+            onPreview={setLivePlace}
+            onDone={() => goTo(2)}
+          />
         ) : null}
         {step === 2 ? (
           <UnitStep
@@ -376,7 +382,16 @@ export function OnboardingPage() {
           />
         ) : null}
         {step === 6 ? (
-          <RulesStep propertyId={propertyId} onBack={() => goTo(5)} onDone={() => goTo(7)} />
+          <RulesStep
+            propertyId={propertyId}
+            rulesDone={
+              checklist.data?.items.some(
+                (item) => item.key === 'rules' && item.status === 'done',
+              ) ?? false
+            }
+            onBack={() => goTo(5)}
+            onDone={() => goTo(7)}
+          />
         ) : null}
         {step === 7 ? (
           <ReviewStep
@@ -393,8 +408,11 @@ export function OnboardingPage() {
         ) : null}
       </div>
       <PreviewCard
-        name={prop?.name ?? account.data.account.name}
-        place={prop ? `${prop.city}, ${prop.province}` : ''}
+        name={(step === 1 ? livePlace?.name : null) ?? prop?.name ?? account.data.account.name}
+        place={
+          (step === 1 ? livePlace?.place : null) ??
+          (prop ? `${prop.city}, ${prop.province}` : (account.data.application?.city ?? ''))
+        }
         price={firstUnitPrice !== null ? formatPesos(firstUnitPrice) : null}
         units={unitList.length}
       />
@@ -419,8 +437,10 @@ type PlaceForm = z.infer<typeof placeSchema>;
 function PlaceStep({
   account,
   property,
+  onPreview,
   onDone,
 }: {
+  readonly onPreview: (preview: { readonly name: string; readonly place: string }) => void;
   readonly account: NonNullable<ReturnType<typeof useMyAccountQuery>['data']>;
   readonly property:
     NonNullable<ReturnType<typeof useOwnerPropertyQuery>['data']>['property'] | null;
@@ -441,9 +461,16 @@ function PlaceStep({
       addressLine: property?.address_line ?? '',
     },
   });
+  const watched = form.watch();
+  useEffect(() => {
+    onPreview({
+      name: watched.name,
+      place: [watched.city, watched.province].filter((part) => part.trim()).join(', '),
+    });
+  }, [onPreview, watched.name, watched.city, watched.province]);
   const draft = useFormDraft<PlaceForm>({
     key: `onboarding-place:${property?.id ?? 'new'}`,
-    values: form.watch(),
+    values: watched,
     dirty: form.formState.isDirty,
     parse: (value) => {
       const parsed = placeSchema.safeParse(value);
@@ -637,6 +664,7 @@ function CountField({
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <NumberField
+        id={id}
         value={value}
         min={min}
         max={max}
@@ -644,7 +672,7 @@ function CountField({
       >
         <NumberFieldGroup className="w-40">
           <NumberFieldDecrement aria-label={`Fewer: ${label}`} />
-          <NumberFieldInput id={id} />
+          <NumberFieldInput />
           <NumberFieldIncrement aria-label={`More: ${label}`} />
         </NumberFieldGroup>
       </NumberField>
@@ -1140,14 +1168,20 @@ function PriceStep({
         ) : null}
         <div className="flex items-start justify-between gap-4 rounded-lg border border-border bg-card p-3">
           <div className="space-y-0.5">
-            <label htmlFor="ob-weekend" className="text-sm font-medium">
+            <label id="ob-weekend-label" htmlFor="ob-weekend" className="text-sm font-medium">
               Charge more on some days?
             </label>
-            <p className="text-sm text-muted-foreground">
+            <p id="ob-weekend-hint" className="text-sm text-muted-foreground">
               Friday and Saturday nights. A Friday night means checking in on Friday.
             </p>
           </div>
-          <Switch id="ob-weekend" checked={weekend} onCheckedChange={setWeekend} />
+          <Switch
+            id="ob-weekend"
+            aria-labelledby="ob-weekend-label"
+            aria-describedby="ob-weekend-hint"
+            checked={weekend}
+            onCheckedChange={setWeekend}
+          />
         </div>
         {weekend ? (
           <Field>
@@ -1374,10 +1408,12 @@ function PayStep({
 
 function RulesStep({
   propertyId,
+  rulesDone,
   onBack,
   onDone,
 }: {
   readonly propertyId: string | null;
+  readonly rulesDone: boolean;
   readonly onBack: () => void;
   readonly onDone: () => void;
 }) {
@@ -1388,8 +1424,11 @@ function RulesStep({
     () => (property.data?.house_rules ?? []).map((rule) => rule.body),
     [property.data],
   );
+  // A new place starts on "down payment kept, one date change" (D48); a saved choice is kept.
   const [preset, setPreset] = useState<CancellationPreset>(
-    current && current.cancellation_preset !== 'custom' ? current.cancellation_preset : 'dp_rebook',
+    rulesDone && current && current.cancellation_preset !== 'custom'
+      ? current.cancellation_preset
+      : 'dp_rebook',
   );
   const [checkin, setCheckin] = useState(current?.checkin_time.slice(0, 5) ?? '14:00');
   const [checkout, setCheckout] = useState(current?.checkout_time.slice(0, 5) ?? '12:00');
