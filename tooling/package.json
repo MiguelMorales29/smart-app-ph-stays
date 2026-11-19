@@ -6,7 +6,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test -c e2e/playwright.config.ts"
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "art": "node scripts/fluent-art.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

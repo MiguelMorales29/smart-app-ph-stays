@@ -70,7 +70,7 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react';
 
-function DualSurfaceShowcase({
+export function DualSurfaceShowcase({
   title,
   source,
   useFor,
