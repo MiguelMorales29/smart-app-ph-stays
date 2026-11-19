@@ -12,6 +12,9 @@ import { AppFrame } from '@/app/shell/AppFrame';
 import { AuthFrame } from '@/app/shell/AuthFrame';
 import { FocusFrame } from '@/app/shell/FocusFrame';
 import { PlaceholderScreen } from '@/app/shell/PlaceholderScreen';
+import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
+import { LoginPage } from '@/features/auth/login-page';
+import { SignupPage } from '@/features/auth/signup-page';
 import { HomePage } from '@/features/home/home-page';
 import { SettingsIndexPage } from '@/features/settings/settings-index-page';
 
@@ -36,30 +39,35 @@ const authLayoutRoute = createRoute({
   component: AuthFrame,
 });
 
+export interface SignupSearch {
+  readonly step?: 2 | 3;
+}
+
+function parseSignupSearch(search: Record<string, unknown>): SignupSearch {
+  const raw = Number(search.step);
+  return raw === 2 || raw === 3 ? { step: raw } : {};
+}
+
 const signupRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: '/signup',
-  staticData: { page: { title: 'Apply as an owner' } },
-  component: () => (
-    <PlaceholderScreen
-      title="Apply as an owner"
-      phase={4}
-      secondaryLink={{ to: '/login', label: 'Already have an account? Sign in' }}
-    />
-  ),
+  validateSearch: parseSignupSearch,
+  staticData: { page: { title: 'Apply as an owner', wide: true } },
+  component: SignupPage,
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: '/login',
   staticData: { page: { title: 'Sign in' } },
-  component: () => (
-    <PlaceholderScreen
-      title="Sign in"
-      phase={4}
-      secondaryLink={{ to: '/signup', label: 'Apply as a property owner' }}
-    />
-  ),
+  component: LoginPage,
+});
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => authLayoutRoute,
+  path: '/forgot-password',
+  staticData: { page: { title: 'Reset your password' } },
+  component: ForgotPasswordPage,
 });
 
 // Focus frame routes (/onboarding, /editor)
@@ -323,7 +331,7 @@ const devOnlyKitRoutes =
 
 const routeTree = rootRoute.addChildren([
   rootIndexRoute,
-  authLayoutRoute.addChildren([signupRoute, loginRoute]),
+  authLayoutRoute.addChildren([signupRoute, loginRoute, forgotPasswordRoute]),
   focusLayoutRoute.addChildren([onboardingRoute, editorRoute]),
   appLayoutRoute.addChildren([
     homeRoute,

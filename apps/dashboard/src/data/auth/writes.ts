@@ -106,3 +106,31 @@ export function useResetPasswordMutation() {
     },
   });
 }
+
+export function useRequestSignupCodeMutation() {
+  const active = useActiveDataClient();
+  return useMutation({
+    mutationFn: async (input: { readonly email: string; readonly idempotencyKey?: string }) => {
+      const { source, session } = requireSourceClient(active);
+      return unwrapResult(
+        await source.requestSignupCode(
+          {
+            idempotencyKey: input.idempotencyKey ?? createIdempotencyKey('signup-code'),
+            email: input.email,
+          },
+          session,
+        ),
+      );
+    },
+  });
+}
+
+export function useVerifySignupCodeMutation() {
+  const active = useActiveDataClient();
+  return useMutation({
+    mutationFn: async (input: OperationInput<'verifySignupCode'>) => {
+      const { source, session } = requireSourceClient(active);
+      return unwrapResult(await source.verifySignupCode(input, session));
+    },
+  });
+}

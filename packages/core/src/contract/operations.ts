@@ -32,6 +32,7 @@ import { calendarDateSchema } from '../time/index.js';
 import {
   accountMembersRow,
   accountsRow,
+  plansRow,
   amenitiesRow,
   bookingGuestsRow,
   bookingsRow,
@@ -845,6 +846,8 @@ export const operations = {
         propertyCountBand: propertyCountBandSchema,
         city: z.string().min(1).max(80),
         facebookPage: z.string().min(1).max(200).nullable(),
+        /** The place's name; becomes the account name (and prefills onboarding). */
+        placeName: accountsRow.shape.name.optional(),
       }),
       z.object({
         method: z.literal('google'),
@@ -857,6 +860,8 @@ export const operations = {
         propertyCountBand: propertyCountBandSchema,
         city: z.string().min(1).max(80),
         facebookPage: z.string().min(1).max(200).nullable(),
+        /** The place's name; becomes the account name (and prefills onboarding). */
+        placeName: accountsRow.shape.name.optional(),
       }),
     ]),
     output: applyOwnerResultViewSchema,
@@ -883,6 +888,48 @@ export const operations = {
       credential: z.string().min(1).max(4096),
     }),
     output: googleSignInResultViewSchema,
+    errors: ['not_allowed'],
+    idempotent: false,
+    featureIds: ['OW-01'],
+  },
+  listPlans: {
+    name: 'listPlans',
+    access: ['public'],
+    input: z.object({}),
+    output: z.array(
+      z.object(plansRow.shape).pick({
+        code: true,
+        name: true,
+        price_centavos: true,
+        included_units: true,
+        extra_unit_centavos: true,
+        trial_days: true,
+      }),
+    ),
+    errors: [],
+    idempotent: false,
+    featureIds: ['OW-01'],
+  },
+  requestSignupCode: {
+    name: 'requestSignupCode',
+    access: ['public'],
+    input: z.object({
+      idempotencyKey: idempotencyKeySchema,
+      email: accountsRow.shape.contact_email,
+    }),
+    output: z.object({ queued: z.boolean() }),
+    errors: ['not_allowed'],
+    idempotent: true,
+    featureIds: ['OW-01'],
+  },
+  verifySignupCode: {
+    name: 'verifySignupCode',
+    access: ['public'],
+    input: z.object({
+      email: accountsRow.shape.contact_email,
+      code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+    }),
+    output: z.object({ verified: z.literal(true) }),
     errors: ['not_allowed'],
     idempotent: false,
     featureIds: ['OW-01'],

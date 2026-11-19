@@ -13,6 +13,13 @@ export const DASHBOARD_ROUTE_CATALOG: readonly RouteCatalogEntry[] = [
   { app: 'dashboard', path: '/login', label: 'Owner sign-in', frame: 'AuthFrame', phase: 4 },
   {
     app: 'dashboard',
+    path: '/forgot-password',
+    label: 'Reset password',
+    frame: 'AuthFrame',
+    phase: 4,
+  },
+  {
+    app: 'dashboard',
     path: '/onboarding',
     label: 'Onboarding checklist',
     frame: 'FocusFrame',

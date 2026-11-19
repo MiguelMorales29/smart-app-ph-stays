@@ -67,6 +67,7 @@ export interface MemoryAuthState {
     string,
     { code: string; attempts: number; expiresAtMs: number }
   >;
+  readonly signupCodesByEmail: Map<string, { code: string; attempts: number; expiresAtMs: number }>;
   readonly deletionByAccountId: Map<string, AccountDeletionRequestView>;
   readonly slugChangesByPropertyId: Map<string, number[]>;
 }
@@ -90,6 +91,7 @@ export function createMemoryAuthState(world: DemoWorld, clock: Clock): MemoryAut
     passwordsByEmail,
     signInFailuresByEmail: new Map(),
     passwordCodesByEmail: new Map(),
+    signupCodesByEmail: new Map(),
     deletionByAccountId: new Map(),
     slugChangesByPropertyId,
   };
@@ -342,6 +344,9 @@ type P4OwnerOperationName =
   | 'applyAsOwner'
   | 'signIn'
   | 'signInWithGoogle'
+  | 'listPlans'
+  | 'requestSignupCode'
+  | 'verifySignupCode'
   | 'requestPasswordCode'
   | 'resetPassword'
   | 'getMyAccount'
@@ -454,7 +459,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
 
           const account = {
             id: accountId,
-            name: input.fullName.trim(),
+            name: (input.placeName ?? input.fullName).trim(),
             status: 'pending' as const,
             is_demo: true,
             contact_email: email,
@@ -610,6 +615,70 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
         profile,
         session: { role: 'owner' as const, accountId: account.id, profileId: profile.id },
       });
+    },
+
+    async listPlans(_input, session) {
+      const guard = await beforeCall('listPlans', session);
+      if (!guard.ok) return guard;
+      return ok(
+        world.plans
+          .filter((plan) => plan.is_active)
+          .map((plan) => ({
+            code: plan.code,
+            name: plan.name,
+            price_centavos: plan.price_centavos,
+            included_units: plan.included_units,
+            extra_unit_centavos: plan.extra_unit_centavos,
+            trial_days: plan.trial_days,
+          })),
+      );
+    },
+
+    async requestSignupCode(input, session) {
+      const guard = await beforeCall('requestSignupCode', session);
+      if (!guard.ok) return guard;
+
+      return runIdempotent(
+        'requestSignupCode',
+        input.idempotencyKey,
+        null,
+        input,
+        operations.requestSignupCode.output,
+        async () => {
+          const email = input.email.trim().toLowerCase();
+          // Imitates the sign-up email check (Phase 11 sends the real email): every new
+          // applicant gets the demo code 123456, valid for 15 minutes.
+          auth.signupCodesByEmail.set(email, {
+            code: DEMO_PASSWORD_CODE,
+            attempts: 0,
+            expiresAtMs: clock.now().getTime() + CODE_TTL_MINUTES * 60_000,
+          });
+          return ok({ queued: true });
+        },
+      );
+    },
+
+    async verifySignupCode(input, session) {
+      const guard = await beforeCall('verifySignupCode', session);
+      if (!guard.ok) return guard;
+
+      const email = input.email.trim().toLowerCase();
+      const wrong = appError('not_allowed', 'That code is wrong or expired. Ask for a new code.', {
+        fields: { code: 'That code is wrong or expired. Ask for a new code.' },
+      });
+      // Imitates the DB code check: 5 wrong tries or 15 minutes end the code.
+      const entry = auth.signupCodesByEmail.get(email);
+      if (!entry || entry.expiresAtMs < clock.now().getTime()) {
+        auth.signupCodesByEmail.delete(email);
+        return err(wrong);
+      }
+      if (entry.code !== input.code) {
+        entry.attempts += 1;
+        if (entry.attempts >= MAX_CODE_FAILURES) auth.signupCodesByEmail.delete(email);
+        return err(wrong);
+      }
+      auth.signupCodesByEmail.delete(email);
+      return ok({ verified: true as const });
     },
 
     async requestPasswordCode(input, session) {

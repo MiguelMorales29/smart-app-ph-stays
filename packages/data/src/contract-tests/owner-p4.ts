@@ -293,6 +293,76 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       );
     });
 
+    it('22b. requestSignupCode is repeat-safe and verifySignupCode accepts only the code, 5 wrong tries end it', async () => {
+      const { source } = await makeSource();
+      const plans = assertOk(await source.listPlans({}, GUEST_SESSION));
+      expect(plans.length).toBeGreaterThan(0);
+      expect(plans.every((plan) => plan.price_centavos > 0)).toBe(true);
+      const nextKey = createKeyMaker('p4-signup-code');
+      const key = nextKey();
+      const sent = assertOk(
+        await source.requestSignupCode(
+          { idempotencyKey: key, email: 'new.owner@example.com' },
+          GUEST_SESSION,
+        ),
+      );
+      expect(sent).toEqual({ queued: true });
+      expect(
+        assertOk(
+          await source.requestSignupCode(
+            { idempotencyKey: key, email: 'new.owner@example.com' },
+            GUEST_SESSION,
+          ),
+        ),
+      ).toEqual(sent);
+
+      const badFormat = assertErr(
+        await source.verifySignupCode(
+          { email: 'new.owner@example.com', code: '12' },
+          GUEST_SESSION,
+        ),
+      );
+      expect(badFormat.code).toBe('not_allowed');
+
+      for (let i = 0; i < 4; i += 1) {
+        assertErr(
+          await source.verifySignupCode(
+            { email: 'new.owner@example.com', code: '000000' },
+            GUEST_SESSION,
+          ),
+        );
+      }
+      expect(
+        assertOk(
+          await source.verifySignupCode(
+            { email: 'new.owner@example.com', code: DEMO_PASSWORD_CODE },
+            GUEST_SESSION,
+          ),
+        ),
+      ).toEqual({ verified: true });
+
+      assertOk(
+        await source.requestSignupCode(
+          { idempotencyKey: nextKey(), email: 'other@example.com' },
+          GUEST_SESSION,
+        ),
+      );
+      for (let i = 0; i < 5; i += 1) {
+        assertErr(
+          await source.verifySignupCode(
+            { email: 'other@example.com', code: '000000' },
+            GUEST_SESSION,
+          ),
+        );
+      }
+      assertErr(
+        await source.verifySignupCode(
+          { email: 'other@example.com', code: DEMO_PASSWORD_CODE },
+          GUEST_SESSION,
+        ),
+      );
+    });
+
     it('23. getMyAccount, getSetupChecklist, pending owner can save but cannot publish, getOwnerProperty, saveProperty, checkSlug, changeSlug', async () => {
       const { source, advanceMinutes } = await makeSource();
       const nextKey = createKeyMaker('p4-prop');
