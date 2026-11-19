@@ -12,8 +12,14 @@ import { Field, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { GoogleButton } from '@smartapp/ui/compositions/google-button';
 
-/** The demo owner the sample data knows (signs straight in). */
-const DEMO_OWNER = { email: 'owner.ulap-suites@demo.invalid', name: 'Ulap Suites owner' };
+/**
+ * The demo owner the sample data knows (signs straight in). The static env check lets the
+ * production build drop the address entirely (the build scan rejects demo emails).
+ */
+const DEMO_OWNER =
+  import.meta.env.VITE_DATA_SOURCE === 'memory' && import.meta.env.VITE_APP_ENV !== 'production'
+    ? { email: 'owner.ulap-suites@demo.invalid', name: 'Ulap Suites owner' }
+    : null;
 
 /**
  * Sample data only: stands in for Google's account chooser until real sign-in (Phase 11). It
@@ -51,13 +57,15 @@ export function DemoGoogleButton({
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <div className="flex flex-col gap-4">
-            <Button
-              variant="outline"
-              className="min-h-11 justify-start"
-              onClick={() => choose(DEMO_OWNER.email, DEMO_OWNER.name)}
-            >
-              {DEMO_OWNER.email} (has an account)
-            </Button>
+            {DEMO_OWNER ? (
+              <Button
+                variant="outline"
+                className="min-h-11 justify-start"
+                onClick={() => choose(DEMO_OWNER.email, DEMO_OWNER.name)}
+              >
+                {DEMO_OWNER.email} (has an account)
+              </Button>
+            ) : null}
             <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
               <p className="text-sm font-medium">Someone new</p>
               <Field>
