@@ -1,6 +1,6 @@
 # P4-8 · Phase 4 close-out: owner journey test, component tests, budget and docs
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D40, D44, D45–D60), docs/PROGRESS.md, docs/ui-library.md, docs/previews.md, `.github/workflows/check.yml`, `tooling/e2e/`, and what P4-0 to P4-7 added.
 

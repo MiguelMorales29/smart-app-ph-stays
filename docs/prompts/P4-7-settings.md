@@ -1,6 +1,6 @@
 # P4-7 · Settings, the property switcher and phone gestures
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D29, D45–D60), docs/ui-library.md, the `/kit` pages, `apps/dashboard/src/app/router.tsx`, the shell files, `apps/dashboard/src/data/{property,payments,settings}`, and the contract entries `getOwnerProperty`, `saveProperty`, `changeSlug`, `checkSlug`, the payment-account operations, `savePolicies`, `saveHours`, `updateProfile`, `changePassword`, `signOutEverywhere`, `requestAccountDeletion` and `getMyAccount`.
 

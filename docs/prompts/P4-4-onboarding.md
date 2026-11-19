@@ -1,6 +1,6 @@
 # P4-4 · Onboarding and the home setup checklist
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D45–D60), docs/ui-library.md, the `/kit` pages, `FocusFrame`, the `/home` feature, `apps/dashboard/src/data/{setup,property,units,prices,photos,payments}`, and the contract entries `getSetupChecklist`, `getOwnerProperty`, `saveProperty`, `checkSlug`, `saveUnit`, `createBedSpaces`, `saveUnitPrices`, `savePaymentAccount` and `savePolicies`.
 

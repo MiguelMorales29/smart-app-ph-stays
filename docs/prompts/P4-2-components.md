@@ -1,6 +1,6 @@
 # P4-2 · Components and compositions for Phase 4
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D34, D41, D44, D45–D60), docs/ui-library.md, docs/design-tokens.md, `packages/ui/components.json`, the `/kit` pages, and what P4-0 and P4-1 added. The food app is at `~/Project/Smart-App-PH---FINAL-2026`; it is read-only, so never edit it.
 
