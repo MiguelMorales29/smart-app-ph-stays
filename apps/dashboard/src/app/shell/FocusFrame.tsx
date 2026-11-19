@@ -20,7 +20,7 @@ export function FocusFrame() {
       <DashboardSwitchGate />
       <PreviewRibbon />
 
-      <header className="sticky top-0 z-20 border-b border-border frost">
+      <header className="sticky top-0 z-20 border-b border-border frost pt-safe">
         <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button
@@ -61,7 +61,7 @@ export function FocusFrame() {
         />
       ) : null}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-safe sm:px-6">
         <Outlet />
       </main>
     </div>

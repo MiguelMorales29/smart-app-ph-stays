@@ -208,6 +208,9 @@ export function KitTokensTab() {
               <Badge variant="outline">--dur-fast: 120ms</Badge>
               <Badge variant="outline">--dur-base: 200ms</Badge>
               <Badge variant="outline">--dur-slow: 320ms</Badge>
+              <Badge variant="outline">--ease-enter</Badge>
+              <Badge variant="outline">--ease-exit</Badge>
+              <Badge variant="outline">--ease-spring</Badge>
             </div>
           </div>
         </div>
