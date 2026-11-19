@@ -82,6 +82,10 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 - Sign-up answers (what they rent, counts, city, Facebook page) are stored in one `owner_applications` record per account, so the super admin screen (Phase 9) reads it as a whole. Wave 1 now has 49 tables.
 - Test packages approved for Phase 4: `@axe-core/playwright@4.14.0` (P4-1); `@testing-library/react@16.3.3`, `@testing-library/user-event@14.6.9`, `@testing-library/jest-dom@7.0.1`, `jsdom@31.0.0` (P4-8). Each is listed with its licence when installed.
 
+### P4-1 approved packages
+
+- `@axe-core/playwright@4.14.0` (MPL-2.0) in `tooling` devDependencies only for automated accessibility checks in `tooling/e2e/ui-scan.e2e.ts`.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
