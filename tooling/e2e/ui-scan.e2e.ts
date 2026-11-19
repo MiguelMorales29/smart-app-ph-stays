@@ -14,6 +14,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 const DASHBOARD_ORIGIN = 'http://127.0.0.1:5174';
@@ -108,14 +109,37 @@ function fileName(app: string, path: string, size: string, theme: string): strin
   return `${app}-${slug}-${size}-${theme}.png`;
 }
 
-async function inspect(page: Page): Promise<{ overflow: string | null; soft: string[] }> {
-  return page.evaluate(() => {
+async function inspect(
+  page: Page,
+  isPhone: boolean,
+): Promise<{ overflow: string | null; smallInputs: string[]; soft: string[] }> {
+  return page.evaluate((checkPhoneInputs) => {
     const soft: string[] = [];
     const root = document.documentElement;
     const overflow =
       root.scrollWidth > root.clientWidth + 1
         ? `page scrolls sideways: ${root.scrollWidth}px wide in a ${root.clientWidth}px window`
         : null;
+
+    const smallInputs = checkPhoneInputs
+      ? [...document.querySelectorAll('input, textarea, select')]
+          .filter((element) => {
+            const style = getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0')
+              return false;
+            const box = element.getBoundingClientRect();
+            if (box.width === 0 || box.height === 0) return false;
+            return Number.parseFloat(style.fontSize) < 16;
+          })
+          .map((element) => {
+            const fontSize = getComputedStyle(element).fontSize;
+            const label =
+              element.getAttribute('aria-label') ||
+              element.getAttribute('name') ||
+              element.tagName.toLowerCase();
+            return `${label} (${fontSize})`;
+          })
+      : [];
 
     // Text hidden under another layer (ignores the floating Preview pill and the phone dock,
     // which float over scrolled content by design).
@@ -166,8 +190,8 @@ async function inspect(page: Page): Promise<{ overflow: string | null; soft: str
       });
     if (tiny.length > 0) soft.push(`tap targets under 24px: ${tiny.join('; ')}`);
 
-    return { overflow, soft };
-  });
+    return { overflow, smallInputs, soft };
+  }, isPhone);
 }
 
 async function scan(
@@ -203,8 +227,21 @@ async function scan(
   await page.goto(`${origin}${path}${separator}clock=golden`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
 
-  const { overflow, soft } = await inspect(page);
+  const { overflow, smallInputs, soft } = await inspect(page, size.name === 'phone');
   if (overflow) hard.push(overflow);
+  if (smallInputs.length > 0) {
+    hard.push(`touch input font-size under 16px: ${smallInputs.join(', ')}`);
+  }
+
+  const axeResults = await new AxeBuilder({ page }).analyze();
+  for (const violation of axeResults.violations) {
+    if (violation.impact !== 'serious' && violation.impact !== 'critical') continue;
+    const targets = violation.nodes
+      .slice(0, 3)
+      .map((node) => node.target.join(' '))
+      .join(', ');
+    hard.push(`axe ${violation.impact} (${violation.id}): ${violation.help} [${targets}]`);
+  }
 
   const screenshot = fileName(app, path, size.name, theme);
   await page.screenshot({ path: resolve(OUT_DIR, screenshot) });
@@ -220,16 +257,39 @@ test.describe('UI scan', () => {
   });
 
   for (const size of SIZES) {
+    const isPhone = size.name === 'phone';
     for (const theme of ['light', 'dark'] as const) {
       for (const path of dashboardPaths()) {
-        test(`dashboard ${path} (${size.name}, ${theme})`, async ({ page }) => {
-          await scan(page, 'dashboard', path, size, theme);
+        test(`dashboard ${path} (${size.name}, ${theme})`, async ({ browser }) => {
+          const context = await browser.newContext({
+            viewport: { width: size.width, height: size.height },
+            colorScheme: theme,
+            hasTouch: isPhone,
+            isMobile: isPhone,
+          });
+          const page = await context.newPage();
+          try {
+            await scan(page, 'dashboard', path, size, theme);
+          } finally {
+            await context.close();
+          }
         });
       }
     }
     for (const path of STOREFRONT_PATHS) {
-      test(`storefront ${path} (${size.name})`, async ({ page }) => {
-        await scan(page, 'storefront', path, size, 'light');
+      test(`storefront ${path} (${size.name})`, async ({ browser }) => {
+        const context = await browser.newContext({
+          viewport: { width: size.width, height: size.height },
+          colorScheme: 'light',
+          hasTouch: isPhone,
+          isMobile: isPhone,
+        });
+        const page = await context.newPage();
+        try {
+          await scan(page, 'storefront', path, size, 'light');
+        } finally {
+          await context.close();
+        }
       });
     }
   }
