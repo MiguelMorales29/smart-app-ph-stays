@@ -59,11 +59,36 @@ Current decisions only, one line each, newest at the bottom of its section. Prod
 - P3-D approved packages (2026-11-18): `@tanstack/react-router@1.170.46` (MIT, catalog; code-based routes, no router plugin), plus `lucide-react` (`catalog:`) in `apps/dashboard`.
 - P3-E approved packages (2026-11-18): `@playwright/test@1.65.0` (Apache-2.0, `tooling` devDependencies, catalog; `1.65.1` skipped under `minimumReleaseAge`), Chromium only.
 
+## Phase 4 (founder, 2026-11-18)
+
+Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
+
+- D45 Error reasons: the 7 error codes stay. A closed list of reasons (`invalid_input`, `slug_taken`, `slug_reserved`, `slug_change_limit`, `email_taken`, `unit_limit`, `storage_full`, `file_too_large`, `not_image`, `last_payment_method`, `bank_limit`, `changed_elsewhere`, plus D33's `wallet_not_checked`) and per-field errors go in `details`. Bad input to any operation returns an error result, never throws.
+- D46 Forms use React Hook Form 7.89.0 with @hookform/resolvers 5.9.1. TanStack Query 5.104.1 moves forward from Phase 5 to Phase 4. Data hooks live in `apps/dashboard/src/data/<area>/` (keys, reads, writes), one automatic retry; instant updates with Undo only for switches, reordering, archiving and removing photos.
+- D47 Approval blocks going live, not setting up. Pending owners can set up everything; publishing waits for approval.
+- D48 Setup is six steps plus Review. Photos and payment can wait; publishing arrives with the Phase 5 editor.
+- D49 Photos: JPEG, PNG or WebP (HEIC is converted by the phone's picker), up to 15 MB in, shrunk to 1,600 px; at least 3 to list a unit; up to 20 per unit and 10 per property; warn under 1,024 px, refuse under 600 × 400; Move buttons beside drag.
+- D50 Prices are typed in pesos only: base, weekday price (Friday and Saturday preset), special dates with holiday chips, and a 14-night preview.
+- D51 Bed spaces are created in bulk and grouped by room (`units.group_label`).
+- D52 Navigation: the phone dock stays; settings is a list then a page, two panes from 1,024 px; short tasks open in sheets kept in the address; swipe-back only in the installed iPhone app; no page swiping.
+- D53 Motion is CSS and View Transitions in Phase 4 (no `motion` package); one celebration with canvas-confetti; duration and easing tokens; reduced motion enforced by one global rule.
+- D54 Icons are Lucide plus `@lucide/lab` only. Milestone pictures are Microsoft Fluent Emoji 3D (MIT) on token-coloured discs. No Storyset, unDraw, DrawKit, Lottie or Rive.
+- D55 Phase 4 install list: shadcn field, label, textarea, input-group, native-select, radio-group, checkbox, switch, toggle, toggle-group, tabs, dialog, alert-dialog, progress, card, item, table, popover, calendar; ReUI stepper, sortable, number-field; Dice UI file-upload, mask-input, responsive-dialog, circular-progress. Never `@reui/alert`, `@reui/badge`, `sonner` or `vaul`. No Magic UI or Aceternity in Phase 4.
+- D56 Check-in and check-out times are property-level and set in Policies; `/settings/hours` is reply and viewing hours.
+- D57 `properties.status = live` decides whether the public page shows; publishing is refused while the account is pending.
+- D58 Owners can sign up and sign in with Google as well as email and password. Phase 4 shows "Continue with Google" on `/signup` and `/login` and imitates it on the memory data layer; the real Google sign-in arrives with real sign-in in Phase 11. Google applicants still answer sign-up steps 2 and 3 and wait for approval.
+- D59 Default avatars come from DiceBear (`@dicebear/core` plus one CC0 style, Notionists unless the kit review picks another CC0 style), generated in the app, never through DiceBear's online API, with background colours from our tokens. Stored as `profiles.avatar = { kind: "preset", preset_id: "notionists-<seed>" }`; no schema change. Installed in P4-2 after the founder's yes on the exact versions.
+- D60 Sourcing order for a component the planned libraries lack: (1) shadcn, ReUI or Dice UI; (2) another free library item that works on Base UI (or uses no Radix), has an open licence (MIT, Apache-2.0, ISC or CC0) and does not need `motion`, proposed to the founder first; (3) last resort, rebuild it as a composition from our installed parts and tokens, using the reference only as a picture (screenshots, sizes, behaviour). Never copy code from paid ("Pro") items or sites without an open licence, never scrape a site's code or compiled CSS. Open-licence code may be read and adapted with its licence notice kept in the file.
+- Sign-up answers (what they rent, counts, city, Facebook page) are stored in one `owner_applications` record per account, so the super admin screen (Phase 9) reads it as a whole. Wave 1 now has 49 tables.
+- Test packages approved for Phase 4: `@axe-core/playwright@4.14.0` (P4-1); `@testing-library/react@16.3.3`, `@testing-library/user-event@14.6.9`, `@testing-library/jest-dom@7.0.1`, `jsdom@31.0.0` (P4-8). Each is listed with its licence when installed.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
 - O2 ~~Hosted preview links for phone checks (Vercel previews or another host). Decide in phase 3.~~ Closed in D38.
-- O4 How bed spaces count toward the plan's 5 included units.
+- O4 How bed spaces count toward the plan's 5 included units. Each bed is a unit (D24), so a 12-bed dorm would pay ₱599 + 7 × ₱100 = ₱1,299 a month. Decide before the pilot; it shows on the units page (P4-5).
 - O5 Day-use stays (for example a Pansol day swim, 8 am to 5 pm) have no model.
 - O7 Check that the five demo brand names are not real businesses before public videos.
 - O8 The RA 9653 rent cap is extended only to 31 December 2026; the lease warning must be easy to change.
+- O9 What the waiting-for-approval screen promises about time ("usually within 1 working day" or nothing). Decide before P4-3.
+- O10 Whether to add a refundable security-deposit fee type. Decide before P4-6.

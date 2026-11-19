@@ -84,3 +84,5 @@ Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one b
 - [P3-C](P3-C-storefront-frame.md) · `ag/p3c-storefront-frame` · 2026-11-18
 - [P3-D](P3-D-dashboard-frames.md) · `ag/p3d-dashboard-frames` · 2026-11-18
 - [P3-E](P3-E-kits-screens-docs.md) · `ag/p3e-kits-screens-docs` · 2026-11-18
+- [P4-0](P4-0-data-contract.md) · `ag/p4-0-data-contract` · 2026-11-18
+- [P4-1](P4-1-platform-fixes.md) · `ag/p4-1-platform-fixes` · 2026-11-18
