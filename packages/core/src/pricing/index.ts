@@ -22,3 +22,5 @@ export type {
   QuoteWeekdayRate,
   StayQuote,
 } from './quoteStay.js';
+export { CANCELLATION_PRESET_COPY, cancellationRefund } from './cancellation.js';
+export type { CancellationOutcome } from './cancellation.js';
