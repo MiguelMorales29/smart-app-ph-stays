@@ -3,6 +3,7 @@ import type {
   AccountsRow,
   CustomerConsentsRow,
   CustomersRow,
+  OwnerApplicationsRow,
   PlatformAdminsRow,
   ProfilesRow,
   SubscriptionsRow,
@@ -334,6 +335,7 @@ export function buildExtraStateOwners(today: CalendarDate): {
   readonly profiles: ProfilesRow[];
   readonly accounts: AccountsRow[];
   readonly members: AccountMembersRow[];
+  readonly applications: OwnerApplicationsRow[];
   readonly subscriptions: SubscriptionsRow[];
 } {
   const createdAt = manilaWallTime(addDays(today, -30), '09:00').toISOString();
@@ -628,5 +630,80 @@ export function buildExtraStateOwners(today: CalendarDate): {
     },
   ];
 
-  return { profiles, accounts, members, subscriptions };
+  const applications: OwnerApplicationsRow[] = [
+    {
+      id: DEMO_IDS.people.extraAccounts.pendingApplication,
+      account_id: DEMO_IDS.people.extraAccounts.pendingAccount,
+      rents: 'staycation',
+      unit_count_band: '2_5',
+      property_count_band: '1',
+      city: 'Baguio City',
+      facebook_page: 'https://facebook.com/pinecrestcabin.demo',
+      sign_up_method: 'password',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: DEMO_IDS.people.extraAccounts.trialDay13Application,
+      account_id: DEMO_IDS.people.extraAccounts.trialDay13Account,
+      rents: 'staycation',
+      unit_count_band: '1',
+      property_count_band: '1',
+      city: 'San Juan, La Union',
+      facebook_page: null,
+      sign_up_method: 'google',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: DEMO_IDS.people.extraAccounts.inGraceApplication,
+      account_id: DEMO_IDS.people.extraAccounts.inGraceAccount,
+      rents: 'mix',
+      unit_count_band: '2_5',
+      property_count_band: '2_3',
+      city: 'Lipa City',
+      facebook_page: 'https://facebook.com/patioverde.demo',
+      sign_up_method: 'password',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: DEMO_IDS.people.extraAccounts.pausedApplication,
+      account_id: DEMO_IDS.people.extraAccounts.pausedAccount,
+      rents: 'apartments',
+      unit_count_band: '2_5',
+      property_count_band: '1',
+      city: 'Makati City',
+      facebook_page: null,
+      sign_up_method: 'password',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: DEMO_IDS.people.extraAccounts.cancelledApplication,
+      account_id: DEMO_IDS.people.extraAccounts.cancelledAccount,
+      rents: 'staycation',
+      unit_count_band: '1',
+      property_count_band: '1',
+      city: 'Vigan City',
+      facebook_page: null,
+      sign_up_method: 'password',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: DEMO_IDS.people.extraAccounts.emptyApplication,
+      account_id: DEMO_IDS.people.extraAccounts.emptyAccount,
+      rents: 'staycation',
+      unit_count_band: '2_5',
+      property_count_band: '1',
+      city: 'Cebu City',
+      facebook_page: null,
+      sign_up_method: 'password',
+      created_at: manilaWallTime(today, '08:00').toISOString(),
+      updated_at: manilaWallTime(today, '08:00').toISOString(),
+    },
+  ];
+
+  return { profiles, accounts, members, applications, subscriptions };
 }

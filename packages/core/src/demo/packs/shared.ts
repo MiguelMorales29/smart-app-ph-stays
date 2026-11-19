@@ -25,6 +25,7 @@ import type {
   MetaEventSwitchesRow,
   MetaPixelsRow,
   NotificationsOutboxRow,
+  OwnerApplicationsRow,
   PageReportsRow,
   PaymentAccountsRow,
   PaymentProofsRow,
@@ -64,6 +65,7 @@ export interface DemoWorld {
   readonly feature_flags: FeatureFlagsRow[];
   readonly accounts: AccountsRow[];
   readonly account_members: AccountMembersRow[];
+  readonly owner_applications: OwnerApplicationsRow[];
   readonly subscriptions: SubscriptionsRow[];
   readonly account_features: AccountFeaturesRow[];
   readonly account_counters: AccountCountersRow[];
@@ -116,6 +118,7 @@ export function createEmptyDemoWorld(): DemoWorld {
     feature_flags: [],
     accounts: [],
     account_members: [],
+    owner_applications: [],
     subscriptions: [],
     account_features: [],
     account_counters: [],
@@ -285,6 +288,7 @@ export function appendBrandToWorld(
 ): void {
   world.accounts.push(brand.account);
   world.account_members.push(brand.member);
+  world.owner_applications.push(brand.application);
   world.subscriptions.push(brand.subscription);
   world.files.push(...brand.files);
   world.subscription_payments.push(brand.subscriptionPayment);

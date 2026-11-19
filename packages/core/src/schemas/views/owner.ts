@@ -1,20 +1,42 @@
 import { z } from 'zod';
 
+import { uuidSchema } from '../../ids/index.js';
+import {
+  accountStatusSchema,
+  setupStepKeySchema,
+  setupStepStatusSchema,
+} from '../../lists/index.js';
 import { centavosSchema } from '../../money/index.js';
 import { calendarDateSchema } from '../../time/index.js';
 import {
+  accountMembersRow,
+  accountsRow,
   bookingEventsRow,
   bookingGuestsRow,
   bookingLinesRow,
   bookingsRow,
   boundedDateRangeSchema,
   customersRow,
+  houseRulesRow,
+  isoTimestampSchema,
+  listingPhotosRow,
   messagesRow,
+  ownerApplicationsRow,
   paymentProofsRow,
   paymentsRow,
+  plansRow,
+  profilesRow,
+  propertiesRow,
+  propertyPagesRow,
+  rateOverridesRow,
+  subscriptionsRow,
   threadsRow,
+  unitFeesRow,
+  unitLeaseTermsRow,
   unitOccupancyRow,
+  unitStayTermsRow,
   unitsRow,
+  weekdayRatesRow,
 } from '../tables/index.js';
 
 export const ownerHomeCountsViewSchema = z.object({
@@ -163,3 +185,123 @@ export const calendarTimelineViewSchema = z.object({
   units: z.array(calendarTimelineUnitSchema),
 });
 export type CalendarTimelineView = z.infer<typeof calendarTimelineViewSchema>;
+
+export const ownerSessionViewSchema = z.object({
+  role: z.literal('owner'),
+  accountId: accountsRow.shape.id,
+  profileId: profilesRow.shape.id,
+});
+export type OwnerSessionView = z.infer<typeof ownerSessionViewSchema>;
+
+export const authOwnerResultViewSchema = z.object({
+  account: accountsRow,
+  profile: profilesRow,
+  session: ownerSessionViewSchema,
+});
+export type AuthOwnerResultView = z.infer<typeof authOwnerResultViewSchema>;
+
+export const applyOwnerResultViewSchema = z.object({
+  account: accountsRow,
+  profile: profilesRow,
+  application: ownerApplicationsRow,
+  session: ownerSessionViewSchema,
+});
+export type ApplyOwnerResultView = z.infer<typeof applyOwnerResultViewSchema>;
+
+export const googleSignInResultViewSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('signed_in'),
+    account: accountsRow,
+    profile: profilesRow,
+    session: ownerSessionViewSchema,
+  }),
+  z.object({
+    kind: z.literal('needs_application'),
+    email: z.email(),
+    fullName: z.string().min(1).max(80),
+  }),
+]);
+export type GoogleSignInResultView = z.infer<typeof googleSignInResultViewSchema>;
+
+export const accountDeletionRequestViewSchema = z.object({
+  status: z.enum(['none', 'scheduled']),
+  requested_at: isoTimestampSchema.nullable(),
+  scheduled_for: isoTimestampSchema.nullable(),
+});
+export type AccountDeletionRequestView = z.infer<typeof accountDeletionRequestViewSchema>;
+
+export const ownerPropertySummaryViewSchema = z.object(propertiesRow.shape).pick({
+  id: true,
+  slug: true,
+  name: true,
+  city: true,
+  status: true,
+  updated_at: true,
+});
+export type OwnerPropertySummaryView = z.infer<typeof ownerPropertySummaryViewSchema>;
+
+export const ownerAccountViewSchema = z.object({
+  account: accountsRow,
+  profile: profilesRow,
+  member: accountMembersRow,
+  application: ownerApplicationsRow.nullable(),
+  subscription: subscriptionsRow.nullable(),
+  plan: plansRow.nullable(),
+  properties: z.array(ownerPropertySummaryViewSchema),
+  deletion_request: accountDeletionRequestViewSchema,
+});
+export type OwnerAccountView = z.infer<typeof ownerAccountViewSchema>;
+
+export const setupChecklistItemViewSchema = z.object({
+  key: setupStepKeySchema,
+  status: setupStepStatusSchema,
+});
+export type SetupChecklistItemView = z.infer<typeof setupChecklistItemViewSchema>;
+
+export const setupChecklistViewSchema = z.object({
+  items: z.array(setupChecklistItemViewSchema).length(7),
+  account_status: accountStatusSchema,
+  can_publish: z.boolean(),
+});
+export type SetupChecklistView = z.infer<typeof setupChecklistViewSchema>;
+
+export const ownerPhotoViewSchema = listingPhotosRow.extend({
+  url: z.string().min(1),
+});
+export type OwnerPhotoView = z.infer<typeof ownerPhotoViewSchema>;
+
+export const ownerPropertyViewSchema = z.object({
+  property: propertiesRow,
+  page: propertyPagesRow.nullable(),
+  photos: z.array(ownerPhotoViewSchema),
+  house_rules: z.array(houseRulesRow),
+});
+export type OwnerPropertyView = z.infer<typeof ownerPropertyViewSchema>;
+
+export const slugCheckViewSchema = z.object({
+  status: z.enum(['available', 'taken', 'reserved', 'invalid']),
+  normalized: z.string(),
+  suggestions: z.array(z.string()).max(3),
+});
+export type SlugCheckView = z.infer<typeof slugCheckViewSchema>;
+
+export const ownerUnitListItemViewSchema = z.object({
+  unit: unitsRow,
+  cover_photo: ownerPhotoViewSchema.nullable(),
+  photo_count: z.int().min(0),
+  stay_terms: unitStayTermsRow.nullable(),
+  lease_terms: unitLeaseTermsRow.nullable(),
+});
+export type OwnerUnitListItemView = z.infer<typeof ownerUnitListItemViewSchema>;
+
+export const ownerUnitDetailViewSchema = z.object({
+  unit: unitsRow,
+  stay_terms: unitStayTermsRow.nullable(),
+  lease_terms: unitLeaseTermsRow.nullable(),
+  weekday_rates: z.array(weekdayRatesRow),
+  rate_overrides: z.array(rateOverridesRow),
+  fees: z.array(unitFeesRow),
+  photos: z.array(ownerPhotoViewSchema),
+  amenity_ids: z.array(uuidSchema),
+});
+export type OwnerUnitDetailView = z.infer<typeof ownerUnitDetailViewSchema>;

@@ -23,7 +23,7 @@ describe('operation contract', () => {
 
   it('ensures every operation entry matches its key and has valid access, errors, and featureIds', () => {
     const entries = Object.entries(operations);
-    expect(entries.length).toBe(45);
+    expect(entries.length).toBe(77);
 
     for (const [key, spec] of entries) {
       expect(spec.name).toBe(key);
@@ -92,5 +92,29 @@ describe('operation contract', () => {
         idempotencyKey: 'short',
       }).success,
     ).toBe(false);
+
+    // Phase 4 discriminated union on applyAsOwner & plain string on changeSlug
+    expect(
+      operations.applyAsOwner.input.safeParse({
+        method: 'google',
+        idempotencyKey: 'idem-apply-google-1',
+        fullName: 'Liza Morales',
+        credential: 'demo-google:liza@example.com:Liza Morales',
+        mobile: '0917 555 0199',
+        rents: 'staycation',
+        unitCountBand: '2_5',
+        propertyCountBand: '1',
+        city: 'Tagaytay City',
+        facebookPage: null,
+      }).success,
+    ).toBe(true);
+    expect(
+      operations.changeSlug.input.safeParse({
+        idempotencyKey: 'idem-slug-1',
+        accountId: 'dec0de00-0000-4000-8000-000000000001',
+        propertyId: 'dec0de00-0000-4000-8000-000000000002',
+        newSlug: 'admin',
+      }).success,
+    ).toBe(true);
   });
 });

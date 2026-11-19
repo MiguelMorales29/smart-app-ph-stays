@@ -161,6 +161,18 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       created_at: createdAt,
       updated_at: createdAt,
     },
+    application: {
+      id: ids.application,
+      account_id: ids.account,
+      rents: 'apartments',
+      unit_count_band: '2_5',
+      property_count_band: '1',
+      city: 'Pasig City',
+      facebook_page: 'https://facebook.com/ilawresidences.demo',
+      sign_up_method: 'google',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
     subscription: {
       id: ids.subscription,
       account_id: ids.account,
@@ -262,6 +274,7 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         name: 'Studio A',
         mode: 'long_term',
         unit_type: 'entire_place',
+        group_label: null,
         description:
           '22 sqm sunny studio apartment with ink-blue accent wall, window work desk, induction kitchenette, water heater, and pet-friendly layout.',
         max_guests: 2,
@@ -284,6 +297,7 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         name: '1BR B',
         mode: 'long_term',
         unit_type: 'entire_place',
+        group_label: null,
         description:
           '32 sqm 1-bedroom corner apartment with private balcony, built-in wardrobe, two-burner kitchen with range hood, and separate living area.',
         max_guests: 3,

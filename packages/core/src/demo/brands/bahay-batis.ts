@@ -159,6 +159,18 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
       created_at: createdAt,
       updated_at: createdAt,
     },
+    application: {
+      id: ids.application,
+      account_id: ids.account,
+      rents: 'staycation',
+      unit_count_band: '1',
+      property_count_band: '1',
+      city: 'Calamba City',
+      facebook_page: 'https://facebook.com/bahaybatis.demo',
+      sign_up_method: 'password',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
     subscription: {
       id: ids.subscription,
       account_id: ids.account,
@@ -260,6 +272,7 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
         name: 'Buong Bahay',
         mode: 'short_stay',
         unit_type: 'entire_place',
+        group_label: null,
         description:
           'Whole private resort house (22-hour stay from 2:00 pm to 12:00 nn) with 4 air-conditioned bedrooms, warm spring adult & kiddie pools, videoke, billiards, ping pong, and half basketball court.',
         max_guests: 20,

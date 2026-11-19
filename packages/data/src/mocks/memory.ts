@@ -11,9 +11,10 @@ import {
   nightsBetween,
   ok,
   operations,
-  propertySlugSchema,
+  reasonError,
   resolveDemoWorld,
   systemClock,
+  words,
   type AppError,
   type BookingEventsRow,
   type Clock,
@@ -66,6 +67,13 @@ import {
   sha256Hex,
   toFailAppError,
 } from './helpers.js';
+import {
+  checkUnitLimitForAccount,
+  createMemoryAuthState,
+  createOwnerHandlers,
+  recordSlugChangeTimestamp,
+  validateSlugChangeInMemory,
+} from './owner-handlers.js';
 
 export interface MemorySourceOptions {
   readonly pack: DemoPack;
@@ -98,6 +106,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
   const world = resolveDemoWorld({ pack: options.pack, clock });
   const ids = new DemoIdAllocator();
   const idempotencyCache = new Map<string, StoredIdempotencyEntry>();
+  const auth = createMemoryAuthState(world, clock);
 
   async function beforeCall<K extends OperationName>(
     opName: K,
@@ -2077,6 +2086,17 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
         async () => {
           if (session.role !== 'owner') return err(appError('not_allowed'));
 
+          // Imitates DB rule (D47, D57): pending owners can save everything but cannot publish.
+          const account = world.accounts.find((a) => a.id === acctCheck.data);
+          if (!account || account.status !== 'active') {
+            return err(
+              appError(
+                'not_allowed',
+                'Your account is waiting for approval before you can publish.',
+              ),
+            );
+          }
+
           const pageIdx = world.property_pages.findIndex(
             (pg) => pg.property_id === input.propertyId && pg.account_id === acctCheck.data,
           );
@@ -2098,6 +2118,19 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
             updated_at: nowIso,
           };
           world.property_pages[pageIdx] = updated;
+
+          // D57: properties.status = 'published' decides whether the public page shows.
+          const propIdx = world.properties.findIndex((p) => p.id === input.propertyId);
+          const prop = propIdx !== -1 ? world.properties[propIdx] : undefined;
+          if (prop) {
+            world.properties[propIdx] = {
+              ...prop,
+              status: 'published',
+              published_at: prop.published_at ?? nowIso,
+              updated_at: nowIso,
+            };
+          }
+
           return ok(updated);
         },
       );
@@ -2116,11 +2149,6 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
         input,
         operations.changeSlug.output,
         async () => {
-          const parsedSlug = propertySlugSchema.safeParse(input.newSlug);
-          if (!parsedSlug.success) {
-            return err(appError('not_allowed'));
-          }
-
           const propIdx = world.properties.findIndex(
             (p) => p.id === input.propertyId && p.account_id === acctCheck.data,
           );
@@ -2128,25 +2156,36 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           const prop = world.properties[propIdx];
           if (!prop) return err(appError('not_found'));
 
-          const slugTaken = world.properties.some(
-            (p) =>
-              p.id !== prop.id && (p.slug === input.newSlug || p.old_slugs.includes(input.newSlug)),
-          );
-          if (slugTaken || prop.slug === input.newSlug) {
-            return err(appError('not_allowed', 'That web address is already in use.'));
+          if (prop.slug === input.newSlug) {
+            return err(
+              reasonError('not_allowed', 'slug_taken', {
+                fields: { newSlug: words.errorReasons.slug_taken },
+              }),
+            );
           }
 
+          const slugCheck = validateSlugChangeInMemory({
+            world,
+            auth,
+            clock,
+            rawSlug: input.newSlug,
+            fieldName: 'newSlug',
+            existingProperty: prop,
+          });
+          if (!slugCheck.ok) return slugCheck;
+
+          recordSlugChangeTimestamp(auth, clock, prop.id);
           const oldSlugs = [...prop.old_slugs, prop.slug];
           const nowIso = nowIsoFromClock(clock);
           world.properties[propIdx] = {
             ...prop,
-            slug: input.newSlug,
+            slug: slugCheck.data,
             old_slugs: oldSlugs,
             updated_at: nowIso,
           };
 
           return ok({
-            slug: input.newSlug,
+            slug: slugCheck.data,
             oldSlugs,
           });
         },
@@ -2325,6 +2364,9 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
             (u) => u.id === input.unitId && u.account_id === acctCheck.data,
           );
           if (!sourceUnit) return err(appError('not_found'));
+
+          const limitCheck = checkUnitLimitForAccount(world, acctCheck.data, 1);
+          if (!limitCheck.ok) return limitCheck;
 
           const nowIso = nowIsoFromClock(clock);
           const newUnitId = ids.next('0005');
@@ -2776,6 +2818,17 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
       releaseExpiredHolds(world, clock, ids);
       return buildCalendarTimeline(world, acctCheck.data, input.range);
     },
+
+    ...createOwnerHandlers({
+      world,
+      clock,
+      ids,
+      mediaConfig,
+      auth,
+      beforeCall,
+      requireOwnerAccountMatch,
+      runIdempotent,
+    }),
   } satisfies ParsedDataSourceHandlers;
 
   return createValidatedDataSource(handlers, {

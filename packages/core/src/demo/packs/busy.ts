@@ -94,6 +94,7 @@ export function buildBusyPack(clock: Clock): DemoWorld {
       name: extra.name,
       mode: 'short_stay',
       unit_type: 'entire_place',
+      group_label: null,
       description: `${extra.name} in Tagaytay Ridge.`,
       max_guests: extra.maxGuests,
       bedrooms: 1,

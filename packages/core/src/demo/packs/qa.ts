@@ -44,6 +44,7 @@ export function buildQaPack(clock: Clock): DemoWorld {
   world.profiles.push(...extraOwners.profiles);
   world.accounts.push(...extraOwners.accounts);
   world.account_members.push(...extraOwners.members);
+  world.owner_applications.push(...extraOwners.applications);
 
   for (const sub of extraOwners.subscriptions) {
     if (
