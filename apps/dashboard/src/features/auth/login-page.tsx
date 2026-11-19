@@ -166,7 +166,9 @@ export function LoginPage() {
           Apply as an owner
         </Link>
       </p>
-      {client?.mode === 'memory' ? (
+      {import.meta.env.VITE_DATA_SOURCE === 'memory' &&
+      import.meta.env.VITE_APP_ENV !== 'production' &&
+      client?.mode === 'memory' ? (
         <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
           Sample data: sign in as owner.ulap-suites@demo.invalid with the password demo-owner-pass.
           Codes are 123456.
