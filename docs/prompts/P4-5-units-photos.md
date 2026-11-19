@@ -1,6 +1,6 @@
 # P4-5 · Units, bed spaces and photos
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D23, D24, D45–D60, O4), docs/ui-library.md, the `/kit` pages, `apps/dashboard/src/data/{units,photos}`, and the contract entries `listOwnerUnits`, `getOwnerUnit`, `saveUnit`, `createBedSpaces`, `setUnitStatus`, `reorderUnits`, `archiveUnit`, `duplicateUnit`, `requestUpload`, `confirmUpload` and `saveListingPhotos`. From the food app (read-only): `packages/data/src/compress-image.ts` and its test.
 
