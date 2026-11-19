@@ -89,6 +89,7 @@ import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/as
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
 import { GoogleButton } from '@smartapp/ui/compositions/google-button';
+import { GoLiveCard } from '@smartapp/ui/compositions/go-live-card';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { notify } from '@smartapp/ui/lib/notify';
@@ -607,6 +608,21 @@ export function KitFormsTab() {
           dont="List HEIC in accept."
         >
           {() => <FileUploadDemo />}
+        </Section>
+        <Section
+          title="GoLiveCard"
+          source="Composition (D53)"
+          useFor="The moment a page is published (Phase 5). Bursts confetti once per property per device."
+          dont="Show it for anything smaller than going live."
+        >
+          {() => (
+            <GoLiveCard
+              propertyName="Ulap Suites"
+              url="https://smartapp.ph/ulap-suites"
+              celebrationKey={null}
+              className="max-w-sm"
+            />
+          )}
         </Section>
         <section className="space-y-3 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <h2 className="font-heading text-lg font-semibold">Phase 4 compositions</h2>

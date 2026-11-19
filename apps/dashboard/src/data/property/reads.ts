@@ -29,3 +29,15 @@ export function useCheckSlugQuery(slug: string, excludePropertyId: string | null
     },
   });
 }
+
+/** Returns a function SlugField can call to check a web address (checkSlug), 400 ms after typing. */
+export function useSlugChecker(excludePropertyId: string | null = null) {
+  const active = useActiveDataClient();
+  return async (slug: string) => {
+    const { source, session, accountId } = requireOwnerClient(active);
+    const result = unwrapResult(
+      await source.checkSlug({ accountId, slug, excludePropertyId }, session),
+    );
+    return { status: result.status, suggestions: result.suggestions };
+  };
+}

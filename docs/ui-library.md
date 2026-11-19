@@ -102,6 +102,7 @@ Reuse these before reaching for a raw component; they already handle light/dark,
 | `OwnerAvatar`, `AvatarSeedPicker`          | Owner pictures: photo, DiceBear Notionists (CC0, D59) or initials                   | Call DiceBear's online API                                   |
 | `MilestonePicture`                         | Fluent Emoji 3D pictures on milestone screens (welcome, waiting, live, errors)      | Use on routine empty states (use `EmptyState` with an icon)  |
 | `DraftNotice`                              | "We kept the changes you didn't save" with Keep / Start over                        | Restore a draft without asking                               |
+| `GoLiveCard`                               | The go-live moment: "<Place> is live", the link, Copy and one confetti burst (D53)  | Show it for anything smaller than going live                 |
 | `notify()` (lib)                           | Short messages and Undo (one helper over the Base UI toast)                         | Show errors that need action in a toast                      |
 | `celebrate()` (lib)                        | The go-live confetti, once per property per device                                  | Use for routine saves                                        |
 

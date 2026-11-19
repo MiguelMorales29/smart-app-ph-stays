@@ -16,6 +16,7 @@ import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
 import { LoginPage } from '@/features/auth/login-page';
 import { SignupPage } from '@/features/auth/signup-page';
 import { HomePage } from '@/features/home/home-page';
+import { OnboardingPage } from '@/features/onboarding/onboarding-page';
 import { SettingsIndexPage } from '@/features/settings/settings-index-page';
 
 const rootRoute = createRootRoute({
@@ -77,17 +78,24 @@ const focusLayoutRoute = createRoute({
   component: FocusFrame,
 });
 
+export interface OnboardingSearch {
+  readonly step?: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+}
+
+const ONBOARDING_STEPS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+function parseOnboardingSearch(search: Record<string, unknown>): OnboardingSearch {
+  const raw = Number(search.step);
+  const step = ONBOARDING_STEPS.find((value) => value === raw);
+  return step === undefined ? {} : { step };
+}
+
 const onboardingRoute = createRoute({
   getParentRoute: () => focusLayoutRoute,
   path: '/onboarding',
-  staticData: { page: { title: 'Onboarding checklist' } },
-  component: () => (
-    <PlaceholderScreen
-      title="Onboarding checklist"
-      phase={4}
-      secondaryLink={{ to: '/home', label: 'Continue to dashboard home' }}
-    />
-  ),
+  validateSearch: parseOnboardingSearch,
+  staticData: { page: { title: 'Set up your place' } },
+  component: OnboardingPage,
 });
 
 const editorRoute = createRoute({

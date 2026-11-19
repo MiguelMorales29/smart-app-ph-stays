@@ -7,6 +7,7 @@ import { LoadingState } from '@smartapp/ui/compositions/loading-state';
 import { NotAllowedState } from '@smartapp/ui/compositions/not-allowed-state';
 import { useDashboard } from '@/app/dashboard-context';
 import { ApprovalBanner } from '@/app/auth/approval-banner';
+import { SetupChecklistCard } from './setup-checklist-card';
 
 export function HomePage() {
   const { client, homeState, today, reload } = useDashboard();
@@ -64,6 +65,8 @@ export function HomePage() {
           }
         />
       ) : null}
+
+      {homeState.kind === 'ready' ? <SetupChecklistCard /> : null}
 
       {homeState.kind === 'ready' ? (
         <p className="text-sm text-muted-foreground">
