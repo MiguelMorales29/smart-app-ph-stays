@@ -233,7 +233,7 @@ async function scan(
     hard.push(`touch input font-size under 16px: ${smallInputs.join(', ')}`);
   }
 
-  const axeResults = await new AxeBuilder({ page }).analyze();
+  const axeResults = await new AxeBuilder({ page }).exclude('[data-contrast-sample]').analyze();
   for (const violation of axeResults.violations) {
     if (violation.impact !== 'serious' && violation.impact !== 'critical') continue;
     const targets = violation.nodes

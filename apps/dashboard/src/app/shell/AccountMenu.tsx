@@ -87,12 +87,12 @@ export function AccountMenu({
           render={
             <SidebarMenuButton
               size="lg"
-              aria-label="Account menu"
+              aria-label={`${displayName} (${roleLabel}), Account menu`}
               className="aria-expanded:bg-muted pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-1.5!"
             />
           }
         >
-          {avatar}
+          <span aria-hidden="true">{avatar}</span>
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-medium">{displayName}</span>
             <span className="truncate text-xs text-muted-foreground">{roleLabel}</span>
@@ -110,7 +110,7 @@ export function AccountMenu({
             />
           }
         >
-          {avatar}
+          <span aria-hidden="true">{avatar}</span>
         </DropdownMenuTrigger>
       )}
       <DropdownMenuContent

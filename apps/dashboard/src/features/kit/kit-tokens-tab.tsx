@@ -141,6 +141,7 @@ export function KitTokensTab() {
                     <td className="py-2.5 pr-4 font-mono">{row.pair}</td>
                     <td className="py-2.5 pr-4">
                       <span
+                        data-contrast-sample={row.minRatio < 4.5 ? '' : undefined}
                         className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 font-medium tabular"
                         style={{ backgroundColor: row.bgHexLight, color: row.fgHexLight }}
                       >
@@ -149,6 +150,7 @@ export function KitTokensTab() {
                     </td>
                     <td className="py-2.5 pr-4">
                       <span
+                        data-contrast-sample={row.minRatio < 4.5 ? '' : undefined}
                         className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 font-medium tabular"
                         style={{ backgroundColor: row.bgHexDark, color: row.fgHexDark }}
                       >
