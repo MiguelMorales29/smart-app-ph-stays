@@ -84,5 +84,12 @@ Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one b
 - [P3-C](P3-C-storefront-frame.md) · `ag/p3c-storefront-frame` · 2026-11-18
 - [P3-D](P3-D-dashboard-frames.md) · `ag/p3d-dashboard-frames` · 2026-11-18
 - [P3-E](P3-E-kits-screens-docs.md) · `ag/p3e-kits-screens-docs` · 2026-11-18
-- [P4-0](P4-0-data-contract.md) · `ag/p4-0-data-contract` · 2026-11-18
+- [P4-0](P4-0-data-contract.md) · `ag/p4-0-data-contract` · [PR #24](https://github.com/MiguelMorales29/smart-app-ph-stays/pull/24) · 2026-11-20
 - [P4-1](P4-1-platform-fixes.md) · `ag/p4-1-platform-fixes` · 2026-11-18
+- [P4-2](P4-2-components.md) · `ag/p4-2-components` · written 2026-11-20 (Claude Opus 5.5, High)
+- [P4-3](P4-3-auth.md) · `ag/p4-3-auth` · written 2026-11-20 (Claude Opus 5.5, High)
+- [P4-4](P4-4-onboarding.md) · `ag/p4-4-onboarding` · written 2026-11-20 (Claude Opus 5.5, High)
+- [P4-5](P4-5-units-photos.md) · `ag/p4-5-units-photos` · written 2026-11-20 (Claude Opus 5.5, High)
+- [P4-6](P4-6-prices-rules.md) · `ag/p4-6-prices-rules` · written 2026-11-20 (Claude Opus 5.5, High)
+- [P4-7](P4-7-settings.md) · `ag/p4-7-settings` · written 2026-11-20 (Claude Opus 5.5, High)
+- [P4-8](P4-8-close-out.md) · `ag/p4-8-close-out` · written 2026-11-20 (Claude Opus 5.5, High)
