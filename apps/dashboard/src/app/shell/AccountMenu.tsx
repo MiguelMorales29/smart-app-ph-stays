@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import {
   ChevronsUpDownIcon,
   LaptopIcon,
@@ -27,6 +27,7 @@ import {
 } from '@smartapp/ui/components/dropdown-menu';
 import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
 import { useDashboard } from '@/app/dashboard-context';
+import { useSignOut } from '@/app/auth/owner-session';
 import { THEME_MODES, useTheme, type ThemeMode } from '@/app/theme';
 
 function initialsFromLabel(label: string): string {
@@ -60,7 +61,7 @@ export function AccountMenu({
   readonly placement: 'sidebar' | 'top-bar';
   readonly admin?: boolean | undefined;
 }) {
-  const navigate = useNavigate();
+  const signOut = useSignOut();
   const { client, forcedOffline } = useDashboard();
   const { theme, setTheme } = useTheme();
   const online = !forcedOffline && (typeof window === 'undefined' ? true : window.navigator.onLine);
@@ -181,7 +182,7 @@ export function AccountMenu({
         <DropdownMenuItem
           className="min-h-10"
           onClick={() => {
-            void navigate({ to: '/login' });
+            void signOut();
           }}
         >
           <LogOutIcon aria-hidden="true" />

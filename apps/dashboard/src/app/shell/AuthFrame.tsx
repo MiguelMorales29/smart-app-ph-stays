@@ -1,4 +1,5 @@
 import { Outlet } from '@tanstack/react-router';
+import { cn } from '@smartapp/ui/lib/utils';
 import { Building2Icon, LaptopIcon, MoonIcon, SunIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -86,8 +87,18 @@ export function AuthFrame() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-10 pb-safe">
-        <div className="w-full rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm">
+      <main
+        className={cn(
+          'mx-auto flex w-full flex-1 items-center px-4 py-8 pb-safe sm:py-10',
+          page.wide ? 'max-w-5xl' : 'max-w-md',
+        )}
+      >
+        <div
+          className={cn(
+            'w-full rounded-xl border border-border bg-card text-card-foreground shadow-sm',
+            page.wide ? 'overflow-hidden' : 'p-6',
+          )}
+        >
           <Outlet />
         </div>
       </main>

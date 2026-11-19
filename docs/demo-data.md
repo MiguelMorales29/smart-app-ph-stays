@@ -70,3 +70,10 @@ Both `apps/storefront` and `apps/dashboard` show the floating developer switches
   - `now` (system time), `golden` (`2026-12-10T10:00:00+08:00`), `+1h`, `+1d`.
 - **Sharing state:** Selections write to both `window.sessionStorage` and URL search params (for example `?as=owner:ulap-suites&pack=qa&clock=golden`), with URL query params taking priority so a copied link opens the exact same role, scenario, and clock.
 - **Preview ribbon:** Setting `APP_ENV=preview` renders a fixed `"Preview · sample data"` indicator on both apps.
+
+## Phase 4 sign-in on sample data
+
+- Every demo owner signs in with their contact email and the password `demo-owner-pass` (for example `owner.ulap-suites@demo.invalid`).
+- Every email code (sign-up check, password reset, change password) is `123456`.
+- Google sign-in uses a stand-in chooser until Phase 11. It sends the credential `demo-google:<email>:<name>`: a demo owner's email signs straight in; any other email continues sign-up at step 2 with the name and email filled in.
+- Accounts created by applying live only in the open tab's memory data: reloading the page or changing the Preview pill starts over. Use the Preview pill's "Pending" owner to see a pending account any time.

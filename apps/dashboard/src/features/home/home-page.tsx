@@ -6,12 +6,14 @@ import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { LoadingState } from '@smartapp/ui/compositions/loading-state';
 import { NotAllowedState } from '@smartapp/ui/compositions/not-allowed-state';
 import { useDashboard } from '@/app/dashboard-context';
+import { ApprovalBanner } from '@/app/auth/approval-banner';
 
 export function HomePage() {
   const { client, homeState, today, reload } = useDashboard();
 
   return (
     <section className="space-y-6">
+      <ApprovalBanner />
       <div className="space-y-1">
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Dashboard home</h1>
         <p className="text-sm text-muted-foreground">Coming in phase 8</p>

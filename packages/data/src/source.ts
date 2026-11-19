@@ -323,6 +323,17 @@ export function createValidatedDataSource(
       operations.signInWithGoogle.output,
       handlers.signInWithGoogle,
     ),
+    listPlans: wrapOp(operations.listPlans.input, operations.listPlans.output, handlers.listPlans),
+    requestSignupCode: wrapOp(
+      operations.requestSignupCode.input,
+      operations.requestSignupCode.output,
+      handlers.requestSignupCode,
+    ),
+    verifySignupCode: wrapOp(
+      operations.verifySignupCode.input,
+      operations.verifySignupCode.output,
+      handlers.verifySignupCode,
+    ),
     requestPasswordCode: wrapOp(
       operations.requestPasswordCode.input,
       operations.requestPasswordCode.output,

@@ -9,6 +9,8 @@ export interface PageParentCrumb {
 export interface PageMeta {
   readonly title: string;
   readonly parent?: PageParentCrumb | undefined;
+  /** AuthFrame only: a wider two-column layout (sign-up's sell panel on desktop). */
+  readonly wide?: boolean | undefined;
 }
 
 declare module '@tanstack/react-router' {
