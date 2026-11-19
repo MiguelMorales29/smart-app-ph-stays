@@ -99,6 +99,15 @@
   --ease-spring: var(--ease-spring);
   --default-transition-duration: var(--dur-base);
   --default-transition-timing-function: var(--ease-enter);
+  --animate-spin-around: spin-around 0.8s linear infinite;
+  @keyframes spin-around {
+    0% {
+      transform: rotate(-90deg);
+    }
+    100% {
+      transform: rotate(270deg);
+    }
+  }
 }
 
 @utility duration-fast {
@@ -256,4 +265,10 @@ body:has([data-slot='dev-switch-panel']) {
 
 [data-slot='property-theme'][data-surface-mix='mixed'] [data-page-surface] {
   color: var(--page-foreground, var(--foreground));
+}
+
+/* The SaveBar sits above the phone dock; while the keyboard is open the dock hides and the bar
+   lifts above the keyboard instead (inline bottom from useKeyboardInset). */
+:root:has([data-slot='bottom-dock']) [data-slot='save-bar'] {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2);
 }

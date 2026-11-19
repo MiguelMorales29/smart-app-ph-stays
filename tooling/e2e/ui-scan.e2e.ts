@@ -39,6 +39,7 @@ function dashboardPaths(): string[] {
   );
   return [
     ...paths.filter(Boolean),
+    '/kit?tab=forms',
     '/kit?tab=dashboard',
     '/kit?tab=tokens',
     NOT_FOUND_PATHS[0] ?? '',

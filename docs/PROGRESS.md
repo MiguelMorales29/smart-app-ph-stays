@@ -34,7 +34,7 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 
 - [x] P4-0 Owner data contract, error reasons, schema additions, PH input helpers, form schemas, data hooks
 - [x] P4-1 Phone and platform fixes: manifest, viewport, scroll restoration, notch, 16 px inputs, autofill, motion tokens, UI-scan rules
-- [ ] P4-2 Components and compositions (D55), DiceBear avatars, Fluent pictures
+- [x] P4-2 Components and compositions (D55), DiceBear avatars, Fluent pictures
 - [ ] P4-3 Sign-up (with Google), login, forgot password, waiting for approval
 - [ ] P4-4 Onboarding and the home checklist
 - [ ] P4-5 Units and photos

@@ -193,6 +193,48 @@ function DrawerDescription({ className, ...props }: DrawerPrimitive.Description.
   );
 }
 
+/** Wraps the app so a drawer can scale the page behind it back (the Claude-app sheet look, D52). */
+function DrawerProvider({ ...props }: DrawerPrimitive.Provider.Props) {
+  return <DrawerPrimitive.Provider {...props} />;
+}
+
+/** The page that shrinks and rounds while a drawer is open. Wrap the app's main content in it. */
+function DrawerIndent({ className, ...props }: DrawerPrimitive.Indent.Props) {
+  return (
+    <DrawerPrimitive.Indent
+      data-slot="drawer-indent"
+      className={cn(
+        'origin-top bg-background transition-[transform,border-radius] duration-slow ease-enter data-active:scale-[0.94] data-active:overflow-hidden data-active:rounded-t-xl motion-reduce:data-active:scale-100',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/** The dark layer that shows around the scaled-back page. */
+function DrawerIndentBackground({ className, ...props }: DrawerPrimitive.IndentBackground.Props) {
+  return (
+    <DrawerPrimitive.IndentBackground
+      data-slot="drawer-indent-background"
+      className={cn('fixed inset-0 -z-10 bg-sidebar', className)}
+      {...props}
+    />
+  );
+}
+
+/** An edge area that opens the drawer with a swipe. */
+function DrawerSwipeArea({ ...props }: DrawerPrimitive.SwipeArea.Props) {
+  return <DrawerPrimitive.SwipeArea data-slot="drawer-swipe-area" {...props} />;
+}
+
+/** Keeps a drawer's footer above the phone keyboard. */
+function DrawerVirtualKeyboardProvider({
+  ...props
+}: DrawerPrimitive.VirtualKeyboardProvider.Props) {
+  return <DrawerPrimitive.VirtualKeyboardProvider {...props} />;
+}
+
 export {
   Drawer,
   DrawerPortal,
@@ -205,4 +247,9 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
+  DrawerProvider,
+  DrawerIndent,
+  DrawerIndentBackground,
+  DrawerSwipeArea,
+  DrawerVirtualKeyboardProvider,
 };

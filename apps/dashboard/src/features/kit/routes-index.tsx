@@ -11,15 +11,16 @@ import { PreviewRibbon } from '@/components/PreviewRibbon';
 import { env } from '@/env';
 import { KitBaseTab } from './kit-base-tab';
 import { KitDashboardTab } from './kit-dashboard-tab';
+import { KitFormsTab } from './kit-forms-tab';
 import { KitTokensTab } from './kit-tokens-tab';
 import { DASHBOARD_ROUTE_CATALOG } from './route-catalog';
 
-type KitTabKey = 'base' | 'dashboard' | 'tokens';
+type KitTabKey = 'base' | 'forms' | 'dashboard' | 'tokens';
 
 function parseKitTab(searchStr: string): KitTabKey {
   const params = new URLSearchParams(searchStr);
   const raw = params.get('tab');
-  if (raw === 'dashboard' || raw === 'tokens') return raw;
+  if (raw === 'dashboard' || raw === 'tokens' || raw === 'forms') return raw;
   return 'base';
 }
 
@@ -75,6 +76,7 @@ export function KitPage() {
 
   const tabs: readonly { readonly id: KitTabKey; readonly label: string }[] = [
     { id: 'base', label: 'Base' },
+    { id: 'forms', label: 'Forms' },
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'tokens', label: 'Tokens' },
   ];
@@ -131,8 +133,8 @@ export function KitPage() {
               Smart App PH · UI Kit
             </h1>
             <p className="text-sm text-muted-foreground">
-              Three kits showing every installed component, dashboard composition, status colour,
-              and platform token.
+              Kits showing every installed component, dashboard composition, status colour, and
+              platform token.
               {client ? ` Scenario: ${client.pack}.` : ''}
             </p>
           </div>
@@ -158,6 +160,7 @@ export function KitPage() {
         </header>
 
         {activeTab === 'base' ? <KitBaseTab /> : null}
+        {activeTab === 'forms' ? <KitFormsTab /> : null}
         {activeTab === 'dashboard' ? <KitDashboardTab /> : null}
         {activeTab === 'tokens' ? <KitTokensTab /> : null}
       </main>
