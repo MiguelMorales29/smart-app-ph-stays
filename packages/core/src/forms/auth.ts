@@ -1,10 +1,6 @@
 import { z } from 'zod';
 
-import {
-  accountsRow,
-  ownerApplicationsRow,
-  profilesRow,
-} from '../schemas/tables/index.js';
+import { accountsRow, ownerApplicationsRow, profilesRow } from '../schemas/tables/index.js';
 import { checkPasswordConfirmation, phMobileInputSchema } from './rules.js';
 
 export const ownerPasswordSchema = z

@@ -298,10 +298,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       const nextKey = createKeyMaker('p4-prop');
 
       const myAccount = assertOk(
-        await source.getMyAccount(
-          { accountId: DEMO_IDS.ulapSuites.account },
-          ULAP_OWNER_SESSION,
-        ),
+        await source.getMyAccount({ accountId: DEMO_IDS.ulapSuites.account }, ULAP_OWNER_SESSION),
       );
       expect(myAccount.account.id).toBe(DEMO_IDS.ulapSuites.account);
       expect(myAccount.application).not.toBeNull();
@@ -543,10 +540,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       const nextKey = createKeyMaker('p4-units');
 
       const amenities = assertOk(
-        await source.listAmenities(
-          { accountId: DEMO_IDS.ulapSuites.account },
-          ULAP_OWNER_SESSION,
-        ),
+        await source.listAmenities({ accountId: DEMO_IDS.ulapSuites.account }, ULAP_OWNER_SESSION),
       );
       expect(amenities.length).toBeGreaterThan(0);
 

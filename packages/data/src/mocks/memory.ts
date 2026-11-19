@@ -2090,7 +2090,10 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           const account = world.accounts.find((a) => a.id === acctCheck.data);
           if (!account || account.status !== 'active') {
             return err(
-              appError('not_allowed', 'Your account is waiting for approval before you can publish.'),
+              appError(
+                'not_allowed',
+                'Your account is waiting for approval before you can publish.',
+              ),
             );
           }
 

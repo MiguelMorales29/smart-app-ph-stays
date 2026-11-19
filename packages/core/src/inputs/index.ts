@@ -1,8 +1,4 @@
-export {
-  formatBankAccount,
-  isValidBankAccount,
-  normalizeBankAccount,
-} from './bank-account.js';
+export { formatBankAccount, isValidBankAccount, normalizeBankAccount } from './bank-account.js';
 export {
   formatPhMobile,
   formatWalletMobile,

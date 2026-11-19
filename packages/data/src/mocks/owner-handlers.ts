@@ -43,20 +43,12 @@ import type { z } from 'zod';
 
 import { mediaUrl, type MediaConfig } from '../media.js';
 import type { ParsedDataSourceHandlers, Session } from '../source.js';
-import {
-  addHoursIso,
-  nowIsoFromClock,
-  type DemoIdAllocator,
-} from './helpers.js';
+import { addHoursIso, nowIsoFromClock, type DemoIdAllocator } from './helpers.js';
 
 export const DEMO_OWNER_PASSWORD = 'demo-owner-pass';
 export const DEMO_PASSWORD_CODE = '123456';
 
-const ALLOWED_IMAGE_MIMES: ReadonlySet<string> = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const ALLOWED_IMAGE_MIMES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 const MAX_PROPERTY_PHOTOS = 10;
 const MAX_UNIT_PHOTOS = 20;
@@ -139,10 +131,7 @@ function parseDemoGoogleCredential(
   return { email, fullName };
 }
 
-function checkNotStale(
-  expectedUpdatedAt: string | null,
-  actualUpdatedAt: string,
-): Result<void> {
+function checkNotStale(expectedUpdatedAt: string | null, actualUpdatedAt: string): Result<void> {
   // Imitates optimistic concurrency check `where updated_at = $expected_updated_at`.
   if (expectedUpdatedAt !== null && expectedUpdatedAt !== actualUpdatedAt) {
     return err(reasonError('not_allowed', 'changed_elsewhere'));
@@ -215,8 +204,7 @@ export function validateSlugChangeInMemory(params: {
 
   // Imitates unique constraint across properties.slug and properties.old_slugs.
   const isTakenByAnother = world.properties.some(
-    (p) =>
-      p.id !== existingProperty?.id && (p.slug === rawSlug || p.old_slugs.includes(rawSlug)),
+    (p) => p.id !== existingProperty?.id && (p.slug === rawSlug || p.old_slugs.includes(rawSlug)),
   );
   if (isTakenByAnother) {
     return err(
@@ -387,8 +375,16 @@ type P4OwnerOperationName =
 export type P4OwnerHandlers = Pick<ParsedDataSourceHandlers, P4OwnerOperationName>;
 
 export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
-  const { world, clock, ids, mediaConfig, auth, beforeCall, requireOwnerAccountMatch, runIdempotent } =
-    ctx;
+  const {
+    world,
+    clock,
+    ids,
+    mediaConfig,
+    auth,
+    beforeCall,
+    requireOwnerAccountMatch,
+    runIdempotent,
+  } = ctx;
 
   return {
     async applyAsOwner(input, session) {
@@ -416,9 +412,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           }
 
           // Imitates unique index on auth user email / accounts.contact_email.
-          const emailTaken = world.accounts.some(
-            (a) => a.contact_email.toLowerCase() === email,
-          );
+          const emailTaken = world.accounts.some((a) => a.contact_email.toLowerCase() === email);
           if (emailTaken) {
             return err(
               reasonError('not_allowed', 'email_taken', {
@@ -681,7 +675,9 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
 
           const account = world.accounts.find((a) => a.contact_email.toLowerCase() === email);
           if (!account) {
-            return err(appError('not_allowed', 'That code is wrong or expired. Ask for a new code.'));
+            return err(
+              appError('not_allowed', 'That code is wrong or expired. Ask for a new code.'),
+            );
           }
 
           auth.passwordsByEmail.set(email, input.newPassword);
@@ -765,9 +761,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
       const hasUnit = propUnits.length > 0;
       const hasPhotos =
         property !== undefined &&
-        propUnits.some(
-          (u) => world.listing_photos.filter((p) => p.unit_id === u.id).length >= 3,
-        );
+        propUnits.some((u) => world.listing_photos.filter((p) => p.unit_id === u.id).length >= 3);
       const hasPrice = propUnits.some(
         (u) =>
           world.unit_stay_terms.some((t) => t.unit_id === u.id) ||
@@ -887,7 +881,9 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             if (!slugCheck.ok) return slugCheck;
 
             const slugChanged = existing.slug !== slugCheck.data;
-            const oldSlugs = slugChanged ? [...existing.old_slugs, existing.slug] : existing.old_slugs;
+            const oldSlugs = slugChanged
+              ? [...existing.old_slugs, existing.slug]
+              : existing.old_slugs;
             if (slugChanged) {
               recordSlugChangeTimestamp(auth, clock, existing.id);
             }
@@ -1146,10 +1142,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             );
           }
 
-          if (
-            input.stayTerms !== null &&
-            input.stayTerms.max_nights < input.stayTerms.min_nights
-          ) {
+          if (input.stayTerms !== null && input.stayTerms.max_nights < input.stayTerms.min_nights) {
             return err(
               reasonError('not_allowed', 'invalid_input', {
                 fields: { max_nights: 'Maximum nights must be at least minimum nights.' },
@@ -1159,10 +1152,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
 
           // Imitates unique (property_id, slug) constraint on units.
           const slugTaken = world.units.some(
-            (u) =>
-              u.property_id === property.id &&
-              u.id !== input.unitId &&
-              u.slug === input.slug,
+            (u) => u.property_id === property.id && u.id !== input.unitId && u.slug === input.slug,
           );
           if (slugTaken) {
             return err(
@@ -1564,9 +1554,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
       if (!acctCheck.ok) return acctCheck;
 
       const rows = world.amenities
-        .filter(
-          (a) => a.is_active && (a.account_id === null || a.account_id === acctCheck.data),
-        )
+        .filter((a) => a.is_active && (a.account_id === null || a.account_id === acctCheck.data))
         .sort((a, b) => a.sort_order - b.sort_order);
       return ok(rows);
     },
@@ -1970,7 +1958,8 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
                 }),
               );
             }
-            normalizedAccountNumber = normalizePhMobile(input.accountNumber) ?? normalizedAccountNumber;
+            normalizedAccountNumber =
+              normalizePhMobile(input.accountNumber) ?? normalizedAccountNumber;
           } else if (input.method === 'bank') {
             if (!isValidBankAccount(input.accountNumber)) {
               return err(
@@ -2280,7 +2269,10 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           }
 
           // Sanity-check formatted times exist (keeps import used cleanly if needed)
-          if (input.replyHours?.mon[0] && formatWallTime12h(input.replyHours.mon[0].start) === null) {
+          if (
+            input.replyHours?.mon[0] &&
+            formatWallTime12h(input.replyHours.mon[0].start) === null
+          ) {
             return err(
               reasonError('not_allowed', 'invalid_input', {
                 fields: { replyHours: 'Enter a valid time.' },
@@ -2434,9 +2426,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
 
           if (input.action === 'request') {
             if (existing?.status === 'scheduled') {
-              return err(
-                appError('invalid_move', 'Account deletion is already scheduled.'),
-              );
+              return err(appError('invalid_move', 'Account deletion is already scheduled.'));
             }
             // Imitates 7-day cancellable deletion window (OW-25).
             const scheduled: AccountDeletionRequestView = {

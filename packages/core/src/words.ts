@@ -19,7 +19,8 @@ const errorReasonMessages = {
   email_taken: 'An account with that email already exists. Sign in instead or use another email.',
   unit_limit:
     'You reached the unit limit on your plan. Add extra units in Plan settings or archive an unused unit.',
-  storage_full: 'Your storage is full. Free up space in Storage settings before uploading new photos.',
+  storage_full:
+    'Your storage is full. Free up space in Storage settings before uploading new photos.',
   file_too_large: 'This file is over 15 MB. Pick a smaller photo and try again.',
   not_image: 'Upload a JPEG, PNG or WebP image.',
   last_payment_method: 'Keep at least one payment method turned on so guests can pay.',

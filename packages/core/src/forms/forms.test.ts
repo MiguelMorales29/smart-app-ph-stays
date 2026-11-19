@@ -121,9 +121,9 @@ describe('Phase 4 form schemas', () => {
       logo_file_id: null,
     };
     expect(propertyFormSchema.safeParse(valid).success).toBe(true);
-    expect(propertyFormSchema.safeParse({ ...valid, latitude: null, longitude: null }).success).toBe(
-      true,
-    );
+    expect(
+      propertyFormSchema.safeParse({ ...valid, latitude: null, longitude: null }).success,
+    ).toBe(true);
     expect(propertyFormSchema.safeParse({ ...valid, longitude: null }).success).toBe(false);
   });
 
@@ -227,9 +227,9 @@ describe('Phase 4 form schemas', () => {
       password: 'owner-password',
     };
     expect(paymentAccountFormSchema.safeParse(gcash).success).toBe(true);
-    expect(paymentAccountFormSchema.safeParse({ ...gcash, account_number: '12345678' }).success).toBe(
-      false,
-    );
+    expect(
+      paymentAccountFormSchema.safeParse({ ...gcash, account_number: '12345678' }).success,
+    ).toBe(false);
 
     const bank = {
       method: 'bank',
@@ -244,9 +244,9 @@ describe('Phase 4 form schemas', () => {
     };
     expect(paymentAccountFormSchema.safeParse(bank).success).toBe(true);
     expect(paymentAccountFormSchema.safeParse({ ...bank, bank: null }).success).toBe(false);
-    expect(paymentAccountFormSchema.safeParse({ ...bank, bank: 'other', bank_name: null }).success).toBe(
-      false,
-    );
+    expect(
+      paymentAccountFormSchema.safeParse({ ...bank, bank: 'other', bank_name: null }).success,
+    ).toBe(false);
     expect(paymentAccountFormSchema.safeParse({ ...bank, account_number: '1234567' }).success).toBe(
       false,
     );
@@ -276,7 +276,10 @@ describe('Phase 4 form schemas', () => {
     ).toBe(false);
 
     const emptyWeek = {
-      mon: [{ start: '09:00', end: '12:00' }, { start: '13:00', end: '18:00' }],
+      mon: [
+        { start: '09:00', end: '12:00' },
+        { start: '13:00', end: '18:00' },
+      ],
       tue: [],
       wed: [],
       thu: [],
@@ -285,9 +288,9 @@ describe('Phase 4 form schemas', () => {
       sun: [],
       closed_dates: ['2026-12-25'],
     };
-    expect(
-      hoursFormSchema.safeParse({ reply_hours: emptyWeek, viewing_hours: null }).success,
-    ).toBe(true);
+    expect(hoursFormSchema.safeParse({ reply_hours: emptyWeek, viewing_hours: null }).success).toBe(
+      true,
+    );
     expect(
       hoursFormSchema.safeParse({
         reply_hours: {

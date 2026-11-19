@@ -310,7 +310,10 @@ describe('platform table schemas', () => {
       updated_at: ts,
     };
     expect(ownerApplicationsRow.safeParse(app).success).toBe(true);
-    expect(ownerApplicationsRow.safeParse({ ...app, facebook_page: null, sign_up_method: 'google' }).success).toBe(true);
+    expect(
+      ownerApplicationsRow.safeParse({ ...app, facebook_page: null, sign_up_method: 'google' })
+        .success,
+    ).toBe(true);
     expect(ownerApplicationsRow.safeParse({ ...app, rents: 'tours' }).success).toBe(false);
     expect(ownerApplicationsRow.safeParse({ ...app, unit_count_band: '6_15' }).success).toBe(false);
     expect(ownerApplicationsRow.safeParse({ ...app, city: '' }).success).toBe(false);

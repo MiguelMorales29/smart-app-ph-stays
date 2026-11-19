@@ -26,9 +26,7 @@ export function useApplyAsOwnerMutation() {
       const { source, session } = requireSourceClient(active);
       const idempotencyKey = input.idempotencyKey ?? createIdempotencyKey('apply-owner');
       const payload: OperationInput<'applyAsOwner'> =
-        input.method === 'google'
-          ? { ...input, idempotencyKey }
-          : { ...input, idempotencyKey };
+        input.method === 'google' ? { ...input, idempotencyKey } : { ...input, idempotencyKey };
       return unwrapResult(await source.applyAsOwner(payload, session));
     },
     onSuccess: async () => {

@@ -3,10 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { requireOwnerClient, unwrapResult, useActiveDataClient } from '../shared';
 import { photosKeys } from './keys';
 
-export function useListingPhotosQuery(
-  propertyId: string | null,
-  unitId: string | null = null,
-) {
+export function useListingPhotosQuery(propertyId: string | null, unitId: string | null = null) {
   const active = useActiveDataClient();
   return useQuery({
     queryKey: photosKeys.listing(active.accountId, propertyId, unitId),

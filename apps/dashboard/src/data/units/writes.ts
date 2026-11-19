@@ -10,10 +10,7 @@ import {
 } from '../shared';
 import { unitsKeys } from './keys';
 
-export type SaveUnitVariables = Omit<
-  OperationInput<'saveUnit'>,
-  'accountId' | 'idempotencyKey'
-> & {
+export type SaveUnitVariables = Omit<OperationInput<'saveUnit'>, 'accountId' | 'idempotencyKey'> & {
   readonly idempotencyKey?: string;
 };
 

@@ -3,10 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { requireOwnerClient, unwrapResult, useActiveDataClient } from '../shared';
 import { unitsKeys } from './keys';
 
-export function useOwnerUnitsQuery(
-  propertyId: string | null = null,
-  includeArchived = false,
-) {
+export function useOwnerUnitsQuery(propertyId: string | null = null, includeArchived = false) {
   const active = useActiveDataClient();
   return useQuery({
     queryKey: unitsKeys.list(active.accountId, propertyId, includeArchived),
