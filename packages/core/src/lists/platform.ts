@@ -52,3 +52,35 @@ export type PageReportReason = z.infer<typeof pageReportReasonSchema>;
 export const PAGE_REPORT_STATUSES = ['new', 'reviewing', 'closed'] as const;
 export const pageReportStatusSchema = z.enum(PAGE_REPORT_STATUSES);
 export type PageReportStatus = z.infer<typeof pageReportStatusSchema>;
+
+export const APPLICATION_RENTS = ['staycation', 'apartments', 'bed_spaces', 'mix'] as const;
+export const applicationRentsSchema = z.enum(APPLICATION_RENTS);
+export type ApplicationRents = z.infer<typeof applicationRentsSchema>;
+
+export const SIGN_UP_METHODS = ['password', 'google'] as const;
+export const signUpMethodSchema = z.enum(SIGN_UP_METHODS);
+export type SignUpMethod = z.infer<typeof signUpMethodSchema>;
+
+export const UNIT_COUNT_BANDS = ['1', '2_5', '6_20', '21_plus'] as const;
+export const unitCountBandSchema = z.enum(UNIT_COUNT_BANDS);
+export type UnitCountBand = z.infer<typeof unitCountBandSchema>;
+
+export const PROPERTY_COUNT_BANDS = ['1', '2_3', '4_plus'] as const;
+export const propertyCountBandSchema = z.enum(PROPERTY_COUNT_BANDS);
+export type PropertyCountBand = z.infer<typeof propertyCountBandSchema>;
+
+export const SETUP_STEP_KEYS = [
+  'property',
+  'unit',
+  'photos',
+  'price',
+  'payment_accounts',
+  'rules',
+  'publish',
+] as const;
+export const setupStepKeySchema = z.enum(SETUP_STEP_KEYS);
+export type SetupStepKey = z.infer<typeof setupStepKeySchema>;
+
+export const SETUP_STEP_STATUSES = ['done', 'todo', 'waiting'] as const;
+export const setupStepStatusSchema = z.enum(SETUP_STEP_STATUSES);
+export type SetupStepStatus = z.infer<typeof setupStepStatusSchema>;

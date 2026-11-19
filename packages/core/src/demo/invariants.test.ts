@@ -35,6 +35,7 @@ import {
   metaEventSwitchesRow,
   metaPixelsRow,
   notificationsOutboxRow,
+  ownerApplicationsRow,
   pageReportsRow,
   paymentAccountsRow,
   paymentProofsRow,
@@ -110,6 +111,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['feature_flags', featureFlagsRow],
     ['accounts', accountsRow],
     ['account_members', accountMembersRow],
+    ['owner_applications', ownerApplicationsRow],
     ['subscriptions', subscriptionsRow],
     ['account_features', accountFeaturesRow],
     ['account_counters', accountCountersRow],
@@ -154,7 +156,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['meta_capi_deliveries', metaCapiDeliveriesRow],
   ];
 
-  expect(tableValidators).toHaveLength(48);
+  expect(tableValidators).toHaveLength(49);
 
   const seenIds = new Set<string>();
   for (const [tableName, schema] of tableValidators) {
@@ -185,7 +187,14 @@ function assertWorldInvariants(world: DemoWorld): void {
   const subscriptionsById = new Map(world.subscriptions.map((r) => [r.id, r]));
 
   // Demo accounts, emails, and sample payment accounts
+  const applicationAccountIds = new Set<string>();
+  for (const app of world.owner_applications) {
+    expect(accountsById.has(app.account_id)).toBe(true);
+    expect(applicationAccountIds.has(app.account_id)).toBe(false);
+    applicationAccountIds.add(app.account_id);
+  }
   for (const account of world.accounts) {
+    expect(applicationAccountIds.has(account.id)).toBe(true);
     expect(account.is_demo).toBe(true);
     expect(
       account.contact_email.endsWith('@example.com') ||

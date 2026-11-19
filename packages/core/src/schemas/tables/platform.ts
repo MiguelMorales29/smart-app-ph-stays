@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { uuidSchema } from '../../ids/index.js';
 import {
   accountStatusSchema,
+  applicationRentsSchema,
   auditActorKindSchema,
   counterKindSchema,
   dataExportPartSchema,
@@ -13,9 +14,12 @@ import {
   memberStatusSchema,
   pageReportReasonSchema,
   pageReportStatusSchema,
+  propertyCountBandSchema,
+  signUpMethodSchema,
   subscriptionPaymentMethodSchema,
   subscriptionPaymentStatusSchema,
   subscriptionStatusSchema,
+  unitCountBandSchema,
 } from '../../lists/index.js';
 import { centavosSchema } from '../../money/index.js';
 import { calendarDateSchema } from '../../time/index.js';
@@ -227,3 +231,17 @@ export const pageReportsRow = z.object({
   closed_by: uuidSchema.nullable(),
 });
 export type PageReportsRow = z.infer<typeof pageReportsRow>;
+
+export const ownerApplicationsRow = z.object({
+  id: uuidSchema,
+  account_id: uuidSchema,
+  rents: applicationRentsSchema,
+  unit_count_band: unitCountBandSchema,
+  property_count_band: propertyCountBandSchema,
+  city: z.string().min(1).max(80),
+  facebook_page: z.string().min(1).max(200).nullable(),
+  sign_up_method: signUpMethodSchema,
+  created_at: isoTimestampSchema,
+  updated_at: isoTimestampSchema,
+});
+export type OwnerApplicationsRow = z.infer<typeof ownerApplicationsRow>;

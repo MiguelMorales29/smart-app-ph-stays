@@ -4,6 +4,7 @@ import type {
   FilesRow,
   HouseRulesRow,
   ListingPhotosRow,
+  OwnerApplicationsRow,
   PaymentAccountsRow,
   PropertiesRow,
   PropertyPagesRow,
@@ -36,6 +37,7 @@ export interface BrandBundle {
   readonly groupHex: string;
   readonly account: AccountsRow;
   readonly member: AccountMembersRow;
+  readonly application: OwnerApplicationsRow;
   readonly subscription: SubscriptionsRow;
   readonly subscriptionPayment: SubscriptionPaymentsRow;
   readonly property: PropertiesRow;

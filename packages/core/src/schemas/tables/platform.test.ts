@@ -10,6 +10,7 @@ import {
   featureFlagsRow,
   idempotencyKeysRow,
   jobRunsRow,
+  ownerApplicationsRow,
   pageReportsRow,
   plansRow,
   platformAdminsRow,
@@ -293,5 +294,25 @@ describe('platform table schemas', () => {
     expect(pageReportsRow.safeParse({ ...report, reason: 'spam' }).success).toBe(false);
     expect(pageReportsRow.safeParse({ ...report, details: '' }).success).toBe(false);
     expect(pageReportsRow.safeParse({ ...report, reporter_email: 'bad' }).success).toBe(false);
+  });
+
+  it('validates ownerApplicationsRow and rejects 3 broken rows', () => {
+    const app = {
+      id: id1,
+      account_id: id2,
+      rents: 'staycation',
+      unit_count_band: '2_5',
+      property_count_band: '1',
+      city: 'Tagaytay City',
+      facebook_page: 'https://facebook.com/ulapsuites',
+      sign_up_method: 'password',
+      created_at: ts,
+      updated_at: ts,
+    };
+    expect(ownerApplicationsRow.safeParse(app).success).toBe(true);
+    expect(ownerApplicationsRow.safeParse({ ...app, facebook_page: null, sign_up_method: 'google' }).success).toBe(true);
+    expect(ownerApplicationsRow.safeParse({ ...app, rents: 'tours' }).success).toBe(false);
+    expect(ownerApplicationsRow.safeParse({ ...app, unit_count_band: '6_15' }).success).toBe(false);
+    expect(ownerApplicationsRow.safeParse({ ...app, city: '' }).success).toBe(false);
   });
 });

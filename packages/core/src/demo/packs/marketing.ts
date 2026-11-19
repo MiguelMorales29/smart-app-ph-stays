@@ -7,7 +7,7 @@ import {
   buildUlapSuitesBrand,
 } from '../brands/index.js';
 import { DEMO_IDS } from '../ids.js';
-import { buildAccountCustomers, buildBaseProfiles } from '../people.js';
+import { buildAccountCustomers, buildBaseProfiles, buildExtraStateOwners } from '../people.js';
 import { AccountStoryBuilder } from '../story.js';
 import { appendBrandToWorld, createEmptyDemoWorld, seedPlatformBase } from './shared.js';
 import type { DemoWorld } from './shared.js';
@@ -342,6 +342,25 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
   appendBrandToWorld(world, bahay, bahayStory.build());
   appendBrandToWorld(world, ilaw);
   appendBrandToWorld(world, lorna);
+
+  // One pending owner applicant so pending onboarding/approval flows work on the default pack
+  const extraOwners = buildExtraStateOwners(today);
+  const pendingProfile = extraOwners.profiles.find((p) => p.id === DEMO_IDS.people.owners.pending);
+  const pendingAccount = extraOwners.accounts.find(
+    (a) => a.id === DEMO_IDS.people.extraAccounts.pendingAccount,
+  );
+  const pendingMember = extraOwners.members.find(
+    (m) => m.id === DEMO_IDS.people.extraAccounts.pendingMember,
+  );
+  const pendingApplication = extraOwners.applications.find(
+    (app) => app.id === DEMO_IDS.people.extraAccounts.pendingApplication,
+  );
+  if (pendingProfile && pendingAccount && pendingMember && pendingApplication) {
+    world.profiles.push(pendingProfile);
+    world.accounts.push(pendingAccount);
+    world.account_members.push(pendingMember);
+    world.owner_applications.push(pendingApplication);
+  }
 
   return world;
 }
