@@ -270,11 +270,11 @@ export async function StorefrontKitView({
                 </div>
                 <div className="rounded-lg bg-primary p-3 text-primary-foreground">
                   <p className="text-xs font-medium">Button (10)</p>
-                  <p className="text-xs opacity-90">--primary</p>
+                  <p className="text-xs">--primary</p>
                 </div>
                 <div className="rounded-lg bg-brand-accent p-3 text-brand-accent-foreground">
                   <p className="text-xs font-medium">Brand accent</p>
-                  <p className="text-xs opacity-90">--brand-accent</p>
+                  <p className="text-xs">--brand-accent</p>
                 </div>
               </div>
             </KitSection>

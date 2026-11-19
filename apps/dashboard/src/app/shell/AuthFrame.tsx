@@ -38,7 +38,7 @@ export function AuthFrame() {
       <DashboardSwitchGate />
       <PreviewRibbon />
 
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card pt-safe">
         <div className="mx-auto flex min-h-14 w-full max-w-3xl items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -86,7 +86,7 @@ export function AuthFrame() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-10">
+      <main className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-10 pb-safe">
         <div className="w-full rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm">
           <Outlet />
         </div>

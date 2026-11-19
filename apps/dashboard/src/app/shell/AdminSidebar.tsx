@@ -36,7 +36,7 @@ export function AdminSidebar() {
               </span>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">Smart App PH</span>
-                <span className="truncate text-xs font-medium text-primary">Super admin</span>
+                <span className="truncate text-xs font-medium text-primary-hover">Super admin</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

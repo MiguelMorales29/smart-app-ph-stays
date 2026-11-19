@@ -87,7 +87,6 @@ export function AccountMenu({
           render={
             <SidebarMenuButton
               size="lg"
-              aria-label="Account menu"
               className="aria-expanded:bg-muted pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-1.5!"
             />
           }
@@ -101,16 +100,10 @@ export function AccountMenu({
         </DropdownMenuTrigger>
       ) : (
         <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-11 rounded-full"
-              aria-label="Account menu"
-            />
-          }
+          render={<Button variant="ghost" size="icon" className="size-11 rounded-full" />}
         >
           {avatar}
+          <span className="sr-only">Account menu</span>
         </DropdownMenuTrigger>
       )}
       <DropdownMenuContent

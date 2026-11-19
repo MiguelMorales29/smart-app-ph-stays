@@ -141,6 +141,7 @@ export function KitTokensTab() {
                     <td className="py-2.5 pr-4 font-mono">{row.pair}</td>
                     <td className="py-2.5 pr-4">
                       <span
+                        data-contrast-sample={row.minRatio < 4.5 ? '' : undefined}
                         className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 font-medium tabular"
                         style={{ backgroundColor: row.bgHexLight, color: row.fgHexLight }}
                       >
@@ -149,6 +150,7 @@ export function KitTokensTab() {
                     </td>
                     <td className="py-2.5 pr-4">
                       <span
+                        data-contrast-sample={row.minRatio < 4.5 ? '' : undefined}
                         className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 font-medium tabular"
                         style={{ backgroundColor: row.bgHexDark, color: row.fgHexDark }}
                       >
@@ -208,6 +210,9 @@ export function KitTokensTab() {
               <Badge variant="outline">--dur-fast: 120ms</Badge>
               <Badge variant="outline">--dur-base: 200ms</Badge>
               <Badge variant="outline">--dur-slow: 320ms</Badge>
+              <Badge variant="outline">--ease-enter</Badge>
+              <Badge variant="outline">--ease-exit</Badge>
+              <Badge variant="outline">--ease-spring</Badge>
             </div>
           </div>
         </div>

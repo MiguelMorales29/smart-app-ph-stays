@@ -83,6 +83,10 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 - P4-0 approved packages (2026-11-20, `apps/dashboard` only): `react-hook-form@7.89.0` (MIT), `@hookform/resolvers@5.9.1` (MIT), `@tanstack/react-query@5.104.1` (MIT).
 - Test packages approved for Phase 4: `@axe-core/playwright@4.14.0` (P4-1); `@testing-library/react@16.3.3`, `@testing-library/user-event@14.6.9`, `@testing-library/jest-dom@7.0.1`, `jsdom@31.0.0` (P4-8). Each is listed with its licence when installed.
 
+### P4-1 approved packages
+
+- `@axe-core/playwright@4.14.0` (MPL-2.0) in `tooling` devDependencies only for automated accessibility checks in `tooling/e2e/ui-scan.e2e.ts`.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
