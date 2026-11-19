@@ -17,17 +17,21 @@ export function buildEmptyPack(clock: Clock): DemoWorld {
     (a) => a.id === DEMO_IDS.people.extraAccounts.emptyAccount,
   );
   const emptyMember = extra.members.find((m) => m.id === DEMO_IDS.people.extraAccounts.emptyMember);
+  const emptyApplication = extra.applications.find(
+    (app) => app.id === DEMO_IDS.people.extraAccounts.emptyApplication,
+  );
   const emptySubscription = extra.subscriptions.find(
     (s) => s.id === DEMO_IDS.people.extraAccounts.emptySubscription,
   );
 
-  if (!emptyProfile || !emptyAccount || !emptyMember || !emptySubscription) {
+  if (!emptyProfile || !emptyAccount || !emptyMember || !emptyApplication || !emptySubscription) {
     throw new Error('Missing empty owner records');
   }
 
   world.profiles.push(emptyProfile);
   world.accounts.push(emptyAccount);
   world.account_members.push(emptyMember);
+  world.owner_applications.push(emptyApplication);
   world.subscriptions.push(emptySubscription);
   world.account_counters.push(
     {

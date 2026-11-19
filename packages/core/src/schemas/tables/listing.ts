@@ -99,6 +99,7 @@ export const unitsRow = z.object({
   name: z.string().min(1).max(80),
   mode: unitModeSchema,
   unit_type: unitTypeSchema,
+  group_label: z.string().min(1).max(40).nullable(),
   description: z.string().max(4000).nullable(),
   max_guests: z.int().min(1),
   bedrooms: z.int().min(0),

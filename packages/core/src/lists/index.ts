@@ -123,6 +123,7 @@ export type {
 
 export {
   ACCOUNT_STATUSES,
+  APPLICATION_RENTS,
   AUDIT_ACTOR_KINDS,
   COUNTER_KINDS,
   DATA_EXPORT_PARTS,
@@ -133,8 +134,14 @@ export {
   MEMBER_STATUSES,
   PAGE_REPORT_REASONS,
   PAGE_REPORT_STATUSES,
+  PROPERTY_COUNT_BANDS,
+  SETUP_STEP_KEYS,
+  SETUP_STEP_STATUSES,
+  SIGN_UP_METHODS,
   SUBSCRIPTION_STATUSES,
+  UNIT_COUNT_BANDS,
   accountStatusSchema,
+  applicationRentsSchema,
   auditActorKindSchema,
   counterKindSchema,
   dataExportPartSchema,
@@ -145,10 +152,16 @@ export {
   memberStatusSchema,
   pageReportReasonSchema,
   pageReportStatusSchema,
+  propertyCountBandSchema,
+  setupStepKeySchema,
+  setupStepStatusSchema,
+  signUpMethodSchema,
   subscriptionStatusSchema,
+  unitCountBandSchema,
 } from './platform.js';
 export type {
   AccountStatus,
+  ApplicationRents,
   AuditActorKind,
   CounterKind,
   DataExportPart,
@@ -159,7 +172,12 @@ export type {
   MemberStatus,
   PageReportReason,
   PageReportStatus,
+  PropertyCountBand,
+  SetupStepKey,
+  SetupStepStatus,
+  SignUpMethod,
   SubscriptionStatus,
+  UnitCountBand,
 } from './platform.js';
 
 export { FEE_BASES, FEE_KINDS, feeBasisSchema, feeKindSchema } from './pricing.js';

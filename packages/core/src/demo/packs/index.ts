@@ -66,6 +66,7 @@ export function summarizeDemoWorld(
     feature_flags: world.feature_flags.length,
     accounts: world.accounts.length,
     account_members: world.account_members.length,
+    owner_applications: world.owner_applications.length,
     subscriptions: world.subscriptions.length,
     account_features: world.account_features.length,
     account_counters: world.account_counters.length,

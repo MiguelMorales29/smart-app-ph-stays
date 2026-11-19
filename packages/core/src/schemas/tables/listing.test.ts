@@ -155,6 +155,7 @@ describe('listing table schemas', () => {
       name: 'Buong Bahay Villa',
       mode: 'short_stay',
       unit_type: 'entire_place',
+      group_label: null,
       description: '4 bedrooms with private pool',
       max_guests: 15,
       bedrooms: 4,
@@ -169,6 +170,9 @@ describe('listing table schemas', () => {
       updated_at: ts,
     };
     expect(unitsRow.safeParse(unit).success).toBe(true);
+    expect(unitsRow.safeParse({ ...unit, group_label: 'Room 2A' }).success).toBe(true);
+    expect(unitsRow.safeParse({ ...unit, group_label: '' }).success).toBe(false);
+    expect(unitsRow.safeParse({ ...unit, group_label: 'a'.repeat(41) }).success).toBe(false);
     expect(unitsRow.safeParse({ ...unit, max_guests: 0 }).success).toBe(false);
     expect(unitsRow.safeParse({ ...unit, bathrooms: 1.25 }).success).toBe(false);
     expect(unitsRow.safeParse({ ...unit, slug: 'a'.repeat(41) }).success).toBe(false);

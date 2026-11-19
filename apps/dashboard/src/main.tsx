@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import './index.css';
+import { DashboardQueryProvider } from '@/app/query';
 import { ThemeProvider } from '@/app/theme';
 import { App } from './App';
 
@@ -12,8 +13,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <DashboardQueryProvider>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </DashboardQueryProvider>
   </StrictMode>,
 );

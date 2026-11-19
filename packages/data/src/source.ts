@@ -1,4 +1,4 @@
-import { operations } from '@smartapp/core';
+import { err, operations, reasonError } from '@smartapp/core';
 import type { OperationAccess, OperationName, Result } from '@smartapp/core';
 import type { z } from 'zod';
 
@@ -79,9 +79,19 @@ export function createValidatedDataSource(
     handler: (input: P, session: Session) => Promise<Result<O>>,
   ): (input: I, session: Session) => Promise<Result<O>> {
     return async (input, session) => {
-      // Every call checks its input against the core contract Zod schema.
-      const parsedInput = inputSchema.parse(input);
-      const result = await handler(parsedInput, session);
+      // D45: Every call checks its input with safeParse; bad input returns an error, never throws.
+      const parsedInput = inputSchema.safeParse(input);
+      if (!parsedInput.success) {
+        const fields: Record<string, string> = {};
+        for (const issue of parsedInput.error.issues) {
+          const key = issue.path.length > 0 ? issue.path.map(String).join('.') : '_root';
+          if (!(key in fields)) {
+            fields[key] = issue.message;
+          }
+        }
+        return err(reasonError('not_allowed', 'invalid_input', { fields }));
+      }
+      const result = await handler(parsedInput.data, session);
 
       if (result.ok && validateOutput) {
         const parsedOutput = outputSchema.parse(result.data);
@@ -301,6 +311,150 @@ export function createValidatedDataSource(
       operations.getCalendarTimeline.input,
       operations.getCalendarTimeline.output,
       handlers.getCalendarTimeline,
+    ),
+    applyAsOwner: wrapOp(
+      operations.applyAsOwner.input,
+      operations.applyAsOwner.output,
+      handlers.applyAsOwner,
+    ),
+    signIn: wrapOp(operations.signIn.input, operations.signIn.output, handlers.signIn),
+    signInWithGoogle: wrapOp(
+      operations.signInWithGoogle.input,
+      operations.signInWithGoogle.output,
+      handlers.signInWithGoogle,
+    ),
+    requestPasswordCode: wrapOp(
+      operations.requestPasswordCode.input,
+      operations.requestPasswordCode.output,
+      handlers.requestPasswordCode,
+    ),
+    resetPassword: wrapOp(
+      operations.resetPassword.input,
+      operations.resetPassword.output,
+      handlers.resetPassword,
+    ),
+    getMyAccount: wrapOp(
+      operations.getMyAccount.input,
+      operations.getMyAccount.output,
+      handlers.getMyAccount,
+    ),
+    getSetupChecklist: wrapOp(
+      operations.getSetupChecklist.input,
+      operations.getSetupChecklist.output,
+      handlers.getSetupChecklist,
+    ),
+    getOwnerProperty: wrapOp(
+      operations.getOwnerProperty.input,
+      operations.getOwnerProperty.output,
+      handlers.getOwnerProperty,
+    ),
+    saveProperty: wrapOp(
+      operations.saveProperty.input,
+      operations.saveProperty.output,
+      handlers.saveProperty,
+    ),
+    checkSlug: wrapOp(operations.checkSlug.input, operations.checkSlug.output, handlers.checkSlug),
+    listOwnerUnits: wrapOp(
+      operations.listOwnerUnits.input,
+      operations.listOwnerUnits.output,
+      handlers.listOwnerUnits,
+    ),
+    getOwnerUnit: wrapOp(
+      operations.getOwnerUnit.input,
+      operations.getOwnerUnit.output,
+      handlers.getOwnerUnit,
+    ),
+    saveUnit: wrapOp(operations.saveUnit.input, operations.saveUnit.output, handlers.saveUnit),
+    createBedSpaces: wrapOp(
+      operations.createBedSpaces.input,
+      operations.createBedSpaces.output,
+      handlers.createBedSpaces,
+    ),
+    setUnitStatus: wrapOp(
+      operations.setUnitStatus.input,
+      operations.setUnitStatus.output,
+      handlers.setUnitStatus,
+    ),
+    reorderUnits: wrapOp(
+      operations.reorderUnits.input,
+      operations.reorderUnits.output,
+      handlers.reorderUnits,
+    ),
+    archiveUnit: wrapOp(
+      operations.archiveUnit.input,
+      operations.archiveUnit.output,
+      handlers.archiveUnit,
+    ),
+    listAmenities: wrapOp(
+      operations.listAmenities.input,
+      operations.listAmenities.output,
+      handlers.listAmenities,
+    ),
+    saveUnitPrices: wrapOp(
+      operations.saveUnitPrices.input,
+      operations.saveUnitPrices.output,
+      handlers.saveUnitPrices,
+    ),
+    requestUpload: wrapOp(
+      operations.requestUpload.input,
+      operations.requestUpload.output,
+      handlers.requestUpload,
+    ),
+    confirmUpload: wrapOp(
+      operations.confirmUpload.input,
+      operations.confirmUpload.output,
+      handlers.confirmUpload,
+    ),
+    saveListingPhotos: wrapOp(
+      operations.saveListingPhotos.input,
+      operations.saveListingPhotos.output,
+      handlers.saveListingPhotos,
+    ),
+    listPaymentAccounts: wrapOp(
+      operations.listPaymentAccounts.input,
+      operations.listPaymentAccounts.output,
+      handlers.listPaymentAccounts,
+    ),
+    savePaymentAccount: wrapOp(
+      operations.savePaymentAccount.input,
+      operations.savePaymentAccount.output,
+      handlers.savePaymentAccount,
+    ),
+    setPaymentAccountActive: wrapOp(
+      operations.setPaymentAccountActive.input,
+      operations.setPaymentAccountActive.output,
+      handlers.setPaymentAccountActive,
+    ),
+    reorderPaymentAccounts: wrapOp(
+      operations.reorderPaymentAccounts.input,
+      operations.reorderPaymentAccounts.output,
+      handlers.reorderPaymentAccounts,
+    ),
+    savePolicies: wrapOp(
+      operations.savePolicies.input,
+      operations.savePolicies.output,
+      handlers.savePolicies,
+    ),
+    saveHours: wrapOp(operations.saveHours.input, operations.saveHours.output, handlers.saveHours),
+    updateProfile: wrapOp(
+      operations.updateProfile.input,
+      operations.updateProfile.output,
+      handlers.updateProfile,
+    ),
+    changePassword: wrapOp(
+      operations.changePassword.input,
+      operations.changePassword.output,
+      handlers.changePassword,
+    ),
+    signOutEverywhere: wrapOp(
+      operations.signOutEverywhere.input,
+      operations.signOutEverywhere.output,
+      handlers.signOutEverywhere,
+    ),
+    requestAccountDeletion: wrapOp(
+      operations.requestAccountDeletion.input,
+      operations.requestAccountDeletion.output,
+      handlers.requestAccountDeletion,
     ),
   } satisfies DataSource;
 }

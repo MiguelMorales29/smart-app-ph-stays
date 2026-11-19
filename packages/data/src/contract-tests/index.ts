@@ -2,6 +2,7 @@ import { DEMO_IDS, calendarDate, quoteStay, type AppError, type Result } from '@
 import { describe, expect, it } from 'vitest';
 
 import type { DataSource, Session } from '../source.js';
+import { runOwnerP4ContractTests } from './owner-p4.js';
 
 export interface ContractHarness {
   readonly source: DataSource;
@@ -1684,4 +1685,6 @@ export function runContractTests(makeSource: MakeContractSource): void {
       });
     });
   });
+
+  runOwnerP4ContractTests(makeSource);
 }

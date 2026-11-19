@@ -170,6 +170,18 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       created_at: createdAt,
       updated_at: createdAt,
     },
+    application: {
+      id: ids.application,
+      account_id: ids.account,
+      rents: 'staycation',
+      unit_count_band: '2_5',
+      property_count_band: '1',
+      city: 'Tagaytay City',
+      facebook_page: 'https://facebook.com/ulapsuites.demo',
+      sign_up_method: 'password',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
     subscription: {
       id: ids.subscription,
       account_id: ids.account,
@@ -271,6 +283,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
         name: 'Studio Fog',
         mode: 'short_stay',
         unit_type: 'entire_place',
+        group_label: null,
         description:
           'Cozy 24 sqm studio with fairy-light queen bed, 100-inch projector screen, coffee bar, work desk, and pine-tree window.',
         max_guests: 2,
@@ -293,6 +306,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
         name: '1BR Taal View',
         mode: 'short_stay',
         unit_type: 'entire_place',
+        group_label: null,
         description:
           'Spacious 36 sqm 1-bedroom suite with sunset balcony over Taal Lake, queen bedroom, sofa bed, karaoke speaker, and full kitchen.',
         max_guests: 4,

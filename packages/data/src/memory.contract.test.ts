@@ -58,25 +58,32 @@ describe('getDataSource, mediaUrl, and adapter options', () => {
     }
   });
 
-  it('rejects invalid contract inputs immediately via Zod', async () => {
+  it('returns not_allowed with invalid_input and fields on invalid contract inputs without throwing (D45)', async () => {
     const source = await getDataSource({
       adapter: 'memory',
       pack: 'qa',
       clock: { now: () => new Date(GOLDEN_CLOCK_ISO) },
     });
 
-    await expect(
-      source.quoteStay(
-        {
-          unitId: 'not-a-uuid',
-          checkIn: '2027-01-12',
-          checkOut: '2027-01-14',
-          adults: 2,
-          children: 0,
-        },
-        { role: 'guest' },
-      ),
-    ).rejects.toThrow();
+    const result = await source.quoteStay(
+      {
+        unitId: 'not-a-uuid',
+        checkIn: '2027-01-12',
+        checkOut: '2027-01-14',
+        adults: 2,
+        children: 0,
+      },
+      { role: 'guest' },
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('not_allowed');
+      expect(result.error.details).toEqual({
+        reason: 'invalid_input',
+        fields: { unitId: 'Invalid UUID' },
+      });
+    }
   });
 
   it('turns files rows into storefront /demo-media URLs in memory mode and Supabase Storage URLs in Phase 11 mode', () => {
