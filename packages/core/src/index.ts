@@ -12,5 +12,6 @@ export * from './schemas/tables/index.js';
 export * from './schemas/views/index.js';
 export * from './theme/index.js';
 export * from './time/index.js';
+export * from './time/ph-holidays.js';
 export { words } from './words.js';
 export * from './places/ph-provinces.js';
