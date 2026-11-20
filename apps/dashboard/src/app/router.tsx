@@ -65,7 +65,10 @@ const forgotPasswordRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: '/forgot-password',
   staticData: { page: { title: 'Reset your password' } },
-  component: lazyRouteComponent(() => import('@/features/auth/forgot-password-page'), 'ForgotPasswordPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/auth/forgot-password-page'),
+    'ForgotPasswordPage',
+  ),
 });
 
 // Focus frame routes (/onboarding, /editor)
@@ -92,7 +95,10 @@ const onboardingRoute = createRoute({
   path: '/onboarding',
   validateSearch: parseOnboardingSearch,
   staticData: { page: { title: 'Set up your place' } },
-  component: lazyRouteComponent(() => import('@/features/onboarding/onboarding-page'), 'OnboardingPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/onboarding/onboarding-page'),
+    'OnboardingPage',
+  ),
 });
 
 const editorRoute = createRoute({
@@ -195,7 +201,10 @@ const settingsIndexRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings',
   staticData: { page: { title: 'Settings' } },
-  component: lazyRouteComponent(() => import('@/features/settings/settings-index-page'), 'SettingsIndexPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/settings/settings-index-page'),
+    'SettingsIndexPage',
+  ),
 });
 
 const settingsParent = { to: '/settings', title: 'Settings' } as const;
@@ -204,14 +213,20 @@ const settingsPaymentsRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/payments',
   staticData: { page: { title: 'Payments', parent: settingsParent } },
-  component: lazyRouteComponent(() => import('@/features/settings/payments-settings-page'), 'PaymentsSettingsPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/settings/payments-settings-page'),
+    'PaymentsSettingsPage',
+  ),
 });
 
 const settingsPoliciesRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/policies',
   staticData: { page: { title: 'Policies', parent: settingsParent } },
-  component: lazyRouteComponent(() => import('@/features/settings/policies-settings-page'), 'PoliciesSettingsPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/settings/policies-settings-page'),
+    'PoliciesSettingsPage',
+  ),
 });
 
 const settingsNoticesRoute = createRoute({
@@ -239,21 +254,30 @@ const settingsPropertyRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/property',
   staticData: { page: { title: 'Property details', parent: settingsParent } },
-  component: lazyRouteComponent(() => import('@/features/settings/property-settings-page'), 'PropertySettingsPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/settings/property-settings-page'),
+    'PropertySettingsPage',
+  ),
 });
 
 const settingsHoursRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/hours',
   staticData: { page: { title: 'Hours', parent: settingsParent } },
-  component: lazyRouteComponent(() => import('@/features/settings/hours-settings-page'), 'HoursSettingsPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/settings/hours-settings-page'),
+    'HoursSettingsPage',
+  ),
 });
 
 const settingsAccountRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/account',
   staticData: { page: { title: 'Account', parent: settingsParent } },
-  component: lazyRouteComponent(() => import('@/features/settings/account-settings-page'), 'AccountSettingsPage'),
+  component: lazyRouteComponent(
+    () => import('@/features/settings/account-settings-page'),
+    'AccountSettingsPage',
+  ),
 });
 
 const settingsStorageRoute = createRoute({
