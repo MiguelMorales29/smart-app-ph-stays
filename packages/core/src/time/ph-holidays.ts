@@ -144,9 +144,13 @@ function computedYear(year: number): PhHolidayYear {
         [`${year}-12-30`, 'Rizal Day', 'regular'],
         [`${year}-12-31`, 'Last Day of the Year', 'special'],
       ]),
-      { date: lastMondayOfAugust(year), name: 'National Heroes Day', kind: 'regular' },
-      { date: addDays(easter, -3), name: 'Maundy Thursday', kind: 'regular' },
-      { date: addDays(easter, -2), name: 'Good Friday', kind: 'regular' },
+      {
+        date: lastMondayOfAugust(year),
+        name: 'National Heroes Day',
+        kind: 'regular',
+      } satisfies PhHoliday,
+      { date: addDays(easter, -3), name: 'Maundy Thursday', kind: 'regular' } satisfies PhHoliday,
+      { date: addDays(easter, -2), name: 'Good Friday', kind: 'regular' } satisfies PhHoliday,
     ].sort((x, y) => x.date.localeCompare(y.date)),
   };
 }

@@ -104,6 +104,7 @@ Reuse these before reaching for a raw component; they already handle light/dark,
 | `DraftNotice`                              | "We kept the changes you didn't save" with Keep / Start over                         | Restore a draft without asking                                |
 | `GoLiveCard`                               | The go-live moment: "<Place> is live", the link, Copy and one confetti burst (D53)   | Show it for anything smaller than going live                  |
 | `PhotoManager`                             | Listing photos: add, reorder (drag or menu), cover, descriptions, per-photo progress | Do the shrinking or uploading inside it; the app passes tiles |
+| `PriceEditor`                              | Unit prices: base, day prices, special dates with PH holiday chips, 14-night preview | Use a second price calculator; the preview runs `quoteStay`   |
 | `notify()` (lib)                           | Short messages and Undo (one helper over the Base UI toast)                          | Show errors that need action in a toast                       |
 | `celebrate()` (lib)                        | The go-live confetti, once per property per device                                   | Use for routine saves                                         |
 

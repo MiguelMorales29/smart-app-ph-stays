@@ -80,16 +80,18 @@ const DAY_CHIPS: readonly { iso: number; short: string; long: string }[] = [
   { iso: 7, short: 'Sun', long: 'Sunday' },
 ];
 
-const dayFormat = new Intl.DateTimeFormat('en-PH', {
-  weekday: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
-const shortFormat = new Intl.DateTimeFormat('en-PH', {
-  day: 'numeric',
-  month: 'short',
-  timeZone: 'UTC',
-});
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** "Fri 11" */
+function formatDay(date: Date): string {
+  return `${WEEKDAYS[date.getUTCDay()] ?? ''} ${date.getUTCDate()}`;
+}
+
+/** "11 Dec" */
+function formatShort(date: Date): string {
+  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()] ?? ''}`;
+}
 
 function toDate(date: CalendarDate): Date {
   return new Date(`${date}T00:00:00Z`);
@@ -110,13 +112,13 @@ function fromLocalDate(date: Date): CalendarDate {
 /** "23–26 Dec" (the nights, not the check-out day). */
 export function formatNights(start: CalendarDate, end: CalendarDate): string {
   const last = addDays(end, -1);
-  if (last === start) return shortFormat.format(toDate(start));
+  if (last === start) return formatShort(toDate(start));
   const a = toDate(start);
   const b = toDate(last);
   if (a.getUTCMonth() === b.getUTCMonth()) {
-    return `${a.getUTCDate()}–${shortFormat.format(b)}`;
+    return `${a.getUTCDate()}–${formatShort(b)}`;
   }
-  return `${shortFormat.format(a)} – ${shortFormat.format(b)}`;
+  return `${formatShort(a)} – ${formatShort(b)}`;
 }
 
 function overlaps(
@@ -227,6 +229,7 @@ function Count({
     <div className="flex items-center gap-2">
       <NumberField
         id={id}
+        className="w-auto"
         value={value}
         min={min}
         max={max}
@@ -238,7 +241,9 @@ function Count({
           <NumberFieldIncrement aria-label={`More: ${label}`} />
         </NumberFieldGroup>
       </NumberField>
-      {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
+      {suffix ? (
+        <span className="text-sm whitespace-nowrap text-muted-foreground">{suffix}</span>
+      ) : null}
     </div>
   );
 }
@@ -330,7 +335,7 @@ export function PriceEditor({
                 <ToggleGroupItem
                   key={day.iso}
                   value={String(day.iso)}
-                  aria-label={day.long}
+
                   className="min-h-11 min-w-12 sm:min-h-9"
                 >
                   {day.short}
@@ -422,7 +427,8 @@ export function PriceEditor({
           <p className="text-sm text-muted-foreground">Enter a price per night to see them.</p>
         ) : (
           <ol
-            className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2"
+            tabIndex={0}
+            className="-mx-1 flex snap-x gap-2 overflow-x-auto rounded-lg px-1 pb-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             aria-label="Price for each of the next 14 nights"
           >
             {preview.map((night) => (
@@ -437,9 +443,7 @@ export function PriceEditor({
                       : 'border-border bg-card',
                 )}
               >
-                <span className="text-muted-foreground">
-                  {dayFormat.format(toDate(night.date))}
-                </span>
+                <span className="text-muted-foreground">{formatDay(toDate(night.date))}</span>
                 <span className="text-sm font-semibold text-foreground tabular">
                   {formatPesos(night.price)}
                 </span>

@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { AmenitiesRow, OwnerUnitDetailView } from '@smartapp/core';
+import { AMENITY_GROUPS, type AmenitiesRow, type OwnerUnitDetailView } from '@smartapp/core';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
 import {
@@ -114,6 +114,7 @@ function Count({
     <div className="flex items-center gap-2">
       <NumberField
         id={id}
+        className="w-auto"
         value={value}
         min={min}
         max={max}
@@ -125,7 +126,9 @@ function Count({
           <NumberFieldIncrement aria-label={`More: ${label}`} />
         </NumberFieldGroup>
       </NumberField>
-      {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
+      {suffix ? (
+        <span className="text-sm whitespace-nowrap text-muted-foreground">{suffix}</span>
+      ) : null}
     </div>
   );
 }
@@ -358,7 +361,11 @@ export function AmenitiesField({
     <AmenityChips
       options={catalogue
         .filter((item) => item.is_active)
-        .sort((a, b) => a.sort_order - b.sort_order)
+        .sort(
+          (a, b) =>
+            AMENITY_GROUPS.indexOf(a.grp) - AMENITY_GROUPS.indexOf(b.grp) ||
+            a.sort_order - b.sort_order,
+        )
         .map((item) => ({
           id: item.id,
           label: item.label,
