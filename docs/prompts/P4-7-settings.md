@@ -68,6 +68,18 @@ Post the settings layout at each size, each page's fields and copy, the switcher
 
 Plan, notices, storage and activity pages, publishing (Phase 5).
 
+## Phase 4.5 rules (added 20 Nov 2026)
+
+- Build every page from docs/pattern-guide.md:
+  - grouped rows for every setting;
+  - picker sheets for choices;
+  - `SegmentedControl` for 2–4 options;
+  - `InlineStepper` for small counts;
+  - the save pill;
+  - sheets with snap points for Change link, the password ask, account cards and the property switcher.
+- The hub follows the Claude settings layout: groups with titles, a value on each row, a dot only on unfinished rows.
+- Done also means the pattern guide's definition of done (§6): screenshots at 390 px with Safari's bars and 1280 px, light and dark, and recordings of each sheet.
+
 ## Every prompt in Phase 4
 
 - Load the `smartapp-ui`, `smartapp-ui-writing` and `smartapp-ui-check` skills before any UI work.

@@ -79,6 +79,16 @@ Post the journey test steps, the six component tests, how the budget check measu
 
 As in the shared footer below, and your report includes the budget numbers, the journey test run time, and anything Lex must do by hand.
 
+## Phase 4.5 rules (added 20 Nov 2026)
+
+- **Final design pass:**
+  - every Phase 4 route checked against docs/pattern-guide.md at 390 px (Safari bars) and 1280 px, light and dark;
+  - `design:design-critique` and `design:accessibility-review` on the result;
+  - a before/after gallery in the PR;
+  - Lex signs off on his own iPhone.
+- Run the full UI scan on the Phase 4 routes: `gh workflow run full-ui-scan.yml --ref main -f paths=/signup,/login,/forgot-password,/onboarding,/home,/units,/settings`.
+- AGENTS.md "Where we are" moves to Phase 5 only after Lex's sign-off.
+
 ## Every prompt in Phase 4
 
 - Load the `smartapp-ui`, `smartapp-ui-writing` and `smartapp-ui-check` skills before any UI work.

@@ -91,6 +91,12 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 
 - P4-3 (2026-11-20): the contract gains `listPlans` (public: plan name, price, included units, trial days, for the sign-up sell panel and later the owner landing page), `requestSignupCode` and `verifySignupCode` (public; the sign-up email check, demo code 123456), and `applyAsOwner.placeName` (becomes the account name). Real enforcement that an application's email was verified moves to the API in Phase 11.
 
+- D61 Colour structure follows the Claude apps (warm greys, layered surfaces, one action colour, separate status ramps) with our values: warm neutrals plus Smart Blue for actions and Growth Mint as brand accent. Exact values in docs/pattern-guide.md §1. Replaces the cool blue-grey neutrals of D35.
+- D62 Motion stays CSS only (confirms D53): press 70 ms with 0.98 scale, 120 / 200 / 300 ms tokens. Content is never removed while it animates.
+- D63 The Preview ("view as") switch moves into the account menu on phones and a small corner tab on desktop.
+- D64 The dashboard serves its own copy of the demo media, so demo photos load on any deploy without the storefront.
+- Phase 4.5 (2026-11-20): after a UX review of P4-3 to P4-6 on a real iPhone, Phase 4 adds two prompts (P4.5-A patterns, P4.5-B refit) before P4-7 and P4-8. Every UI prompt follows docs/pattern-guide.md and its definition of done. Konsta UI is a reference for sizes only, not installed (D34, D60).
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
