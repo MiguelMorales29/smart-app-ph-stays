@@ -147,7 +147,7 @@ function PoliciesForm({
       next.note = 'Write your cancellation rule.';
     }
     if (!/^\S+@\S+\.\S+$/.test(draft.privacy.trim())) {
-      next.privacy = 'Enter an email address, like you@example.com.';
+      next.privacy = 'Enter a working email address.';
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
