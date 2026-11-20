@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Building2Icon, ChevronsUpDownIcon, ShapesIcon } from 'lucide-react';
+import { Building2Icon, ChevronRightIcon, ShapesIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
 import {
   Sidebar,
@@ -36,7 +36,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip={`${propertyName} · Property switcher (coming soon)`}
+              tooltip={`${propertyName} · Property details`}
               className="pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-1.5!"
               render={<Link to="/settings/property" />}
             >
@@ -46,10 +46,10 @@ export function AppSidebar() {
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{propertyName}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {client?.isPausedOwner ? 'Paused' : 'Property switcher'}
+                  {client?.isPausedOwner ? 'Paused' : 'Property details'}
                 </span>
               </div>
-              <ChevronsUpDownIcon
+              <ChevronRightIcon
                 className="ml-auto size-4 shrink-0 text-muted-foreground"
                 aria-hidden="true"
               />

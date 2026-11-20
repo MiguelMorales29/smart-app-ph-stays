@@ -8,9 +8,11 @@ import { useDocumentTitle, usePageMeta } from '@/app/page-meta';
 import { DashboardSwitchGate } from '@/components/DashboardSwitchGate';
 import { PreviewRibbon } from '@/components/PreviewRibbon';
 import { AccountMenu } from './AccountMenu';
+import { useSwipeBack } from './use-swipe-back';
 
 export function FocusFrame() {
   const { client, forcedOffline } = useDashboard();
+  useSwipeBack();
   const page = usePageMeta();
   useDocumentTitle(page.title);
 
