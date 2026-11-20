@@ -4,7 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { ArrowLeftIcon, CheckIcon, CircleIcon } from 'lucide-react';
-import { readErrorDetails, unitFormSchema, type OwnerUnitDetailView } from '@smartapp/core';
+import {
+  centavos,
+  calendarDateSchema,
+  readErrorDetails,
+  unitFormSchema,
+  type OwnerUnitDetailView,
+} from '@smartapp/core';
 import {
   Accordion,
   AccordionContent,
@@ -27,18 +33,37 @@ import { Textarea } from '@smartapp/ui/components/textarea';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
+import {
+  PriceEditor,
+  type PriceDraft,
+  type PriceDraftErrors,
+} from '@smartapp/ui/compositions/price-editor';
 import { LeaveGuardDialog, SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { useFormDraft } from '@smartapp/ui/hooks/use-form-draft';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { notify } from '@smartapp/ui/lib/notify';
 import { cn } from '@smartapp/ui/lib/utils';
+import { useDashboard } from '@/app/dashboard-context';
 import { usePhotoPipeline } from '@/app/photos/use-photo-pipeline';
 import { useSetUnitPhotosMutation } from '@/data/photos/upload';
+import { useSaveUnitPricesMutation } from '@/data/prices/writes';
 import { extractAppError } from '@/data/shared';
 import { saveUnitInputFromDetail } from '@/data/units/bulk';
-import { useOwnerUnitQuery, useOwnerUnitsQuery } from '@/data/units/reads';
+import { useAmenitiesQuery, useOwnerUnitQuery, useOwnerUnitsQuery } from '@/data/units/reads';
 import { useSaveUnitMutation } from '@/data/units/writes';
 import { applyAppErrorToForm } from '@/data/use-form-errors';
+import {
+  AmenitiesField,
+  BookingRulesFields,
+  LeaseFields,
+  leaseDraftFrom,
+  priceDraftFrom,
+  rulesDraftFrom,
+  sameDraft,
+  type LeaseDraft,
+  type RulesDraft,
+  type RulesErrors,
+} from './unit-pricing';
 import { UNIT_TYPE_LABEL, UnitStatusBadge } from './unit-words';
 
 export type UnitSection = 'basics' | 'photos' | 'price' | 'amenities' | 'rules';
@@ -184,6 +209,7 @@ function UnitEditor({
   const formFactor = useFormFactor();
   const save = useSaveUnitMutation();
   const savePhotos = useSetUnitPhotosMutation();
+  const savePrices = useSaveUnitPricesMutation();
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [stale, setStale] = useState(false);
   const [topError, setTopError] = useState<string | null>(null);
@@ -207,7 +233,61 @@ function UnitEditor({
     },
   });
   const photos = usePhotoPipeline({ saved: detail.photos, altPrefix: photoLabel });
-  const dirty = form.formState.isDirty || photos.dirty;
+  const amenities = useAmenitiesQuery();
+  const { today } = useDashboard();
+  const isLong = unit.mode === 'long_term';
+  const [price, setPrice] = useState<PriceDraft>(() => priceDraftFrom(detail));
+  const [rules, setRules] = useState<RulesDraft>(() => rulesDraftFrom(detail));
+  const [lease, setLease] = useState<LeaseDraft>(() => leaseDraftFrom(detail));
+  const [amenityIds, setAmenityIds] = useState<string[]>(() => [...detail.amenity_ids]);
+  const [priceErrors, setPriceErrors] = useState<PriceDraftErrors>({});
+  const [rulesErrors, setRulesErrors] = useState<RulesErrors>({});
+  const [leaseError, setLeaseError] = useState<string | undefined>(undefined);
+  const priceDirty = !isLong && !sameDraft(price, priceDraftFrom(current));
+  const rulesDirty = !isLong && !sameDraft(rules, rulesDraftFrom(current));
+  const leaseDirty = isLong && !sameDraft(lease, leaseDraftFrom(current));
+  const amenitiesDirty = !sameDraft([...amenityIds].sort(), [...current.amenity_ids].sort());
+  const dirty =
+    form.formState.isDirty ||
+    photos.dirty ||
+    priceDirty ||
+    rulesDirty ||
+    leaseDirty ||
+    amenitiesDirty;
+
+  /** Checks the price, rules and rent before saving; returns the section to open, or null. */
+  function checkPrices(): UnitSection | null {
+    const nextPrice: PriceDraftErrors = {};
+    const nextRules: RulesErrors = {};
+    let nextLease: string | undefined;
+    if (isLong) {
+      if (leaseDirty && (lease.monthlyRent === null || lease.monthlyRent <= 0)) {
+        nextLease = 'Enter a monthly rent above ₱0.';
+      }
+    } else if (priceDirty || rulesDirty) {
+      if (price.baseNightly === null || price.baseNightly <= 0) {
+        nextPrice.baseNightly = 'Enter a price above ₱0.';
+      }
+      if (
+        price.weekdayOn &&
+        (price.weekdays.length === 0 || price.weekdayPrice === null || price.weekdayPrice <= 0)
+      ) {
+        nextPrice.weekdayPrice =
+          price.weekdays.length === 0
+            ? 'Pick at least one day, or turn this off.'
+            : 'Enter the price for the picked days.';
+      }
+      if (rules.minNights > rules.maxNights) {
+        nextRules.maxNights = 'Make the longest stay at least the shortest stay.';
+      }
+    }
+    setPriceErrors(nextPrice);
+    setRulesErrors(nextRules);
+    setLeaseError(nextLease);
+    if (Object.keys(nextPrice).length > 0 || nextLease) return 'price';
+    if (Object.keys(nextRules).length > 0) return 'rules';
+    return null;
+  }
 
   const blocker = useBlocker({
     shouldBlockFn: ({ next }) => dirty && !next.pathname.startsWith(`/units/${unit.id}`),
@@ -232,25 +312,129 @@ function UnitEditor({
       onSection('basics');
       return;
     }
+    const priceProblem = checkPrices();
+    if (priceProblem) {
+      onSection(priceProblem);
+      return;
+    }
     setState('busy');
     try {
-      if (form.formState.isDirty) {
+      let latest = current;
+      if (form.formState.isDirty || amenitiesDirty || leaseDirty) {
+        const base = saveUnitInputFromDetail(current);
         const values = form.getValues();
+        const basicsChange = form.formState.isDirty
+          ? {
+              name: values.name.trim(),
+              groupLabel: isBed ? emptyToNull(values.group_label ?? '') : null,
+              description: values.description ? emptyToNull(values.description) : null,
+              maxGuests: values.max_guests,
+              bedrooms: values.bedrooms,
+              beds: values.beds,
+              bathrooms: values.bathrooms,
+              floorAreaSqm: values.floor_area_sqm,
+              arrivalInfo: values.arrival_info ? emptyToNull(values.arrival_info) : null,
+            }
+          : {};
         const saved = await save.mutateAsync({
-          ...saveUnitInputFromDetail(current),
-          name: values.name.trim(),
-          groupLabel: isBed ? emptyToNull(values.group_label ?? '') : null,
-          description: values.description ? emptyToNull(values.description) : null,
-          maxGuests: values.max_guests,
-          bedrooms: values.bedrooms,
-          beds: values.beds,
-          bathrooms: values.bathrooms,
-          floorAreaSqm: values.floor_area_sqm,
-          arrivalInfo: values.arrival_info ? emptyToNull(values.arrival_info) : null,
+          ...base,
+          ...basicsChange,
+          amenityIds,
+          leaseTerms:
+            leaseDirty && lease.monthlyRent !== null
+              ? {
+                  monthly_rent_centavos: lease.monthlyRent,
+                  min_lease_months: lease.minLeaseMonths,
+                  advance_months: lease.advanceMonths,
+                  deposit_months: lease.depositMonths,
+                  reservation_fee_centavos: current.lease_terms?.reservation_fee_centavos ?? 0,
+                  available_from:
+                    current.lease_terms?.available_from ?? today ?? unit.created_at.slice(0, 10),
+                  inclusions: current.lease_terms?.inclusions ?? null,
+                }
+              : base.leaseTerms,
         });
+        latest = saved;
         setCurrent(saved);
         form.reset(basicsFrom(saved));
+        setAmenityIds([...saved.amenity_ids]);
+        setLease(leaseDraftFrom(saved));
         draft.clear();
+      }
+      if ((priceDirty || rulesDirty) && price.baseNightly !== null) {
+        const otherFees = latest.fees
+          .filter((fee) => fee.code === 'other')
+          .map((fee) => ({
+            code: fee.code,
+            label: fee.label,
+            amount_centavos: fee.amount_centavos,
+            basis: fee.basis,
+            is_active: fee.is_active,
+          }));
+        const feeLabel = (code: 'cleaning' | 'extra_guest', fallback: string) =>
+          latest.fees.find((fee) => fee.code === code)?.label ?? fallback;
+        const result = await savePrices.mutateAsync({
+          unitId: unit.id,
+          expectedUpdatedAt: null,
+          baseNightlyCentavos: centavos(price.baseNightly),
+          baseGuests: Math.min(price.baseGuests, unit.max_guests),
+          minNights: rules.minNights,
+          maxNights: rules.maxNights,
+          prepNights: rules.prepNights,
+          weeklyDiscountPercent: price.weeklyDiscount,
+          monthlyDiscountPercent: price.monthlyDiscount,
+          downPaymentPercent: rules.downPaymentPercent,
+          holdMinutes: rules.holdMinutes,
+          advanceNoticeDays: rules.advanceNoticeDays,
+          bookingWindowDays: rules.bookingWindowDays,
+          weekdayRates:
+            price.weekdayOn && price.weekdayPrice !== null
+              ? price.weekdays.map((iso) => ({
+                  iso_weekday: iso,
+                  nightly_centavos: centavos(price.weekdayPrice ?? 0),
+                }))
+              : [],
+          rateOverrides: price.specialDates.map((item) => ({
+            during: { start: item.start, end: item.end },
+            nightly_centavos: centavos(item.price),
+            label: item.label,
+          })),
+          fees: [
+            ...(price.cleaningFee !== null && price.cleaningFee > 0
+              ? [
+                  {
+                    code: 'cleaning' as const,
+                    label: feeLabel('cleaning', 'Cleaning fee'),
+                    amount_centavos: centavos(price.cleaningFee),
+                    basis: 'per_stay' as const,
+                    is_active: true,
+                  },
+                ]
+              : []),
+            ...(price.extraGuestFee !== null && price.extraGuestFee > 0
+              ? [
+                  {
+                    code: 'extra_guest' as const,
+                    label: feeLabel('extra_guest', 'Extra guest fee'),
+                    amount_centavos: centavos(price.extraGuestFee),
+                    basis: 'per_extra_guest_per_night' as const,
+                    is_active: true,
+                  },
+                ]
+              : []),
+            ...otherFees,
+          ],
+        });
+        const next: OwnerUnitDetailView = {
+          ...latest,
+          stay_terms: result.stayTerms,
+          weekday_rates: result.weekdayRates,
+          rate_overrides: result.rateOverrides,
+          fees: result.fees,
+        };
+        setCurrent(next);
+        setPrice(priceDraftFrom(next));
+        setRules(rulesDraftFrom(next));
       }
       if (photos.dirty) {
         await savePhotos.mutateAsync({
@@ -288,6 +472,13 @@ function UnitEditor({
   function discard() {
     form.reset(basicsFrom(current));
     photos.reset(current.photos);
+    setPrice(priceDraftFrom(current));
+    setRules(rulesDraftFrom(current));
+    setLease(leaseDraftFrom(current));
+    setAmenityIds([...current.amenity_ids]);
+    setPriceErrors({});
+    setRulesErrors({});
+    setLeaseError(undefined);
     draft.discard();
     notify.info('Changes discarded');
   }
@@ -297,7 +488,7 @@ function UnitEditor({
     photos: photos.photosToSave.length >= 3,
     price: unit.mode === 'long_term' ? current.lease_terms !== null : current.stay_terms !== null,
     amenities: current.amenity_ids.length > 0,
-    rules: current.stay_terms !== null || current.lease_terms !== null,
+    rules: isLong ? current.lease_terms !== null : current.stay_terms !== null,
   };
 
   const errors = form.formState.errors;
@@ -470,18 +661,38 @@ function UnitEditor({
     </div>
   );
 
-  const comingNext = (
-    <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-      Coming next. You'll set this here soon.
-    </p>
-  );
-
   const content: Record<UnitSection, ReactNode> = {
     basics,
     photos: photoSection,
-    price: comingNext,
-    amenities: comingNext,
-    rules: comingNext,
+    price: isLong ? (
+      <LeaseFields value={lease} onChange={setLease} error={leaseError} />
+    ) : today ? (
+      <PriceEditor
+        value={price}
+        onChange={setPrice}
+        maxGuests={unit.max_guests}
+        today={calendarDateSchema.parse(today)}
+        errors={priceErrors}
+      />
+    ) : null,
+    amenities: amenities.isPending ? (
+      <Skeleton className="h-32 w-full" />
+    ) : amenities.isError ? (
+      <ErrorState
+        title="We couldn't load the amenities"
+        message={extractAppError(amenities.error).message}
+        onRetry={() => void amenities.refetch()}
+      />
+    ) : (
+      <AmenitiesField catalogue={amenities.data} value={amenityIds} onChange={setAmenityIds} />
+    ),
+    rules: isLong ? (
+      <p className="text-sm text-muted-foreground">
+        Monthly units use the lease rules under Price.
+      </p>
+    ) : (
+      <BookingRulesFields value={rules} onChange={setRules} errors={rulesErrors} />
+    ),
   };
 
   const mark = (value: UnitSection) =>

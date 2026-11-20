@@ -38,7 +38,7 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 - [x] P4-3 Sign-up (with Google), login, forgot password, waiting for approval
 - [x] P4-4 Onboarding and the home checklist
 - [x] P4-5 Units and photos
-- [ ] P4-6 Prices, amenities and booking rules
+- [x] P4-6 Prices, amenities and booking rules
 - [ ] P4-7 Settings and the property switcher
 - [ ] P4-8 Close-out: owner journey test, component tests, budget, docs
 
