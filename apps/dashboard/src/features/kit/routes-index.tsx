@@ -12,15 +12,16 @@ import { env } from '@/env';
 import { KitBaseTab } from './kit-base-tab';
 import { KitDashboardTab } from './kit-dashboard-tab';
 import { KitFormsTab } from './kit-forms-tab';
+import { KitPatternsTab } from './kit-patterns-tab';
 import { KitTokensTab } from './kit-tokens-tab';
 import { DASHBOARD_ROUTE_CATALOG } from './route-catalog';
 
-type KitTabKey = 'base' | 'forms' | 'dashboard' | 'tokens';
+type KitTabKey = 'base' | 'forms' | 'patterns' | 'dashboard' | 'tokens';
 
 function parseKitTab(searchStr: string): KitTabKey {
   const params = new URLSearchParams(searchStr);
   const raw = params.get('tab');
-  if (raw === 'dashboard' || raw === 'tokens' || raw === 'forms') return raw;
+  if (raw === 'dashboard' || raw === 'tokens' || raw === 'forms' || raw === 'patterns') return raw;
   return 'base';
 }
 
@@ -77,6 +78,7 @@ export function KitPage() {
   const tabs: readonly { readonly id: KitTabKey; readonly label: string }[] = [
     { id: 'base', label: 'Base' },
     { id: 'forms', label: 'Forms' },
+    { id: 'patterns', label: 'Patterns' },
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'tokens', label: 'Tokens' },
   ];
@@ -161,6 +163,7 @@ export function KitPage() {
 
         {activeTab === 'base' ? <KitBaseTab /> : null}
         {activeTab === 'forms' ? <KitFormsTab /> : null}
+        {activeTab === 'patterns' ? <KitPatternsTab /> : null}
         {activeTab === 'dashboard' ? <KitDashboardTab /> : null}
         {activeTab === 'tokens' ? <KitTokensTab /> : null}
       </main>

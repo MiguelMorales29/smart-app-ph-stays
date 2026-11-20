@@ -1,41 +1,41 @@
 :root,
 .light {
-  --background: #f9fafd;
-  --foreground: #0b1633;
+  --background: #f7f6f2;
+  --foreground: #1d1c19;
 
-  --sidebar: #f1f3f9;
-  --sidebar-foreground: #0b1633;
+  --sidebar: #efede6;
+  --sidebar-foreground: #1d1c19;
   --sidebar-primary: #2866ee;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #edf0f6;
-  --sidebar-accent-foreground: #0b1633;
-  --sidebar-border: #e0e3ea;
+  --sidebar-accent: #e5e2d9;
+  --sidebar-accent-foreground: #1d1c19;
+  --sidebar-border: #e3e0d7;
   --sidebar-ring: #4883ff;
 
   --card: #ffffff;
-  --card-foreground: #0b1633;
+  --card-foreground: #1d1c19;
 
   --popover: #ffffff;
-  --popover-foreground: #0b1633;
+  --popover-foreground: #1d1c19;
 
   --raised: #ffffff;
 
-  --muted: #edf0f6;
-  --muted-foreground: #5c6372;
+  --muted: #efede6;
+  --muted-foreground: #6b6960;
 
-  --secondary: #edf0f6;
-  --secondary-foreground: #0b1633;
+  --secondary: #efede6;
+  --secondary-foreground: #1d1c19;
 
-  --accent: #edf0f6;
-  --accent-foreground: #0b1633;
+  --accent: #efede6;
+  --accent-foreground: #1d1c19;
 
   --brand-accent: #7ed6ac;
-  --brand-accent-foreground: #0b1633;
+  --brand-accent-foreground: #1d1c19;
 
   --primary: #2866ee;
   --primary-hover: #194fc9;
   --primary-foreground: #ffffff;
-  --primary-tint: #e4edff;
+  --primary-tint: #e6edfc;
 
   --destructive: #ac111f;
   --destructive-foreground: #ffffff;
@@ -50,8 +50,8 @@
   --info: #006393;
   --info-tint: #dcf0ff;
 
-  --border: #e0e3ea;
-  --input: #83899a;
+  --border: #e3e0d7;
+  --input: #8a867b;
   --ring: #4883ff;
 
   --font-sans:
@@ -66,6 +66,7 @@
   --dock-offset: 0.75rem;
   --shell-header-height: 3.5rem;
 
+  --dur-press: 70ms;
   --dur-fast: 120ms;
   --dur-base: 200ms;
   --dur-slow: 320ms;
@@ -74,51 +75,51 @@
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --shadow-sm: 0 1px 2px 0 rgb(11 22 51 / 0.05);
-  --shadow-md: 0 4px 12px -2px rgb(11 22 51 / 0.08), 0 2px 4px -2px rgb(11 22 51 / 0.04);
-  --shadow-lg: 0 12px 28px -4px rgb(11 22 51 / 0.12), 0 4px 8px -2px rgb(11 22 51 / 0.06);
+  --shadow-sm: 0 1px 2px 0 rgb(29 28 25 / 0.05);
+  --shadow-md: 0 4px 12px -2px rgb(29 28 25 / 0.08), 0 2px 4px -2px rgb(29 28 25 / 0.04);
+  --shadow-lg: 0 12px 28px -4px rgb(29 28 25 / 0.12), 0 4px 8px -2px rgb(29 28 25 / 0.06);
 }
 
 .dark {
-  --background: #1b1e24;
-  --foreground: #eef0f4;
+  --background: #1f1e1c;
+  --foreground: #f4f3ee;
 
-  --sidebar: #14171d;
-  --sidebar-foreground: #eef0f4;
-  --sidebar-primary: #74a2ff;
-  --sidebar-primary-foreground: #060e25;
-  --sidebar-accent: #2a2e36;
-  --sidebar-accent-foreground: #eef0f4;
-  --sidebar-border: #393d46;
-  --sidebar-ring: #74a2ff;
+  --sidebar: #171715;
+  --sidebar-foreground: #f4f3ee;
+  --sidebar-primary: #7aa5ff;
+  --sidebar-primary-foreground: #121a2e;
+  --sidebar-accent: #2a2927;
+  --sidebar-accent-foreground: #f4f3ee;
+  --sidebar-border: #3b3a36;
+  --sidebar-ring: #7aa5ff;
 
-  --card: #23262d;
-  --card-foreground: #eef0f4;
+  --card: #2a2927;
+  --card-foreground: #f4f3ee;
 
-  --popover: #2c3039;
-  --popover-foreground: #eef0f4;
+  --popover: #33322f;
+  --popover-foreground: #f4f3ee;
 
-  --raised: #2c3039;
+  --raised: #33322f;
 
-  --muted: #2a2e36;
-  --muted-foreground: #9fa5b0;
+  --muted: #2e2d2a;
+  --muted-foreground: #a9a69c;
 
-  --secondary: #2a2e36;
-  --secondary-foreground: #eef0f4;
+  --secondary: #2e2d2a;
+  --secondary-foreground: #f4f3ee;
 
-  --accent: #2a2e36;
-  --accent-foreground: #eef0f4;
+  --accent: #2e2d2a;
+  --accent-foreground: #f4f3ee;
 
   --brand-accent: #40be8a;
-  --brand-accent-foreground: #060e25;
+  --brand-accent-foreground: #121a2e;
 
-  --primary: #74a2ff;
-  --primary-hover: #a1c1ff;
-  --primary-foreground: #060e25;
-  --primary-tint: #1e3666;
+  --primary: #7aa5ff;
+  --primary-hover: #a6c3ff;
+  --primary-foreground: #121a2e;
+  --primary-tint: #24324f;
 
-  --destructive: #ff716b;
-  --destructive-foreground: #060e25;
+  --destructive: #ff8a84;
+  --destructive-foreground: #121a2e;
   --danger-tint: #542523;
 
   --success: #50bf6f;
@@ -130,9 +131,9 @@
   --info: #4faeeb;
   --info-tint: #133951;
 
-  --border: #393d46;
-  --input: #737985;
-  --ring: #74a2ff;
+  --border: #3b3a36;
+  --input: #7a776e;
+  --ring: #7aa5ff;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
   --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.3);
@@ -142,6 +143,7 @@
 @media (prefers-reduced-motion: reduce) {
   :root,
   .light {
+    --dur-press: 0ms;
     --dur-fast: 0ms;
     --dur-base: 0ms;
     --dur-slow: 0ms;

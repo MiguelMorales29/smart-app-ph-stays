@@ -110,6 +110,43 @@
   }
 }
 
+@utility duration-press {
+  --tw-duration: var(--dur-press);
+  transition-duration: var(--dur-press);
+  animation-duration: var(--dur-press);
+}
+
+/* Press feedback for rows and tiles (Pattern Guide §2): a quick 0.98 squeeze on touch. */
+@utility press {
+  transition-property: transform, background-color, opacity;
+  transition-duration: var(--dur-press);
+  transition-timing-function: var(--ease-enter);
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Edge fades for scroll areas: the top and bottom fade out only while there is more to scroll.
+   Pair with useScrollFades(), which sets data-fade-top / data-fade-bottom. */
+@utility scroll-fades {
+  --fade-size: 1.5rem;
+  &[data-fade-top='true'] {
+    mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-size));
+  }
+  &[data-fade-bottom='true'] {
+    mask-image: linear-gradient(to top, transparent, #000 var(--fade-size));
+  }
+  &[data-fade-top='true'][data-fade-bottom='true'] {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      #000 var(--fade-size),
+      #000 calc(100% - var(--fade-size)),
+      transparent
+    );
+  }
+}
+
 @utility duration-fast {
   --tw-duration: var(--dur-fast);
   transition-duration: var(--dur-fast);
