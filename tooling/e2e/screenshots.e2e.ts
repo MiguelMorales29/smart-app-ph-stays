@@ -25,10 +25,11 @@ async function waitForPageReady(page: Page, waitForLoading = true): Promise<void
   if (waitForLoading) {
     await expect(page.locator('[data-slot="loading-state"]')).toHaveCount(0, { timeout: 20_000 });
   }
-  // The floating Preview pill loads lazily; wait for it so every baseline includes it.
+  // The Preview switches load lazily; wait for them so every baseline is stable. On phones with an
+  // account menu the pill is hidden (D63: it moves into that menu), so wait for it to be attached.
   await page
     .locator('[data-slot="dev-switch-panel"]')
-    .waitFor({ state: 'visible', timeout: 20_000 });
+    .waitFor({ state: 'attached', timeout: 20_000 });
   await page.evaluate(() => document.fonts.ready);
 }
 
