@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import {
   ChevronsUpDownIcon,
+  FlaskConicalIcon,
   LaptopIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -26,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
 import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
+import { openDevPanel } from '@smartapp/ui/lib/dev-panel';
 import { useDashboard } from '@/app/dashboard-context';
 import { useSignOut } from '@/app/auth/owner-session';
 import { THEME_MODES, useTheme, type ThemeMode } from '@/app/theme';
@@ -62,6 +64,9 @@ export function AccountMenu({
   readonly admin?: boolean | undefined;
 }) {
   const signOut = useSignOut();
+  // D63: in preview builds the phone account menu holds the Preview switches (the pill hides).
+  const previewSwitches =
+    import.meta.env.VITE_DATA_SOURCE === 'memory' && import.meta.env.VITE_APP_ENV !== 'production';
   const { client, forcedOffline } = useDashboard();
   const { theme, setTheme } = useTheme();
   const online = !forcedOffline && (typeof window === 'undefined' ? true : window.navigator.onLine);
@@ -101,7 +106,14 @@ export function AccountMenu({
         </DropdownMenuTrigger>
       ) : (
         <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" className="size-11 rounded-full" />}
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 rounded-full"
+              data-dev-panel-menu={previewSwitches ? '' : undefined}
+            />
+          }
         >
           {avatar}
           <span className="sr-only">Account menu</span>
@@ -154,6 +166,15 @@ export function AccountMenu({
             ))}
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
+        {previewSwitches && placement === 'top-bar' ? (
+          <>
+            <DropdownMenuSeparator className="md:hidden" />
+            <DropdownMenuItem className="min-h-10 md:hidden" onClick={openDevPanel}>
+              <FlaskConicalIcon aria-hidden="true" className="text-warning" />
+              <span>Preview · sample data</span>
+            </DropdownMenuItem>
+          </>
+        ) : null}
         <DropdownMenuSeparator />
         {!admin ? (
           <>

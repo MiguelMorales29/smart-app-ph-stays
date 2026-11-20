@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from 'react';
-import { CalendarPlusIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { CalendarPlusIcon } from 'lucide-react';
 import {
   addDays,
   calendarDateSchema,
@@ -11,35 +11,23 @@ import {
   weekdayOf,
   type CalendarDate,
 } from '@smartapp/core';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@smartapp/ui/components/accordion';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
 import { Calendar } from '@smartapp/ui/components/calendar';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
+import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
+import { ChoiceChip } from '@smartapp/ui/compositions/choice-chip';
 import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from '@smartapp/ui/components/number-field';
-import {
-  ResponsiveDialog,
-  ResponsiveDialogContent,
-  ResponsiveDialogDescription,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-} from '@smartapp/ui/components/responsive-dialog';
-import { Switch } from '@smartapp/ui/components/switch';
-import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+  RowButton,
+  RowControl,
+  RowGroup,
+  RowPicker,
+  RowSwitch,
+} from '@smartapp/ui/compositions/grouped-rows';
+import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
+import { useLastDefined } from '@smartapp/ui/hooks/use-last-defined';
 import { cn } from '@smartapp/ui/lib/utils';
 
 export interface SpecialDate {
@@ -208,44 +196,27 @@ export function previewNights(
   return nights;
 }
 
-function Count({
-  id,
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  suffix,
-}: {
-  readonly id: string;
-  readonly label: string;
-  readonly value: number;
-  readonly onChange: (value: number) => void;
-  readonly min: number;
-  readonly max: number;
-  readonly suffix?: string | undefined;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <NumberField
-        id={id}
-        className="w-auto"
-        value={value}
-        min={min}
-        max={max}
-        onValueChange={(next) => onChange(next ?? min)}
-      >
-        <NumberFieldGroup className="w-36">
-          <NumberFieldDecrement aria-label={`Less: ${label}`} />
-          <NumberFieldInput />
-          <NumberFieldIncrement aria-label={`More: ${label}`} />
-        </NumberFieldGroup>
-      </NumberField>
-      {suffix ? (
-        <span className="text-sm whitespace-nowrap text-muted-foreground">{suffix}</span>
-      ) : null}
-    </div>
-  );
+const DISCOUNTS: readonly number[] = [0, 5, 10, 15, 20, 25, 30, 40, 50];
+
+/** Discount choices for a picker sheet; keeps an unusual saved value in the list. */
+function percentOptions(current: number): { value: number; label: string }[] {
+  const values: number[] = DISCOUNTS.includes(current)
+    ? [...DISCOUNTS]
+    : [...DISCOUNTS, current].sort((a, b) => a - b);
+  return values.map((pct) => ({ value: pct, label: pct === 0 ? 'None' : `${pct}%` }));
+}
+
+/** Short text for a section header, e.g. "₱2,600 a night · Fri, Sat ₱3,200 · 2 special dates". */
+export function priceSummary(value: PriceDraft): string {
+  if (value.baseNightly === null) return 'No price yet';
+  const parts = [`${formatPesos(value.baseNightly)} a night`];
+  if (value.weekdayOn && value.weekdays.length > 0 && value.weekdayPrice !== null) {
+    const days = DAY_CHIPS.filter((day) => value.weekdays.includes(day.iso)).map((d) => d.short);
+    parts.push(`${days.join(', ')} ${formatPesos(value.weekdayPrice)}`);
+  }
+  const special = value.specialDates.length;
+  if (special > 0) parts.push(`${special} special ${special === 1 ? 'date' : 'dates'}`);
+  return parts.join(' · ');
 }
 
 let specialCounter = 0;
@@ -276,153 +247,114 @@ export function PriceEditor({
   );
 
   return (
-    <div data-slot="price-editor" className="flex flex-col gap-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field data-invalid={errors?.baseNightly ? true : undefined}>
-          <FieldLabel htmlFor={`${ids}-base`}>Price per night</FieldLabel>
-          <MoneyInput
-            id={`${ids}-base`}
-            value={value.baseNightly}
-            per="a night"
-            invalid={errors?.baseNightly !== undefined}
-            onValueChange={(baseNightly) => set({ baseNightly })}
-          />
-          <FieldError>{errors?.baseNightly}</FieldError>
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={`${ids}-guests`}>Guests included</FieldLabel>
-          <Count
+    <div data-slot="price-editor" className="flex flex-col gap-6">
+      <Field data-invalid={errors?.baseNightly ? true : undefined}>
+        <FieldLabel htmlFor={`${ids}-base`}>Price per night</FieldLabel>
+        <MoneyInput
+          id={`${ids}-base`}
+          value={value.baseNightly}
+          per="a night"
+          invalid={errors?.baseNightly !== undefined}
+          onValueChange={(baseNightly) => set({ baseNightly })}
+        />
+        <FieldError>{errors?.baseNightly}</FieldError>
+      </Field>
+
+      <RowGroup>
+        <RowControl label="Guests included" hint={`Up to ${maxGuests} can stay`}>
+          <InlineStepper
             id={`${ids}-guests`}
             label="Guests included"
             value={Math.min(value.baseGuests, maxGuests)}
-            onChange={(baseGuests) => set({ baseGuests })}
+            onValueChange={(baseGuests) => set({ baseGuests })}
             min={1}
             max={maxGuests}
-            suffix={`of ${maxGuests}`}
           />
-        </Field>
-      </div>
+        </RowControl>
+        <RowSwitch
+          label="Charge more on some days"
+          hint="A Friday night means checking in on Friday."
+          checked={value.weekdayOn}
+          onCheckedChange={(weekdayOn) => set({ weekdayOn })}
+        />
+      </RowGroup>
 
-      <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-0.5">
-            <label id={`${ids}-days-label`} htmlFor={`${ids}-days`} className="text-sm font-medium">
-              Charge more on some days?
-            </label>
-            <p id={`${ids}-days-hint`} className="text-sm text-muted-foreground">
-              A Friday night means checking in on Friday.
-            </p>
-          </div>
-          <Switch
-            id={`${ids}-days`}
-            aria-labelledby={`${ids}-days-label`}
-            aria-describedby={`${ids}-days-hint`}
-            checked={value.weekdayOn}
-            onCheckedChange={(weekdayOn) => set({ weekdayOn })}
-          />
-        </div>
-        {value.weekdayOn ? (
-          <>
-            <ToggleGroup
-              multiple
-              aria-label="Days with a different price"
-              value={value.weekdays.map(String)}
-              onValueChange={(next) => set({ weekdays: next.map(Number).sort((a, b) => a - b) })}
-              variant="outline"
-              className="flex-wrap"
-            >
-              {DAY_CHIPS.map((day) => (
-                <ToggleGroupItem
+      {value.weekdayOn ? (
+        <div className="flex flex-col gap-4">
+          <div
+            role="group"
+            aria-label="Days with a different price"
+            className="flex flex-wrap gap-2"
+          >
+            {DAY_CHIPS.map((day) => {
+              const picked = value.weekdays.includes(day.iso);
+              return (
+                <ChoiceChip
                   key={day.iso}
-                  value={String(day.iso)}
-
-                  className="min-h-11 min-w-12 sm:min-h-9"
+                  pressed={picked}
+                  onPressedChange={(on) =>
+                    set({
+                      weekdays: (on
+                        ? [...value.weekdays, day.iso]
+                        : value.weekdays.filter((iso) => iso !== day.iso)
+                      ).sort((a, b) => a - b),
+                    })
+                  }
                 >
                   {day.short}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            <Field data-invalid={errors?.weekdayPrice ? true : undefined}>
-              <FieldLabel htmlFor={`${ids}-day-price`}>
-                Price on {pickedLong.length > 0 ? pickedLong.join(', ') : 'the picked days'}
-              </FieldLabel>
-              <MoneyInput
-                id={`${ids}-day-price`}
-                value={value.weekdayPrice}
-                per="a night"
-                invalid={errors?.weekdayPrice !== undefined}
-                onValueChange={(weekdayPrice) => set({ weekdayPrice })}
-              />
-              <FieldError>{errors?.weekdayPrice}</FieldError>
-            </Field>
-          </>
-        ) : null}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-medium">Special dates</h3>
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-11 sm:min-h-9"
-            onClick={() => setEditing('new')}
-          >
-            <CalendarPlusIcon aria-hidden="true" />
-            Add special date
-          </Button>
+                </ChoiceChip>
+              );
+            })}
+          </div>
+          <Field data-invalid={errors?.weekdayPrice ? true : undefined}>
+            <FieldLabel htmlFor={`${ids}-day-price`}>
+              Price on {pickedLong.length > 0 ? pickedLong.join(', ') : 'the picked days'}
+            </FieldLabel>
+            <MoneyInput
+              id={`${ids}-day-price`}
+              value={value.weekdayPrice}
+              per="a night"
+              invalid={errors?.weekdayPrice !== undefined}
+              onValueChange={(weekdayPrice) => set({ weekdayPrice })}
+            />
+            <FieldError>{errors?.weekdayPrice}</FieldError>
+          </Field>
         </div>
-        {value.specialDates.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Holidays and peak weeks can have their own price.
-          </p>
-        ) : (
-          <ul className="divide-y divide-border rounded-lg border border-border">
-            {[...value.specialDates]
-              .sort((a, b) => a.start.localeCompare(b.start))
-              .map((item) => (
-                <li key={item.id} className="flex items-center gap-2 px-3 py-1.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{item.label ?? 'Special date'}</p>
-                    <p className="text-sm text-muted-foreground tabular">
-                      {formatNights(item.start, item.end)} · {formatPesos(item.price)} a night
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-11 sm:size-9"
-                    aria-label={`Edit ${item.label ?? 'special date'}`}
-                    onClick={() => setEditing(item)}
-                  >
-                    <PencilIcon aria-hidden="true" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-11 sm:size-9"
-                    aria-label={`Remove ${item.label ?? 'special date'}`}
-                    onClick={() =>
-                      set({
-                        specialDates: value.specialDates.filter((other) => other.id !== item.id),
-                      })
-                    }
-                  >
-                    <Trash2Icon aria-hidden="true" />
-                  </Button>
-                </li>
-              ))}
-          </ul>
-        )}
-        {errors?.specialDates ? (
-          <p className="text-sm text-destructive">{errors.specialDates}</p>
-        ) : null}
-      </div>
+      ) : null}
+
+      <RowGroup
+        title="Special dates"
+        footer={
+          errors?.specialDates ? (
+            <span className="text-destructive">{errors.specialDates}</span>
+          ) : value.specialDates.length === 0 ? (
+            'Holidays and peak weeks can have their own price.'
+          ) : undefined
+        }
+      >
+        {[...value.specialDates]
+          .sort((a, b) => a.start.localeCompare(b.start))
+          .map((item) => (
+            <RowButton
+              key={item.id}
+              label={item.label ?? 'Special date'}
+              hint={
+                <span className="tabular">
+                  {formatNights(item.start, item.end)} · {formatPesos(item.price)} a night
+                </span>
+              }
+              onClick={() => setEditing(item)}
+            />
+          ))}
+        <RowButton
+          label={<span className="font-medium text-primary-hover">Add special date</span>}
+          icon={<CalendarPlusIcon className="text-primary-hover" />}
+          onClick={() => setEditing('new')}
+        />
+      </RowGroup>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium">The next 14 nights</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">The next 14 nights</h3>
         {preview.length === 0 ? (
           <p className="text-sm text-muted-foreground">Enter a price per night to see them.</p>
         ) : (
@@ -435,7 +367,7 @@ export function PriceEditor({
               <li
                 key={night.date}
                 className={cn(
-                  'flex w-24 shrink-0 snap-start flex-col gap-0.5 rounded-lg border p-2 text-xs',
+                  'flex w-24 shrink-0 snap-start flex-col gap-0.5 rounded-xl border p-2 text-xs',
                   night.kind === 'special'
                     ? 'border-primary bg-primary-tint'
                     : night.kind === 'weekday'
@@ -454,69 +386,49 @@ export function PriceEditor({
         )}
       </div>
 
-      <Accordion className="rounded-lg border border-border px-3">
-        <AccordionItem value="more">
-          <AccordionTrigger className="min-h-11 items-center hover:no-underline">
-            More fees and discounts
-          </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 pb-4">
-            <Field>
-              <FieldLabel htmlFor={`${ids}-cleaning`}>Cleaning fee</FieldLabel>
-              <MoneyInput
-                id={`${ids}-cleaning`}
-                value={value.cleaningFee}
-                per="a stay"
-                onValueChange={(cleaningFee) => set({ cleaningFee })}
-              />
-              <FieldDescription>
-                Added once to every booking. Leave empty for none.
-              </FieldDescription>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`${ids}-extra`}>Extra guest fee</FieldLabel>
-              <MoneyInput
-                id={`${ids}-extra`}
-                value={value.extraGuestFee}
-                per="a guest a night"
-                onValueChange={(extraGuestFee) => set({ extraGuestFee })}
-              />
-              <FieldDescription>
-                For each guest above the {value.baseGuests} included.
-              </FieldDescription>
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor={`${ids}-weekly`}>Weekly discount</FieldLabel>
-                <Count
-                  id={`${ids}-weekly`}
-                  label="Weekly discount"
-                  value={value.weeklyDiscount}
-                  onChange={(weeklyDiscount) => set({ weeklyDiscount })}
-                  min={0}
-                  max={90}
-                  suffix="%"
-                />
-                <FieldDescription>Stays of 7 nights or more.</FieldDescription>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor={`${ids}-monthly`}>Monthly discount</FieldLabel>
-                <Count
-                  id={`${ids}-monthly`}
-                  label="Monthly discount"
-                  value={value.monthlyDiscount}
-                  onChange={(monthlyDiscount) => set({ monthlyDiscount })}
-                  min={0}
-                  max={90}
-                  suffix="%"
-                />
-                <FieldDescription>
-                  Stays of 28 nights or more. Only the larger discount applies.
-                </FieldDescription>
-              </Field>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div className="flex flex-col gap-4">
+        <h3 className="text-sm font-medium text-muted-foreground">Fees and discounts</h3>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor={`${ids}-cleaning`}>Cleaning fee</FieldLabel>
+            <MoneyInput
+              id={`${ids}-cleaning`}
+              value={value.cleaningFee}
+              per="a stay"
+              onValueChange={(cleaningFee) => set({ cleaningFee })}
+            />
+            <FieldDescription>Added once to every booking. Leave empty for none.</FieldDescription>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`${ids}-extra`}>Extra guest fee</FieldLabel>
+            <MoneyInput
+              id={`${ids}-extra`}
+              value={value.extraGuestFee}
+              per="a guest a night"
+              onValueChange={(extraGuestFee) => set({ extraGuestFee })}
+            />
+            <FieldDescription>
+              For each guest above the {value.baseGuests} included.
+            </FieldDescription>
+          </Field>
+        </div>
+        <RowGroup footer="Only the larger discount applies.">
+          <RowPicker
+            label="Weekly discount"
+            hint="Stays of 7 nights or more"
+            value={value.weeklyDiscount}
+            options={percentOptions(value.weeklyDiscount)}
+            onValueChange={(weeklyDiscount) => set({ weeklyDiscount })}
+          />
+          <RowPicker
+            label="Monthly discount"
+            hint="Stays of 28 nights or more"
+            value={value.monthlyDiscount}
+            options={percentOptions(value.monthlyDiscount)}
+            onValueChange={(monthlyDiscount) => set({ monthlyDiscount })}
+          />
+        </RowGroup>
+      </div>
 
       <SpecialDateDialog
         editing={editing}
@@ -524,6 +436,10 @@ export function PriceEditor({
         today={today}
         onClose={() => setEditing(null)}
         onEditOther={(other) => setEditing(other)}
+        onRemove={(item) => {
+          set({ specialDates: value.specialDates.filter((other) => other.id !== item.id) });
+          setEditing(null);
+        }}
         onSave={(item) => {
           const rest = value.specialDates.filter((other) => other.id !== item.id);
           set({ specialDates: [...rest, item] });
@@ -540,6 +456,7 @@ function SpecialDateDialog({
   today,
   onClose,
   onEditOther,
+  onRemove,
   onSave,
 }: {
   readonly editing: SpecialDate | 'new' | null;
@@ -547,41 +464,68 @@ function SpecialDateDialog({
   readonly today: CalendarDate;
   readonly onClose: () => void;
   readonly onEditOther: (other: SpecialDate) => void;
+  readonly onRemove: (item: SpecialDate) => void;
   readonly onSave: (item: SpecialDate) => void;
 }) {
   const open = editing !== null;
-  const current = editing === 'new' || editing === null ? null : editing;
+  // Keep showing what was open while the sheet slides away (Pattern Guide §2).
+  const shown = useLastDefined(editing);
+  const current = shown === 'new' || shown === null || shown === undefined ? null : shown;
+  const formId = useId();
   return (
-    <ResponsiveDialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <ResponsiveDialogContent>
-        {open ? (
-          <SpecialDateForm
-            key={current?.id ?? 'new'}
-            current={current}
-            existing={existing}
-            today={today}
-            onClose={onClose}
-            onEditOther={onEditOther}
-            onSave={onSave}
-          />
-        ) : null}
-      </ResponsiveDialogContent>
-    </ResponsiveDialog>
+    <AppSheet
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      height="full"
+      title={current ? 'Edit special date' : 'Add special date'}
+      description="Pick the nights, or tap a holiday to fill them in."
+      footer={
+        <>
+          <Button
+            type="button"
+            data-sheet-cancel=""
+            variant="outline"
+            className="min-h-11"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={formId} className="min-h-11">
+            {current ? 'Save special date' : 'Add special date'}
+          </Button>
+        </>
+      }
+    >
+      {shown === null || shown === undefined ? null : (
+        <SpecialDateForm
+          onRemove={current ? () => onRemove(current) : undefined}
+          key={current?.id ?? 'new'}
+          formId={formId}
+          current={current}
+          existing={existing}
+          today={today}
+          onEditOther={onEditOther}
+          onSave={onSave}
+        />
+      )}
+    </AppSheet>
   );
 }
 
 function SpecialDateForm({
+  formId,
+  onRemove,
   current,
   existing,
   today,
-  onClose,
   onEditOther,
   onSave,
 }: {
+  readonly formId: string;
+  readonly onRemove?: (() => void) | undefined;
   readonly current: SpecialDate | null;
   readonly existing: readonly SpecialDate[];
   readonly today: CalendarDate;
-  readonly onClose: () => void;
   readonly onEditOther: (other: SpecialDate) => void;
   readonly onSave: (item: SpecialDate) => void;
 }) {
@@ -622,100 +566,102 @@ function SpecialDateForm({
   }
 
   return (
-    <>
-      <ResponsiveDialogHeader>
-        <ResponsiveDialogTitle>
-          {current ? 'Edit special date' : 'Add special date'}
-        </ResponsiveDialogTitle>
-        <ResponsiveDialogDescription>
-          Pick the nights, or tap a holiday to fill them in.
-        </ResponsiveDialogDescription>
-      </ResponsiveDialogHeader>
-      <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto">
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Holidays">
-          {chips.map((chip) => (
-            <Button
-              key={chip.key}
-              type="button"
-              variant="outline"
-              size="sm"
-              className="min-h-11 rounded-full sm:min-h-8"
-              onClick={() => {
-                setRange({ from: chip.start, to: addDays(chip.end, -1) });
-                if (!label.trim()) setLabel(chip.label);
-              }}
-            >
-              {chip.label}
-            </Button>
-          ))}
-        </div>
-        <Calendar
-          mode="range"
-          className="mx-auto rounded-lg border border-border"
-          disabled={{ before: toLocalDate(today) }}
-          defaultMonth={range ? toLocalDate(range.from) : toLocalDate(today)}
-          selected={
-            range ? { from: toLocalDate(range.from), to: toLocalDate(range.to) } : undefined
-          }
-          onSelect={(next) => {
-            if (!next?.from) {
-              setRange(null);
-              return;
+    <form
+      id={formId}
+      noValidate
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        save();
+      }}
+    >
+      <div
+        className="flex touch-pan-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"
+        role="group"
+        aria-label="Holidays"
+      >
+        {chips.map((chip) => (
+          <ChoiceChip
+            key={chip.key}
+            className="shrink-0"
+            pressed={
+              range !== null && range.from === chip.start && range.to === addDays(chip.end, -1)
             }
-            const from = fromLocalDate(next.from);
-            setRange({ from, to: next.to ? fromLocalDate(next.to) : from });
-          }}
-        />
-        <p className="text-sm text-muted-foreground tabular" aria-live="polite">
-          {range
-            ? `${formatNights(range.from, addDays(range.to, 1))} · ${nightsBetween(range.from, range.to) + 1} nights`
-            : 'No nights picked yet'}
-        </p>
-        <Field>
-          <FieldLabel htmlFor={`${ids}-price`}>Price for these nights</FieldLabel>
-          <MoneyInput id={`${ids}-price`} value={price} per="a night" onValueChange={setPrice} />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={`${ids}-label`}>Label (optional)</FieldLabel>
-          <Input
-            id={`${ids}-label`}
-            value={label}
-            maxLength={80}
-            placeholder="e.g. Christmas"
-            onChange={(event) => setLabel(event.target.value)}
-          />
-        </Field>
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {clash ? (
-          <Alert variant="destructive">
-            <AlertDescription className="flex flex-wrap items-center gap-2">
-              These nights overlap {clash.label ?? 'another special date'} (
-              {formatNights(clash.start, clash.end)}).
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="min-h-11 sm:min-h-8"
-                onClick={() => onEditOther(clash)}
-              >
-                Edit the other date
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : null}
+            onPressedChange={() => {
+              setRange({ from: chip.start, to: addDays(chip.end, -1) });
+              if (!label.trim()) setLabel(chip.label);
+            }}
+          >
+            {chip.label}
+          </ChoiceChip>
+        ))}
       </div>
-      <ResponsiveDialogFooter>
-        <Button type="button" variant="outline" className="min-h-11" onClick={onClose}>
-          Cancel
+      <Calendar
+        mode="range"
+        className="mx-auto rounded-lg border border-border"
+        disabled={{ before: toLocalDate(today) }}
+        defaultMonth={range ? toLocalDate(range.from) : toLocalDate(today)}
+        selected={range ? { from: toLocalDate(range.from), to: toLocalDate(range.to) } : undefined}
+        onSelect={(next) => {
+          if (!next?.from) {
+            setRange(null);
+            return;
+          }
+          const from = fromLocalDate(next.from);
+          setRange({ from, to: next.to ? fromLocalDate(next.to) : from });
+        }}
+      />
+      <p className="text-sm text-muted-foreground tabular" aria-live="polite">
+        {range
+          ? `${formatNights(range.from, addDays(range.to, 1))} · ${nightsBetween(range.from, range.to) + 1} nights`
+          : 'No nights picked yet'}
+      </p>
+      <Field>
+        <FieldLabel htmlFor={`${ids}-price`}>Price for these nights</FieldLabel>
+        <MoneyInput id={`${ids}-price`} value={price} per="a night" onValueChange={setPrice} />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${ids}-label`}>Label (optional)</FieldLabel>
+        <Input
+          id={`${ids}-label`}
+          value={label}
+          maxLength={80}
+          placeholder="e.g. Christmas"
+          onChange={(event) => setLabel(event.target.value)}
+        />
+      </Field>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {clash ? (
+        <Alert variant="destructive">
+          <AlertDescription className="flex flex-wrap items-center gap-2">
+            These nights overlap {clash.label ?? 'another special date'} (
+            {formatNights(clash.start, clash.end)}).
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-11 sm:min-h-8"
+              onClick={() => onEditOther(clash)}
+            >
+              Edit the other date
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {onRemove ? (
+        <Button
+          type="button"
+          variant="ghost"
+          className="min-h-11 self-start text-destructive hover-hover:hover:text-destructive"
+          onClick={onRemove}
+        >
+          Remove this special date
         </Button>
-        <Button type="button" className="min-h-11" onClick={save}>
-          {current ? 'Save special date' : 'Add special date'}
-        </Button>
-      </ResponsiveDialogFooter>
-    </>
+      ) : null}
+    </form>
   );
 }

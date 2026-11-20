@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { FlaskConicalIcon, XIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
+import { DEV_PANEL_OPEN_EVENT } from '@smartapp/ui/lib/dev-panel';
 
 export interface DevSwitchOption {
   readonly value: string;
@@ -49,9 +50,18 @@ function readHidden(): boolean {
  * A small "Preview" pill sits in the bottom-right corner, above any bottom dock
  * or sticky action bar, and opens a themed panel. It never takes space in the layout.
  * `?clean=1` hides it for the browser tab (for screen recordings); `?clean=0` brings it back.
+ * D63: on phones the pill hides itself when the page has an element marked `data-dev-panel-menu`
+ * (the dashboard's account menu button); that menu opens the panel with `openDevPanel()`.
  */
+
 export function DevSwitchPanel({ summary, fields, marker }: DevSwitchPanelProps) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(DEV_PANEL_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(DEV_PANEL_OPEN_EVENT, onOpen);
+  }, []);
   // Only ever mounted in the browser (the switch gates load it after hydration).
   const [hidden] = useState(readHidden);
   const panelId = useId();
@@ -141,6 +151,7 @@ export function DevSwitchPanel({ summary, fields, marker }: DevSwitchPanelProps)
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((value) => !value)}
+        data-dev-pill=""
         className="pressable flex h-11 max-w-[min(16rem,calc(100vw-2rem))] items-center gap-1.5 rounded-full border border-border bg-popover px-3.5 text-xs font-medium text-popover-foreground shadow-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <FlaskConicalIcon aria-hidden="true" className="size-4 shrink-0 text-warning" />

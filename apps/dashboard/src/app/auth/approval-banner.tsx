@@ -9,13 +9,7 @@ import {
   BannerTitle,
 } from '@smartapp/ui/components/banner';
 import { Button } from '@smartapp/ui/components/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@smartapp/ui/components/sheet';
+import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { useMyAccountQuery } from '@/data/auth/reads';
 
 /**
@@ -56,83 +50,104 @@ export function ApprovalBanner({ onboarding = false }: { readonly onboarding?: b
   if (status === 'active') {
     if (!onboarding || account.data?.account.approved_at === null) return null;
     return (
-      <Banner
-        variant="success"
+      <div
         data-slot="approval-banner"
-        dismissible={false}
-        className="rounded-lg"
+        role="status"
+        className="flex min-h-11 items-center gap-2.5 rounded-xl bg-success-tint px-3 py-2 text-sm text-foreground"
       >
-        <BannerContent className="flex-row">
-          <BannerIcon>
-            <BadgeCheckIcon className="size-4" />
-          </BannerIcon>
-          <div className="flex flex-col gap-0.5">
-            <BannerTitle>You're approved</BannerTitle>
-            <BannerDescription>Publish your page when it's ready.</BannerDescription>
-          </div>
-        </BannerContent>
-      </Banner>
+        <BadgeCheckIcon aria-hidden="true" className="size-4 shrink-0 text-success" />
+        You're approved. Publish your page when it's ready.
+      </div>
     );
   }
 
+  const checks = (
+    <AppSheet
+      open={checksOpen}
+      onOpenChange={setChecksOpen}
+      title="What we check"
+      description="So guests can trust every page on Smart App PH."
+      size="sm"
+      footer={
+        <Button className="min-h-11" onClick={() => setChecksOpen(false)}>
+          Got it
+        </Button>
+      }
+    >
+      <ul className="list-disc space-y-3 pl-5 text-sm">
+        <li>That the place is real: your Facebook page, photos or a quick call.</li>
+        <li>That you can be reached on the mobile number and email you gave.</li>
+        <li>That what you rent is allowed (staycations, apartments or bed spaces).</li>
+      </ul>
+    </AppSheet>
+  );
+
+  // Pattern Guide §3.11: the full banner only on Home; one calm row everywhere else.
+  if (onboarding) {
+    return (
+      <>
+        <div
+          data-slot="approval-banner"
+          className="flex min-h-11 items-center gap-2.5 rounded-xl bg-muted px-3 py-2 text-sm"
+        >
+          <HourglassIcon aria-hidden="true" className="size-4 shrink-0 text-warning" />
+          <p className="min-w-0 flex-1 text-foreground">
+            We're checking your application. Your page goes live after we approve you.
+          </p>
+          <button
+            type="button"
+            className="shrink-0 font-medium text-primary-hover underline-offset-4 outline-none hover-hover:hover:underline focus-visible:underline pointer-coarse:min-h-11"
+            onClick={() => setChecksOpen(true)}
+          >
+            What we check
+          </button>
+        </div>
+        {checks}
+      </>
+    );
+  }
+
+  // Home: a calm card (not a coloured banner) with the next step and what we check.
   return (
     <>
-      <Banner
-        variant="warning"
+      <section
         data-slot="approval-banner"
-        dismissible={false}
-        className="rounded-lg"
+        aria-labelledby="approval-title"
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center"
       >
-        <BannerContent className="flex-col items-start gap-3 sm:flex-row sm:items-center">
-          <div className="flex flex-1 gap-3">
-            <BannerIcon>
-              <HourglassIcon className="size-4" />
-            </BannerIcon>
-            <div className="flex flex-col gap-0.5">
-              <BannerTitle>We're checking your application</BannerTitle>
-              <BannerDescription>
-                We'll email you. Set up your page now; it goes live after we approve you.
-              </BannerDescription>
-            </div>
+        <div className="flex flex-1 gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-warning-tint">
+            <HourglassIcon aria-hidden="true" className="size-4 text-warning" />
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <h2 id="approval-title" className="font-medium text-foreground">
+              We're checking your application
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              We'll email you. Set up your page now; it goes live after we approve you.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {onboarding ? null : (
-              <Button
-                size="sm"
-                className="min-h-11 sm:min-h-8"
-                nativeButton={false}
-                render={<Link to="/onboarding" />}
-              >
-                Set up your page
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="min-h-11 sm:min-h-8"
-              onClick={() => setChecksOpen(true)}
-            >
-              What we check
-            </Button>
-          </div>
-        </BannerContent>
-      </Banner>
-      <Sheet open={checksOpen} onOpenChange={setChecksOpen}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[85dvh] sm:mx-auto sm:max-w-lg sm:rounded-t-xl"
-        >
-          <SheetHeader>
-            <SheetTitle>What we check</SheetTitle>
-            <SheetDescription>So guests can trust every page on Smart App PH.</SheetDescription>
-          </SheetHeader>
-          <ul className="space-y-3 px-4 pb-6 text-sm">
-            <li>That the place is real: your Facebook page, photos or a quick call.</li>
-            <li>That you can be reached on the mobile number and email you gave.</li>
-            <li>That what you rent is allowed (staycations, apartments or bed spaces).</li>
-          </ul>
-        </SheetContent>
-      </Sheet>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            className="min-h-11 sm:min-h-8"
+            nativeButton={false}
+            render={<Link to="/onboarding" />}
+          >
+            Set up your page
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="min-h-11 sm:min-h-8"
+            onClick={() => setChecksOpen(true)}
+          >
+            What we check
+          </Button>
+        </div>
+      </section>
+      {checks}
     </>
   );
 }

@@ -50,7 +50,7 @@ Rules:
 - **Component:** `ResponsiveDialog` over the Base UI drawer (`packages/ui/src/components/drawer.tsx`), with `snapPoints`.
 - **Behaviour:**
   - Opens at **half** height for short tasks and drags to **full**. Long forms open at full.
-  - Grabber on top. Close (×) top-left; one main button pinned at the bottom.
+  - Grabber on top. Close (×) top-left; one main button pinned at the bottom. On phones and tablets a Cancel button is hidden (`data-sheet-cancel`), because Close and a swipe down already cancel; the desktop dialog keeps it.
   - The body scrolls inside the sheet and fades at the top and bottom edges when there is more.
   - Swipe down closes; with unsaved input it asks first.
   - One sheet at a time.
@@ -153,9 +153,13 @@ Rules:
 
 The Preview ("view as") switch lives in the account menu on phones and as a small corner tab on desktop. It never floats over content.
 
+- How it works: the phone account menu button carries `data-dev-panel-menu` (preview builds only); a CSS rule hides the pill on phones when that marker is on the page, and the menu item calls `openDevPanel()` from `@smartapp/ui/lib/dev-panel`. Pages without the account menu (sign-in) keep the pill.
+
 ## 5. Demo photos (D64)
 
 The dashboard serves its own copy of the demo media, so photos load on any deploy without the storefront.
+
+- How it works: `apps/dashboard/vite.config.ts` serves `apps/storefront/public/demo-media` at `/demo-media` in dev and preview, and copies it into `dist/demo-media` for sample-data builds that are not production. The memory client builds relative photo links (`storefrontOrigin: ''`).
 
 ## 6. Definition of done for every UI prompt
 

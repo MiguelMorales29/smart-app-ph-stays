@@ -27,7 +27,11 @@ export interface AppSheetProps {
   readonly title: ReactNode;
   readonly description?: ReactNode | undefined;
   readonly children: ReactNode;
-  /** Pinned at the bottom (phones) or the dialog's foot (desktop): usually Cancel and the main button. */
+  /**
+   * Pinned at the bottom (phones) or the dialog's foot (desktop): usually Cancel and the main button.
+   * Mark Cancel with `data-sheet-cancel`: phones hide it, because the sheet's Close button and a
+   * swipe down already cancel, and one pinned button keeps the form visible (Pattern Guide §3.1).
+   */
   readonly footer?: ReactNode | undefined;
   /**
    * Phones only. `half` opens at half height and drags to full (short pickers); `full` opens tall
@@ -161,7 +165,7 @@ export function AppSheet({
           {shown.footer ? (
             <div
               data-slot="app-sheet-footer"
-              className="flex shrink-0 flex-col gap-2 border-t border-border bg-popover px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+var(--drawer-keyboard-inset,0px)+0.75rem)] transition-transform duration-slow ease-enter [transform:translateY(calc(-1*var(--drawer-snap-point-offset,0px)))] [&>*]:min-h-12 [&>*]:w-full sm:flex-row sm:justify-end sm:[&>*]:w-auto"
+              className="flex shrink-0 flex-col gap-2 border-t border-border bg-popover px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+var(--drawer-keyboard-inset,0px)+0.75rem)] transition-transform duration-slow ease-enter [transform:translateY(calc(-1*var(--drawer-snap-point-offset,0px)))] [&>*]:min-h-12 [&>*]:w-full [&>[data-sheet-cancel]]:hidden sm:flex-row sm:justify-end sm:[&>*]:w-auto"
             >
               {shown.footer}
             </div>

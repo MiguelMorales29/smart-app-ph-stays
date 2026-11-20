@@ -1,48 +1,37 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, useBlocker, useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useBlocker, useParams, useSearch } from '@tanstack/react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
-import { ArrowLeftIcon, CheckIcon, CircleIcon } from 'lucide-react';
 import {
   centavos,
   calendarDateSchema,
+  formatPesos,
   readErrorDetails,
   unitFormSchema,
   type OwnerUnitDetailView,
 } from '@smartapp/core';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@smartapp/ui/components/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
-import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from '@smartapp/ui/components/number-field';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
+import { EditorSections } from '@smartapp/ui/compositions/editor-sections';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
+import { RowControl, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
+import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
 import {
   PriceEditor,
+  priceSummary,
   type PriceDraft,
   type PriceDraftErrors,
 } from '@smartapp/ui/compositions/price-editor';
 import { LeaveGuardDialog, SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { useFormDraft } from '@smartapp/ui/hooks/use-form-draft';
-import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { notify } from '@smartapp/ui/lib/notify';
-import { cn } from '@smartapp/ui/lib/utils';
 import { useDashboard } from '@/app/dashboard-context';
 import { usePhotoPipeline } from '@/app/photos/use-photo-pipeline';
 import { useSetUnitPhotosMutation } from '@/data/photos/upload';
@@ -59,6 +48,7 @@ import {
   leaseDraftFrom,
   priceDraftFrom,
   rulesDraftFrom,
+  rulesSummary,
   sameDraft,
   type LeaseDraft,
   type RulesDraft,
@@ -117,39 +107,10 @@ function basicsFrom(detail: OwnerUnitDetailView): BasicsForm {
 
 const emptyToNull = (value: string) => (value.trim() === '' ? null : value);
 
-function CountInput({
-  id,
-  value,
-  onChange,
-  min,
-  max,
-  step = 1,
-  label,
-}: {
-  readonly id: string;
-  readonly value: number | null;
-  readonly onChange: (value: number | null) => void;
-  readonly min: number;
-  readonly max: number;
-  readonly step?: number;
-  readonly label: string;
-}) {
-  return (
-    <NumberField id={id} value={value} min={min} max={max} step={step} onValueChange={onChange}>
-      <NumberFieldGroup className="w-40">
-        <NumberFieldDecrement aria-label={`Fewer: ${label}`} />
-        <NumberFieldInput />
-        <NumberFieldIncrement aria-label={`More: ${label}`} />
-      </NumberFieldGroup>
-    </NumberField>
-  );
-}
-
 /** /units/$unitId (OW-08): Basics and Photos now; Price, Amenities and Booking rules in P4-6. */
 export function UnitEditPage() {
   const { unitId } = useParams({ from: '/app-frame/units/$unitId' });
   const search = useSearch({ from: '/app-frame/units/$unitId' });
-  const navigate = useNavigate();
   const detail = useOwnerUnitQuery(unitId);
   const units = useOwnerUnitsQuery();
 
@@ -182,15 +143,7 @@ export function UnitEditPage() {
       key={detail.data.unit.id}
       detail={detail.data}
       roomBeds={roomBeds.map((item) => ({ unitId: item.unit.id, name: item.unit.name }))}
-      section={search.section ?? 'basics'}
-      onSection={(section) =>
-        void navigate({
-          to: '/units/$unitId',
-          params: { unitId },
-          search: { section },
-          replace: true,
-        })
-      }
+      initialSection={search.section ?? 'basics'}
     />
   );
 }
@@ -198,15 +151,16 @@ export function UnitEditPage() {
 function UnitEditor({
   detail,
   roomBeds,
-  section,
-  onSection,
+  initialSection,
 }: {
   readonly detail: OwnerUnitDetailView;
   readonly roomBeds: readonly { readonly unitId: string; readonly name: string }[];
-  readonly section: UnitSection;
-  readonly onSection: (section: UnitSection) => void;
+  readonly initialSection: UnitSection;
 }) {
-  const formFactor = useFormFactor();
+  // The open section is local state: writing it to the address re-rendered the page on every tap
+  // and made the accordion jump (Phase 4 audit). `?section=` still opens a section on arrival.
+  const [section, setSection] = useState<UnitSection | null>(initialSection);
+  const onSection = (next: UnitSection) => setSection(next);
   const save = useSaveUnitMutation();
   const savePhotos = useSetUnitPhotosMutation();
   const savePrices = useSaveUnitPricesMutation();
@@ -247,6 +201,14 @@ function UnitEditor({
   const rulesDirty = !isLong && !sameDraft(rules, rulesDraftFrom(current));
   const leaseDirty = isLong && !sameDraft(lease, leaseDraftFrom(current));
   const amenitiesDirty = !sameDraft([...amenityIds].sort(), [...current.amenity_ids].sort());
+  const changeCount = [
+    form.formState.isDirty,
+    photos.dirty,
+    priceDirty,
+    rulesDirty,
+    leaseDirty,
+    amenitiesDirty,
+  ].filter(Boolean).length;
   const dirty =
     form.formState.isDirty ||
     photos.dirty ||
@@ -483,17 +445,19 @@ function UnitEditor({
     notify.info('Changes discarded');
   }
 
-  const doneMarks: Record<UnitSection, boolean> = {
-    basics: true,
-    photos: photos.photosToSave.length >= 3,
-    price: unit.mode === 'long_term' ? current.lease_terms !== null : current.stay_terms !== null,
-    amenities: current.amenity_ids.length > 0,
-    rules: isLong ? current.lease_terms !== null : current.stay_terms !== null,
-  };
-
   const errors = form.formState.errors;
+  const bedrooms = watched.bedrooms;
+  const basicsSummary = [
+    `${watched.max_guests} ${watched.max_guests === 1 ? 'guest' : 'guests'}`,
+    ...(isBed
+      ? []
+      : [bedrooms === 0 ? 'Studio' : `${bedrooms} ${bedrooms === 1 ? 'bedroom' : 'bedrooms'}`]),
+    `${watched.beds} ${watched.beds === 1 ? 'bed' : 'beds'}`,
+    `${watched.bathrooms} ${watched.bathrooms === 1 ? 'bath' : 'baths'}`,
+  ].join(' · ');
+
   const basics = (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {draft.saved ? (
         <DraftNotice
           onKeep={() => {
@@ -526,99 +490,109 @@ function UnitEditor({
           </FieldDescription>
         </Field>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field>
-          <FieldLabel htmlFor="unit-guests">Guests</FieldLabel>
+      <RowGroup
+        title="The space"
+        footer={
+          errors.floor_area_sqm ? (
+            <span className="text-destructive">{errors.floor_area_sqm.message}</span>
+          ) : undefined
+        }
+      >
+        <RowControl label="Guests" labelFor="unit-guests">
           <Controller
             control={form.control}
             name="max_guests"
             render={({ field }) => (
-              <CountInput
+              <InlineStepper
                 id="unit-guests"
                 label="Guests"
                 value={field.value}
-                onChange={(v) => field.onChange(v ?? 1)}
+                onValueChange={field.onChange}
                 min={1}
                 max={30}
               />
             )}
           />
-        </Field>
+        </RowControl>
         {!isBed ? (
-          <Field>
-            <FieldLabel htmlFor="unit-bedrooms">Bedrooms</FieldLabel>
+          <RowControl
+            label="Bedrooms"
+            hint={bedrooms === 0 ? 'Studio' : undefined}
+            labelFor="unit-bedrooms"
+          >
             <Controller
               control={form.control}
               name="bedrooms"
               render={({ field }) => (
-                <CountInput
+                <InlineStepper
                   id="unit-bedrooms"
                   label="Bedrooms"
                   value={field.value}
-                  onChange={(v) => field.onChange(v ?? 0)}
+                  onValueChange={field.onChange}
                   min={0}
                   max={20}
                 />
               )}
             />
-          </Field>
+          </RowControl>
         ) : null}
-        <Field>
-          <FieldLabel htmlFor="unit-beds">Beds</FieldLabel>
+        <RowControl label="Beds" labelFor="unit-beds">
           <Controller
             control={form.control}
             name="beds"
             render={({ field }) => (
-              <CountInput
+              <InlineStepper
                 id="unit-beds"
                 label="Beds"
                 value={field.value}
-                onChange={(v) => field.onChange(v ?? 0)}
+                onValueChange={field.onChange}
                 min={0}
                 max={40}
               />
             )}
           />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="unit-baths">Bathrooms</FieldLabel>
+        </RowControl>
+        <RowControl label="Bathrooms" hint="Half for a toilet only" labelFor="unit-baths">
           <Controller
             control={form.control}
             name="bathrooms"
             render={({ field }) => (
-              <CountInput
+              <InlineStepper
                 id="unit-baths"
                 label="Bathrooms"
                 value={field.value}
-                onChange={(v) => field.onChange(v ?? 0)}
+                onValueChange={field.onChange}
                 min={0}
                 max={20}
                 step={0.5}
               />
             )}
           />
-        </Field>
-        <Field data-invalid={errors.floor_area_sqm ? true : undefined}>
-          <FieldLabel htmlFor="unit-area">Floor area (m²)</FieldLabel>
+        </RowControl>
+        <RowControl label="Floor area" hint="Optional" labelFor="unit-area">
           <Controller
             control={form.control}
             name="floor_area_sqm"
             render={({ field }) => (
-              <Input
-                id="unit-area"
-                inputMode="decimal"
-                value={field.value === null ? '' : String(field.value)}
-                onChange={(event) => {
-                  const raw = event.target.value.replace(/[^\d.]/g, '');
-                  field.onChange(raw === '' ? null : Number(raw));
-                }}
-                onBlur={field.onBlur}
-              />
+              <span className="flex items-center gap-1.5">
+                <Input
+                  id="unit-area"
+                  inputMode="decimal"
+                  className="w-20 text-right tabular"
+                  aria-invalid={errors.floor_area_sqm ? true : undefined}
+                  value={field.value === null ? '' : String(field.value)}
+                  onChange={(event) => {
+                    const raw = event.target.value.replace(/[^\d.]/g, '');
+                    field.onChange(raw === '' ? null : Number(raw));
+                  }}
+                  onBlur={field.onBlur}
+                />
+                <span className="text-sm text-muted-foreground">m²</span>
+              </span>
             )}
           />
-          <FieldError>{errors.floor_area_sqm?.message}</FieldError>
-        </Field>
-      </div>
+        </RowControl>
+      </RowGroup>
       <Field>
         <FieldLabel htmlFor="unit-description">Description</FieldLabel>
         <Textarea
@@ -695,28 +669,43 @@ function UnitEditor({
     ),
   };
 
-  const mark = (value: UnitSection) =>
-    doneMarks[value] ? (
-      <CheckIcon aria-label="Done" className="size-4 text-success" />
-    ) : (
-      <CircleIcon aria-label="Not done" className="size-4 text-muted-foreground" />
-    );
+  const photoCount = photos.tiles.length;
+  const amenityLabels = (amenities.data ?? [])
+    .filter((item) => amenityIds.includes(item.id))
+    .map((item) => item.label);
+  const summaries: Record<UnitSection, string> = {
+    basics: basicsSummary,
+    photos:
+      photoCount === 0
+        ? 'Add at least 3 photos'
+        : `${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}${photoCount < 3 ? ' · add at least 3' : ''}`,
+    price: isLong
+      ? lease.monthlyRent === null
+        ? 'No rent yet'
+        : `${formatPesos(lease.monthlyRent)} a month · ${lease.depositMonths} months deposit`
+      : priceSummary(price),
+    amenities:
+      amenityLabels.length === 0
+        ? 'None picked yet'
+        : amenityLabels.length <= 3
+          ? amenityLabels.join(', ')
+          : `${amenityLabels.slice(0, 2).join(', ')} and ${amenityLabels.length - 2} more`,
+    rules: isLong ? 'Set under Price' : rulesSummary(rules),
+  };
+  const needsYou: Record<UnitSection, boolean> = {
+    basics: false,
+    photos: photoCount < 3,
+    price: isLong ? lease.monthlyRent === null : price.baseNightly === null,
+    amenities: amenityIds.length === 0,
+    rules: false,
+  };
 
   return (
-    <section className="space-y-5">
-      <div className="space-y-2">
-        <Link
-          to="/units"
-          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover-hover:hover:text-foreground"
-        >
-          <ArrowLeftIcon aria-hidden="true" className="size-4" />
-          Units
-        </Link>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="line-clamp-2 font-heading text-2xl font-semibold">{unit.name}</h1>
-          <UnitStatusBadge status={unit.status} />
-        </div>
-        <p className="text-sm text-muted-foreground">{UNIT_TYPE_LABEL[unit.unit_type]}</p>
+    <section className="space-y-5 pb-24 lg:pb-20">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h1 className="line-clamp-2 font-heading text-2xl font-semibold">{unit.name}</h1>
+        <UnitStatusBadge status={unit.status} />
+        <p className="w-full text-sm text-muted-foreground">{UNIT_TYPE_LABEL[unit.unit_type]}</p>
       </div>
 
       {stale ? (
@@ -741,67 +730,24 @@ function UnitEditor({
         </Alert>
       ) : null}
 
-      {/* Phones and tablets: an accordion. Desktop: sections on the left, the form on the right. */}
-      {formFactor !== 'desktop' ? (
-        <Accordion
-          className="rounded-xl border border-border bg-card px-4"
-          value={[section]}
-          onValueChange={(value) => {
-            const next = SECTIONS.find((item) => item.value === value[0]);
-            if (next) onSection(next.value);
-          }}
-        >
-          {SECTIONS.map((item) => (
-            <AccordionItem key={item.value} value={item.value}>
-              <AccordionTrigger className="min-h-12 items-center text-base hover:no-underline">
-                <span className="flex items-center gap-2">
-                  {mark(item.value)}
-                  {item.label}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-4">
-                {section === item.value ? content[item.value] : null}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      ) : (
-        <div className="grid grid-cols-[200px_minmax(0,1fr)] gap-8">
-          <nav aria-label="Unit sections">
-            <ul className="sticky top-20 space-y-1">
-              {SECTIONS.map((item) => (
-                <li key={item.value}>
-                  <button
-                    type="button"
-                    aria-current={section === item.value ? 'page' : undefined}
-                    onClick={() => onSection(item.value)}
-                    className={cn(
-                      'flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-                      section === item.value
-                        ? 'bg-primary-tint text-foreground'
-                        : 'text-muted-foreground hover-hover:hover:bg-muted',
-                    )}
-                  >
-                    {mark(item.value)}
-                    {item.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className="min-w-0 rounded-xl border border-border bg-card p-5">
-            <h2 className="mb-4 font-heading text-lg font-semibold">
-              {SECTIONS.find((item) => item.value === section)?.label}
-            </h2>
-            {content[section]}
-          </div>
-        </div>
-      )}
+      <EditorSections
+        label="Unit sections"
+        value={section}
+        onValueChange={setSection}
+        sections={SECTIONS.map((item) => ({
+          value: item.value,
+          label: item.label,
+          summary: summaries[item.value],
+          needsYou: needsYou[item.value],
+          content: content[item.value],
+        }))}
+      />
 
       <SaveBar
         dirty={dirty}
         state={state}
         canSave={!photos.busy}
+        changes={changeCount}
         onSave={() => void onSave()}
         onDiscard={discard}
       />

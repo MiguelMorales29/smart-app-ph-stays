@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from 'react';
-import { PlusIcon, SearchIcon } from 'lucide-react';
+import { CheckIcon, PlusIcon, SearchIcon } from 'lucide-react';
 import { cn } from 'cn';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
@@ -90,11 +90,12 @@ export function AmenityChips({
                 <label
                   key={item.id}
                   className={cn(
-                    'inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm transition-colors duration-fast pointer-coarse:min-h-11',
+                    // Pattern Guide §3.5: tint, a blue ring and a check when picked.
+                    'press inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm transition-colors duration-fast pointer-coarse:min-h-11',
                     'has-focus-visible:ring-3 has-focus-visible:ring-ring/50',
                     checked
-                      ? 'border-primary bg-primary-tint text-foreground'
-                      : 'border-border bg-card text-foreground hover-hover:hover:bg-muted',
+                      ? 'border-primary bg-primary-tint font-semibold text-foreground shadow-[inset_0_0_0_0.5px_var(--primary)]'
+                      : 'border-input bg-card text-foreground hover-hover:hover:bg-muted',
                   )}
                 >
                   <input
@@ -103,13 +104,11 @@ export function AmenityChips({
                     checked={checked}
                     onChange={() => toggle(item.id)}
                   />
-                  <Icon
-                    aria-hidden="true"
-                    className={cn(
-                      'size-4',
-                      checked ? 'text-primary-hover' : 'text-muted-foreground',
-                    )}
-                  />
+                  {checked ? (
+                    <CheckIcon aria-hidden="true" className="size-4 text-primary" />
+                  ) : (
+                    <Icon aria-hidden="true" className="size-4 text-muted-foreground" />
+                  )}
                   {item.label}
                 </label>
               );
