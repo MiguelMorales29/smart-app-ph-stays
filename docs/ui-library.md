@@ -77,34 +77,35 @@ _(Plus `use-mobile.ts` installed in `packages/ui/src/hooks/` as a transitive dep
 
 Reuse these before reaching for a raw component; they already handle light/dark, phone/desktop and accessibility.
 
-| Composition                                | Use for                                                                             | Don't                                                        |
-| ------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `LoadingState`                             | Skeleton placeholders while data loads (`layout` page, cards or list)               | Show a lone spinner for a whole page                         |
-| `EmptyState`                               | No data yet: one sentence and one action                                            | Leave a blank area or an empty table                         |
-| `ErrorState`                               | A load failed: what happened plus "Try again"                                       | Show raw error codes as the main message                     |
-| `NotAllowedState`                          | The viewer's role cannot open this page                                             | Hide the page silently                                       |
-| `OfflineBanner`                            | Connection lost; place it inside the content area (`SidebarInset` in the dashboard) | Put it above the sidebar layout, where the sidebar covers it |
-| `PausedAccountBanner`                      | Subscription paused notice in the dashboard                                         | Use for general warnings (use `Alert`)                       |
-| `BookingStatusBadge`, `PaymentStatusBadge` | Every booking and payment status (icon + word + D35 colour)                         | Build status pills by hand or use mint for status            |
-| `BottomDock`, `NavDrawer`                  | Phone navigation and its "More" drawer                                              | Use on tablet or desktop                                     |
-| `PropertyTheme`, `PropertyThemeDocument`   | Applying an owner's palette and font pair to storefront pages                       | Hard-code a property's colours                               |
-| `DevSwitchPanel` (D42)                     | The floating "Preview" pill, loaded lazily by the switch gates on sample data only  | Render it in production code paths or inside a page layout   |
-| `SettingsList`                             | iOS-style grouped settings rows: label, value, chevron, unfinished dot (P4-7)       | Put actions that change data straight in a row               |
-| `SaveBar`, `LeaveGuardDialog`              | Sticky "Unsaved changes" bar above the dock and keyboard; the leave question        | Save automatically without telling the owner                 |
-| `AsyncButton`                              | Save → Saving → ✓ Saved at a fixed width, announced to screen readers               | Change the button's width or text mid-save                   |
-| `MoneyInput`                               | Every ₱ amount (accepts 1,500, ₱1500, 1.5k; whole centavos)                         | Use `type=number` or percentages for prices                  |
-| `PhoneInput`                               | PH mobile, GCash and Maya numbers (shows 0917 123 4567, stores +639…)               | Add a country picker (owners are PH-only)                    |
-| `PasswordInput`                            | Passwords with the show/hide eye and a rules line                                   | Hide the rules until after an error                          |
-| `GoogleButton`                             | "Continue with Google" on sign-up and login (D58)                                   | Recolour Google's mark                                       |
-| `TimeSelect`                               | Check-in, check-out and hours in 30-minute steps                                    | Build a custom time picker                                   |
-| `SlugField`                                | The web address with the live check and suggestions                                 | Check on every keystroke (it waits 400 ms)                   |
-| `AmenityChips`                             | Grouped amenity checkboxes with search and "Add your own"                           | Use a free tag input (the catalogue is fixed)                |
-| `OwnerAvatar`, `AvatarSeedPicker`          | Owner pictures: photo, DiceBear Notionists (CC0, D59) or initials                   | Call DiceBear's online API                                   |
-| `MilestonePicture`                         | Fluent Emoji 3D pictures on milestone screens (welcome, waiting, live, errors)      | Use on routine empty states (use `EmptyState` with an icon)  |
-| `DraftNotice`                              | "We kept the changes you didn't save" with Keep / Start over                        | Restore a draft without asking                               |
-| `GoLiveCard`                               | The go-live moment: "<Place> is live", the link, Copy and one confetti burst (D53)  | Show it for anything smaller than going live                 |
-| `notify()` (lib)                           | Short messages and Undo (one helper over the Base UI toast)                         | Show errors that need action in a toast                      |
-| `celebrate()` (lib)                        | The go-live confetti, once per property per device                                  | Use for routine saves                                        |
+| Composition                                | Use for                                                                              | Don't                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `LoadingState`                             | Skeleton placeholders while data loads (`layout` page, cards or list)                | Show a lone spinner for a whole page                          |
+| `EmptyState`                               | No data yet: one sentence and one action                                             | Leave a blank area or an empty table                          |
+| `ErrorState`                               | A load failed: what happened plus "Try again"                                        | Show raw error codes as the main message                      |
+| `NotAllowedState`                          | The viewer's role cannot open this page                                              | Hide the page silently                                        |
+| `OfflineBanner`                            | Connection lost; place it inside the content area (`SidebarInset` in the dashboard)  | Put it above the sidebar layout, where the sidebar covers it  |
+| `PausedAccountBanner`                      | Subscription paused notice in the dashboard                                          | Use for general warnings (use `Alert`)                        |
+| `BookingStatusBadge`, `PaymentStatusBadge` | Every booking and payment status (icon + word + D35 colour)                          | Build status pills by hand or use mint for status             |
+| `BottomDock`, `NavDrawer`                  | Phone navigation and its "More" drawer                                               | Use on tablet or desktop                                      |
+| `PropertyTheme`, `PropertyThemeDocument`   | Applying an owner's palette and font pair to storefront pages                        | Hard-code a property's colours                                |
+| `DevSwitchPanel` (D42)                     | The floating "Preview" pill, loaded lazily by the switch gates on sample data only   | Render it in production code paths or inside a page layout    |
+| `SettingsList`                             | iOS-style grouped settings rows: label, value, chevron, unfinished dot (P4-7)        | Put actions that change data straight in a row                |
+| `SaveBar`, `LeaveGuardDialog`              | Sticky "Unsaved changes" bar above the dock and keyboard; the leave question         | Save automatically without telling the owner                  |
+| `AsyncButton`                              | Save → Saving → ✓ Saved at a fixed width, announced to screen readers                | Change the button's width or text mid-save                    |
+| `MoneyInput`                               | Every ₱ amount (accepts 1,500, ₱1500, 1.5k; whole centavos)                          | Use `type=number` or percentages for prices                   |
+| `PhoneInput`                               | PH mobile, GCash and Maya numbers (shows 0917 123 4567, stores +639…)                | Add a country picker (owners are PH-only)                     |
+| `PasswordInput`                            | Passwords with the show/hide eye and a rules line                                    | Hide the rules until after an error                           |
+| `GoogleButton`                             | "Continue with Google" on sign-up and login (D58)                                    | Recolour Google's mark                                        |
+| `TimeSelect`                               | Check-in, check-out and hours in 30-minute steps                                     | Build a custom time picker                                    |
+| `SlugField`                                | The web address with the live check and suggestions                                  | Check on every keystroke (it waits 400 ms)                    |
+| `AmenityChips`                             | Grouped amenity checkboxes with search and "Add your own"                            | Use a free tag input (the catalogue is fixed)                 |
+| `OwnerAvatar`, `AvatarSeedPicker`          | Owner pictures: photo, DiceBear Notionists (CC0, D59) or initials                    | Call DiceBear's online API                                    |
+| `MilestonePicture`                         | Fluent Emoji 3D pictures on milestone screens (welcome, waiting, live, errors)       | Use on routine empty states (use `EmptyState` with an icon)   |
+| `DraftNotice`                              | "We kept the changes you didn't save" with Keep / Start over                         | Restore a draft without asking                                |
+| `GoLiveCard`                               | The go-live moment: "<Place> is live", the link, Copy and one confetti burst (D53)   | Show it for anything smaller than going live                  |
+| `PhotoManager`                             | Listing photos: add, reorder (drag or menu), cover, descriptions, per-photo progress | Do the shrinking or uploading inside it; the app passes tiles |
+| `notify()` (lib)                           | Short messages and Undo (one helper over the Base UI toast)                          | Show errors that need action in a toast                       |
+| `celebrate()` (lib)                        | The go-live confetti, once per property per device                                   | Use for routine saves                                         |
 
 ## Selection Rationale ("How it was chosen")
 
@@ -134,6 +135,7 @@ Reuse these before reaching for a raw component; they already handle light/dark,
 | `packages/ui/src/components/file-upload.tsx`                                                  | P4-2      | The hidden native file input is `aria-hidden`: people use the drop zone and the Choose button, and axe flagged the hidden input's invisible label (`label-title-only`).                                                                                                          |
 
 _(No other installed files were modified.)_
+| `packages/ui/src/components/accordion.tsx` | P4-5 | Installed from the official shadcn base-nova source (local registry, D60). No edits. |
 
 ## Credits
 

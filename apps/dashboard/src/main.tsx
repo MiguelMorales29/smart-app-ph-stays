@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Toaster } from '@smartapp/ui/components/toast';
 
 import './index.css';
 import { DashboardQueryProvider } from '@/app/query';
@@ -15,7 +16,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <DashboardQueryProvider>
       <ThemeProvider>
-        <App />
+        <Toaster>
+          <App />
+        </Toaster>
       </ThemeProvider>
     </DashboardQueryProvider>
   </StrictMode>,

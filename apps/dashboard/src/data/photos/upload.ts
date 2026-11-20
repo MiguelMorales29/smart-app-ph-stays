@@ -21,26 +21,52 @@ async function imageSize(file: Blob): Promise<{ width: number; height: number } 
   }
 }
 
+/** Sends the file to a signed address with progress (fetch can't report upload progress). */
+function putWithProgress(url: string, file: Blob, onProgress: (percent: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('PUT', url);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(10 + (event.loaded / event.total) * 80);
+    };
+    request.onload = () =>
+      request.status >= 200 && request.status < 300
+        ? resolve()
+        : reject(new Error('upload_failed'));
+    request.onerror = () => reject(new Error('upload_failed'));
+    request.send(file);
+  });
+}
+
 export interface UploadedPhoto {
   readonly fileId: string;
   readonly width: number | null;
   readonly height: number | null;
 }
 
+export interface UploadPhotoInput {
+  readonly file: Blob;
+  readonly filename: string;
+  readonly purpose: 'unit_photo' | 'property_photo' | 'payment_qr' | 'logo';
+  readonly width?: number | undefined;
+  readonly height?: number | undefined;
+  readonly onProgress?: ((percent: number) => void) | undefined;
+}
+
 /**
- * Uploads one already-prepared image (P4-5 shrinks it first): asks for an upload slot, sends the
- * file, then confirms it. On sample data nothing leaves the device; the data layer only records it.
+ * Uploads one already-shrunk image: asks for an upload slot, sends the file, then confirms it.
+ * Progress: 10% once the slot is ready, up to 90% while sending, 100% when confirmed. On sample
+ * data nothing leaves the device, so progress moves with the (switchable) data latency.
  */
 export function useUploadPhotoMutation() {
   const active = useActiveDataClient();
   return useMutation({
-    mutationFn: async (input: {
-      readonly file: Blob;
-      readonly filename: string;
-      readonly purpose: 'unit_photo' | 'property_photo' | 'payment_qr' | 'logo';
-    }): Promise<UploadedPhoto> => {
+    mutationFn: async (input: UploadPhotoInput): Promise<UploadedPhoto> => {
       const { source, session, accountId } = requireOwnerClient(active);
-      const size = await imageSize(input.file);
+      const size =
+        input.width && input.height
+          ? { width: input.width, height: input.height }
+          : await imageSize(input.file);
       const slot = unwrapResult(
         await source.requestUpload(
           {
@@ -56,9 +82,11 @@ export function useUploadPhotoMutation() {
           session,
         ),
       );
+      input.onProgress?.(10);
       if (slot.uploadUrl.startsWith('http')) {
-        await fetch(slot.uploadUrl, { method: 'PUT', body: input.file }).catch(() => undefined);
+        await putWithProgress(slot.uploadUrl, input.file, (percent) => input.onProgress?.(percent));
       }
+      input.onProgress?.(90);
       const confirmed = unwrapResult(
         await source.confirmUpload(
           {
@@ -73,12 +101,16 @@ export function useUploadPhotoMutation() {
           session,
         ),
       );
+      input.onProgress?.(100);
       return { fileId: confirmed.id, width: size?.width ?? null, height: size?.height ?? null };
     },
   });
 }
 
-/** Saves the photo order and descriptions for each unit given (bed spaces share their photos). */
+/**
+ * Saves the photo order and descriptions for each unit given (bed spaces in one room share their
+ * photos), or for the property when `unitId` is null.
+ */
 export function useSetUnitPhotosMutation() {
   const active = useActiveDataClient();
   const queryClient = useQueryClient();
@@ -86,7 +118,7 @@ export function useSetUnitPhotosMutation() {
     mutationFn: async (input: {
       readonly propertyId: string;
       readonly units: readonly { readonly unitId: string | null; readonly name: string }[];
-      readonly fileIds: readonly string[];
+      readonly photos: readonly { readonly fileId: string; readonly altText: string | null }[];
     }) => {
       const { source, session, accountId } = requireOwnerClient(active);
       for (const unit of input.units) {
@@ -97,9 +129,12 @@ export function useSetUnitPhotosMutation() {
               accountId,
               propertyId: input.propertyId,
               unitId: unit.unitId,
-              photos: input.fileIds.map((fileId, index) => ({
-                fileId,
-                altText: `${unit.name}, photo ${index + 1}`.slice(0, 160),
+              photos: input.photos.map((photo, index) => ({
+                fileId: photo.fileId,
+                altText: (photo.altText?.trim() || `${unit.name}, photo ${index + 1}`).slice(
+                  0,
+                  160,
+                ),
               })),
             },
             session,

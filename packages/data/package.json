@@ -16,6 +16,10 @@
     "./switches": {
       "types": "./dist/switches.d.ts",
       "import": "./dist/switches.js"
+    },
+    "./compress-image": {
+      "types": "./dist/compress-image.d.ts",
+      "import": "./dist/compress-image.js"
     }
   },
   "scripts": {
