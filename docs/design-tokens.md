@@ -50,5 +50,5 @@ Status ALWAYS pairs a semantic colour with an icon and a plain-word label (Growt
 | **Done (green)**       | `#007031` on `#daf5de` | `#50bf6f` on `#193b22` | `confirmed`, `completed`, `approved` |
 | **Waiting (amber)**    | `#7d5200` on `#fee9ce` | `#db9400` on `#47300c` | `held`, `in_review`, `submitted`     |
 | **In progress (blue)** | `#006393` on `#dcf0ff` | `#4faeeb` on `#133951` | `checked_in`                         |
-| **Problem (red)**      | `#ac111f` on `#ffe6e4` | `#ff716b` on `#542523` | `cancelled`, `rejected`, `reversed`  |
+| **Problem (red)**      | `#ac111f` on `#ffe6e4` | `#ff8a84` on `#542523` | `cancelled`, `rejected`, `reversed`  |
 | **Finished (grey)**    | `#5c6372` on `#edf0f6` | `#9fa5b0` on `#2a2e36` | `expired`                            |
