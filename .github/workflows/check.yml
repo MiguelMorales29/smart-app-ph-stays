@@ -50,6 +50,9 @@ jobs:
           DATA_SOURCE: memory
         run: pnpm build
 
+      - name: Check dashboard bundle budget
+        run: node tooling/check-budget.ts
+
       - name: Build production front ends
         env:
           APP_ENV: production

@@ -43,13 +43,23 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 - [x] P4.5-B Refit Phase 4 screens on the patterns, demo photos, Preview switch
 - [x] P4-7 Settings and the property switcher
   - Follow-ups (open): the property switcher needs a demo owner with 2 properties and the data hooks reading the active property (`?p=`); saved replies need a contract operation; uploading your own profile photo needs a photo URL on the profile.
-- [ ] P4-8 Close-out: owner journey test, component tests, budget, docs
+- [x] P4-8 Close-out (wrapped up 2026-11-21 by Lex's call): pages load on demand and a bundle budget check runs in CI (entry 100 KB, first load 245 KB gzipped); the full UI scan passed on main; docs updated. The rest moved to the Phase 5 carry-over list below.
+
+### Carry-over into Phase 5 (decided by Lex, 2026-11-21)
+
+- [ ] Lex's iPhone check of every Phase 4 screen (Safari bars, light and dark), with a screen recording of anything that feels broken.
+- [ ] Edit unit accordion on iPhone: opening one section closes the one above, so the page jumps (suspected; fix after the recording).
+- [ ] Re-check every component changed in Phase 4 / 4.5 on a real iPhone, not only in Chrome.
+- [ ] Desktop + mobile UX research pass (desktop patterns were not studied as deeply as mobile), then a combined Smart App pattern set.
+- [ ] Owner journey e2e test and the six component tests (needs Node 24.15 for jsdom 31; the repo pins 24.14).
+- [ ] Property switcher: a demo owner with 2 properties and the data hooks reading `?p=`.
+- [ ] Saved replies (needs a contract operation) and uploading your own profile photo.
 
 ## Later phases
 
 - [x] 2 Data shapes, demo data and the mock layer
 - [x] 3 Look and app frames
-- [ ] 4 Owner start and listing (screens)
+- [x] 4 Owner start and listing (screens)
 - [ ] 5 Public pages and the page editor (screens)
 - [ ] 6 Dates, price and holding a booking (screens)
 - [ ] 7 Conversation, payment proof and notices (screens)
