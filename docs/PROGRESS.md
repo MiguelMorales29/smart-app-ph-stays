@@ -39,6 +39,8 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 - [x] P4-4 Onboarding and the home checklist
 - [x] P4-5 Units and photos
 - [x] P4-6 Prices, amenities and booking rules
+- [ ] P4.5-A Pattern Guide v2 patterns: warm colours, motion, sheet, rows, segmented pill, stepper, chips, save pill, section nav
+- [ ] P4.5-B Refit Phase 4 screens on the patterns, demo photos, Preview switch
 - [ ] P4-7 Settings and the property switcher
 - [ ] P4-8 Close-out: owner journey test, component tests, budget, docs
 
