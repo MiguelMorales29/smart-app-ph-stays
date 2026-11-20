@@ -17,6 +17,8 @@ import { LoginPage } from '@/features/auth/login-page';
 import { SignupPage } from '@/features/auth/signup-page';
 import { HomePage } from '@/features/home/home-page';
 import { OnboardingPage } from '@/features/onboarding/onboarding-page';
+import { UnitEditPage, type UnitEditSearch } from '@/features/units/unit-edit-page';
+import { UnitsPage, type UnitsSearch } from '@/features/units/units-page';
 import { SettingsIndexPage } from '@/features/settings/settings-index-page';
 
 const rootRoute = createRootRoute({
@@ -153,11 +155,38 @@ const inboxRoute = createRoute({
   component: () => <PlaceholderScreen title="Inbox" phase={7} />,
 });
 
+const UNITS_FILTERS = ['listed', 'hidden', 'drafts'] as const;
+
+function parseUnitsSearch(search: Record<string, unknown>): UnitsSearch {
+  const filter = UNITS_FILTERS.find((value) => value === search.filter);
+  const add = search.add === 'unit' || search.add === 'beds' ? search.add : undefined;
+  return {
+    ...(filter ? { filter } : {}),
+    ...(add ? { add } : {}),
+  };
+}
+
 const unitsRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/units',
+  validateSearch: parseUnitsSearch,
   staticData: { page: { title: 'Units' } },
-  component: () => <PlaceholderScreen title="Units" phase={4} />,
+  component: UnitsPage,
+});
+
+const UNIT_SECTIONS = ['basics', 'photos', 'price', 'amenities', 'rules'] as const;
+
+function parseUnitEditSearch(search: Record<string, unknown>): UnitEditSearch {
+  const section = UNIT_SECTIONS.find((value) => value === search.section);
+  return section ? { section } : {};
+}
+
+const unitEditRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: '/units/$unitId',
+  validateSearch: parseUnitEditSearch,
+  staticData: { page: { title: 'Edit unit' } },
+  component: UnitEditPage,
 });
 
 const guestsRoute = createRoute({
@@ -348,6 +377,7 @@ const routeTree = rootRoute.addChildren([
     paymentsRoute,
     inboxRoute,
     unitsRoute,
+    unitEditRoute,
     guestsRoute,
     settingsIndexRoute,
     settingsPaymentsRoute,

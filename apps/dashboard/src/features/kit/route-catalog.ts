@@ -32,6 +32,13 @@ export const DASHBOARD_ROUTE_CATALOG: readonly RouteCatalogEntry[] = [
   { app: 'dashboard', path: '/payments', label: 'Payments', frame: 'AppFrame', phase: 7 },
   { app: 'dashboard', path: '/inbox', label: 'Inbox', frame: 'AppFrame', phase: 7 },
   { app: 'dashboard', path: '/units', label: 'Units', frame: 'AppFrame', phase: 4 },
+  {
+    app: 'dashboard',
+    path: '/units/dec0de10-0005-4000-8000-000000000001',
+    label: 'Edit unit (Studio Fog)',
+    frame: 'AppFrame',
+    phase: 4,
+  },
   { app: 'dashboard', path: '/guests', label: 'Guests', frame: 'AppFrame', phase: 8 },
   { app: 'dashboard', path: '/settings', label: 'Settings', frame: 'AppFrame', phase: 4 },
   {

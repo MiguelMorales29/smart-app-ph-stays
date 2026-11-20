@@ -53,6 +53,7 @@ import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
+import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
 import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
 import { RadioCards } from '@smartapp/ui/compositions/radio-cards';
 import { SlugField } from '@smartapp/ui/compositions/slug-field';
@@ -61,17 +62,18 @@ import { useFormDraft } from '@smartapp/ui/hooks/use-form-draft';
 import { cn } from '@smartapp/ui/lib/utils';
 import { ApprovalBanner } from '@/app/auth/approval-banner';
 import { useDashboard } from '@/app/dashboard-context';
+import { usePhotoPipeline } from '@/app/photos/use-photo-pipeline';
 import { useMyAccountQuery } from '@/data/auth/reads';
 import { usePaymentAccountsQuery } from '@/data/payments/reads';
 import { useSavePaymentAccountMutation } from '@/data/payments/writes';
-import { useUploadPhotoMutation, useSetUnitPhotosMutation } from '@/data/photos/upload';
+import { useSetUnitPhotosMutation } from '@/data/photos/upload';
 import { useSaveUnitPricesMutation } from '@/data/prices/writes';
 import { useOwnerPropertyQuery, useSlugChecker } from '@/data/property/reads';
 import { useSavePropertyMutation } from '@/data/property/writes';
 import { useSavePoliciesMutation } from '@/data/settings/writes';
 import { extractAppError } from '@/data/shared';
 import { useSetupChecklistQuery } from '@/data/setup/reads';
-import { useOwnerUnitsQuery } from '@/data/units/reads';
+import { useOwnerUnitQuery, useOwnerUnitsQuery } from '@/data/units/reads';
 import { useCreateBedSpacesMutation, useSaveUnitMutation } from '@/data/units/writes';
 import { applyAppErrorToForm } from '@/data/use-form-errors';
 
@@ -886,13 +888,7 @@ function UnitStep({
   );
 }
 
-// ——— Step 3: Photos (simple picker; the full photo manager arrives in P4-5) ————————————
-
-interface PickedPhoto {
-  readonly id: string;
-  readonly file: File;
-  readonly url: string;
-}
+// ——— Step 3: Photos ————————————————————————————————————————————————
 
 function PhotosStep({
   propertyId,
@@ -905,21 +901,13 @@ function PhotosStep({
   readonly onBack: () => void;
   readonly onDone: () => void;
 }) {
-  const upload = useUploadPhotoMutation();
-  const setPhotos = useSetUnitPhotosMutation();
-  const [picked, setPicked] = useState<PickedPhoto[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const group = firstGroup(units);
   const target = group[0];
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(
-    () => () => {
-      for (const photo of picked) URL.revokeObjectURL(photo.url);
-    },
-    [picked],
-  );
+  const detail = useOwnerUnitQuery(target?.unit.id ?? null);
+  const setPhotos = useSetUnitPhotosMutation();
+  const label = target?.unit.group_label ?? target?.unit.name ?? 'Your unit';
+  const pipeline = usePhotoPipeline({ saved: detail.data?.photos, altPrefix: label });
+  const [error, setError] = useState<string | null>(null);
 
   if (!target || propertyId === null) {
     return (
@@ -931,115 +919,61 @@ function PhotosStep({
     );
   }
 
-  const existing = target.photo_count;
-  const label = target.unit.group_label
-    ? `${target.unit.group_label} (shared by ${group.length} beds)`
-    : target.unit.name;
+  const shared = target.unit.group_label ? ` (shared by ${group.length} beds)` : '';
 
   return (
     <StepFrame
       step={3}
       title="Photos"
-      description={`Add at least 3 photos of ${label} to list it. We suggest 5 or more.`}
+      description={`Photos of ${label}${shared}. Guests see them in a 4:3 frame.`}
       onBack={onBack}
       onSkip={onDone}
       primary={
         <AsyncButton
           className="min-h-11"
-          state={busy ? 'busy' : 'idle'}
-          busyLabel="Uploading…"
-          disabled={picked.length === 0}
+          state={setPhotos.isPending ? 'busy' : 'idle'}
+          disabled={pipeline.busy}
           onClick={() => {
             setError(null);
-            setBusy(true);
-            void (async () => {
-              try {
-                const fileIds: string[] = [];
-                for (const photo of picked) {
-                  const uploaded = await upload.mutateAsync({
-                    file: photo.file,
-                    filename: photo.file.name,
-                    purpose: 'unit_photo',
-                  });
-                  fileIds.push(uploaded.fileId);
-                }
-                await setPhotos.mutateAsync({
-                  propertyId,
-                  units: group.map((item) => ({ unitId: item.unit.id, name: item.unit.name })),
-                  fileIds,
-                });
+            if (!pipeline.dirty) {
+              onDone();
+              return;
+            }
+            void setPhotos
+              .mutateAsync({
+                propertyId,
+                units: group.map((item) => ({ unitId: item.unit.id, name: item.unit.name })),
+                photos: pipeline.photosToSave,
+              })
+              .then(() => {
+                pipeline.markSaved();
                 onDone();
-              } catch (caught) {
-                setError(extractAppError(caught).message);
-              } finally {
-                setBusy(false);
-              }
-            })();
+              })
+              .catch((caught: unknown) => setError(extractAppError(caught).message));
           }}
         >
-          Continue to Price
+          {pipeline.busy ? 'Uploading…' : 'Continue to Price'}
         </AsyncButton>
       }
     >
-      {existing > 0 ? (
-        <p className="text-sm text-muted-foreground">{existing} photos are already saved.</p>
-      ) : null}
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={(event) => {
-          const files = [...(event.target.files ?? [])].filter((file) =>
-            ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
-          );
-          setPicked((current) =>
-            [
-              ...current,
-              ...files.map((file) => ({
-                id: `${file.name}-${file.size}-${Math.random()}`,
-                file,
-                url: URL.createObjectURL(file),
-              })),
-            ].slice(0, 20),
-          );
-          event.target.value = '';
-        }}
-      />
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-        {picked.map((photo, index) => (
-          <figure
-            key={photo.id}
-            className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted"
-          >
-            <img src={photo.url} alt={`Photo ${index + 1}`} className="size-full object-cover" />
-            {index === 0 ? (
-              <figcaption className="absolute top-1 left-1 rounded bg-background/90 px-1.5 py-0.5 text-xs font-medium">
-                Cover
-              </figcaption>
-            ) : null}
-          </figure>
-        ))}
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex aspect-[4/3] min-h-11 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-card text-sm text-muted-foreground outline-none hover-hover:hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <ImagePlusIcon aria-hidden="true" className="size-5" />
-          Add photos
-        </button>
-      </div>
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        {picked.length} picked. The first one is the cover.
-      </p>
+      {detail.isPending ? (
+        <Skeleton className="aspect-[4/3] w-1/2" />
+      ) : (
+        <PhotoManager
+          tiles={pipeline.tiles}
+          max={20}
+          onAdd={pipeline.add}
+          onReorder={pipeline.reorder}
+          onAltChange={pipeline.setAlt}
+          onRemove={pipeline.remove}
+          onRetry={pipeline.retry}
+        />
+      )}
     </StepFrame>
   );
 }

@@ -83,7 +83,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/component
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { Toggle } from '@smartapp/ui/components/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
-import { Toaster } from '@smartapp/ui/components/toast';
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -551,7 +550,7 @@ function CompositionsDemo() {
 /** Phase 4 form components and compositions (P4-2), each in light and dark. */
 export function KitFormsTab() {
   return (
-    <Toaster>
+    <>
       <div className="space-y-6">
         <Section
           title="Field, Input, Textarea, NativeSelect"
@@ -635,6 +634,6 @@ export function KitFormsTab() {
           <CompositionsDemo />
         </section>
       </div>
-    </Toaster>
+    </>
   );
 }
