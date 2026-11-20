@@ -1,36 +1,42 @@
 import { Link } from '@tanstack/react-router';
+import { HammerIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
+import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 
+/**
+ * A page we haven't built yet. `phase` is shown only on /kit/routes (Pattern Guide §3.10: no
+ * developer text on real pages).
+ */
 export function PlaceholderScreen({
   title,
-  phase,
   detail,
   secondaryLink,
 }: {
   readonly title: string;
-  readonly phase: number;
+  readonly phase?: number | undefined;
   readonly detail?: string | undefined;
   readonly secondaryLink?: { readonly to: string; readonly label: string } | undefined;
 }) {
   return (
-    <section className="space-y-4">
-      <div className="space-y-1.5">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-sm text-muted-foreground">Coming in phase {phase}</p>
-        {detail ? <p className="text-xs text-muted-foreground">{detail}</p> : null}
-      </div>
-      {secondaryLink ? (
-        <div>
-          <Button
-            variant="outline"
-            className="min-h-11 sm:min-h-9"
-            nativeButton={false}
-            render={<Link to={secondaryLink.to} />}
-          >
-            {secondaryLink.label}
-          </Button>
-        </div>
-      ) : null}
+    <section className="space-y-6">
+      <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only">{title}</h1>
+      <EmptyState
+        icon={<HammerIcon />}
+        title="Coming soon"
+        description={detail ?? "We're still building this page. Everything else in the menu works."}
+        action={
+          secondaryLink ? (
+            <Button
+              variant="outline"
+              className="min-h-11 sm:min-h-9"
+              nativeButton={false}
+              render={<Link to={secondaryLink.to} />}
+            >
+              {secondaryLink.label}
+            </Button>
+          ) : undefined
+        }
+      />
     </section>
   );
 }

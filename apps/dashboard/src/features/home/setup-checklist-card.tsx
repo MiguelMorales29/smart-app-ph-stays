@@ -110,6 +110,13 @@ export function checklistRows(view: SetupChecklistView): ChecklistRow[] {
 }
 
 /** Home's "Get your page ready" card (OW-02). Hidden once the page is published. */
+/** True once the page is published (the setup card then hides), null while loading. */
+export function useSetupComplete(): boolean | null {
+  const checklist = useSetupChecklistQuery();
+  if (!checklist.data) return null;
+  return checklistRows(checklist.data).find((row) => row.key === 'publish')?.status === 'done';
+}
+
 export function SetupChecklistCard() {
   const checklist = useSetupChecklistQuery();
 

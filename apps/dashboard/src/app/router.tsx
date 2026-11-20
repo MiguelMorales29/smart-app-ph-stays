@@ -185,7 +185,7 @@ const unitEditRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/units/$unitId',
   validateSearch: parseUnitEditSearch,
-  staticData: { page: { title: 'Edit unit' } },
+  staticData: { page: { title: 'Edit unit', parent: { to: '/units', title: 'Units' } } },
   component: UnitEditPage,
 });
 

@@ -111,6 +111,7 @@ Reuse these before reaching for a raw component; they already handle light/dark,
 | `RowGroup`, `RowButton`, `RowSwitch`, `RowControl`, `RowPicker` | Settings-style grouped rows; `RowPicker` opens a half-height checked list                                | Stack bare inputs for settings                                |
 | `ChoiceChip`                                                    | Many-choice chips with the tint, ring and check selected look                                            | Rely on the toggle's default faint selected look              |
 | `EditorSections`                                                | Long editors: accordion on phones, section list on desktop, values in headers, content kept mounted      | Unmount a section's content when it closes                    |
+| `openDevPanel()` (lib `dev-panel`)                              | Opening the Preview switches from the phone account menu (D63)                                           | Import the panel itself into app code                         |
 | `notify()` (lib)                                                | Short messages and Undo (one helper over the Base UI toast)                                              | Show errors that need action in a toast                       |
 | `celebrate()` (lib)                                             | The go-live confetti, once per property per device                                                       | Use for routine saves                                         |
 

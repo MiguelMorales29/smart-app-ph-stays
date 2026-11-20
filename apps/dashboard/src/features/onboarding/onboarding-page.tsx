@@ -10,6 +10,7 @@ import {
   DoorClosedIcon,
   HomeIcon,
   ImagePlusIcon,
+  InfoIcon,
   PencilIcon,
 } from 'lucide-react';
 import {
@@ -37,19 +38,13 @@ import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
-import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from '@smartapp/ui/components/number-field';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { Switch } from '@smartapp/ui/components/switch';
-import { Toggle } from '@smartapp/ui/components/toggle';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
+import { ChoiceChip } from '@smartapp/ui/compositions/choice-chip';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
+import { RowControl, RowGroup, RowSwitch } from '@smartapp/ui/compositions/grouped-rows';
+import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
@@ -303,11 +298,20 @@ export function OnboardingPage() {
   const checklist = useSetupChecklistQuery(propertyId);
   const [livePlace, setLivePlace] = useState<{ name: string; place: string } | null>(null);
   const resumeStep = checklist.data ? firstUnfinishedStep(checklist.data.items) : null;
-  const step: OnboardingStep = search.step ?? resumeStep ?? 1;
+  const askedStep: OnboardingStep = search.step ?? resumeStep ?? 1;
+  // Every later step needs the place, so without one we go back to step 1 and say why.
+  const needsPlace = !property.isPending && property.data?.property == null && askedStep > 1;
+  const [placeNote, setPlaceNote] = useState(false);
+  if (needsPlace && !placeNote) setPlaceNote(true);
+  const step: OnboardingStep = needsPlace ? 1 : askedStep;
 
   function goTo(next: OnboardingStep) {
     void navigate({ to: '/onboarding', search: { step: next } });
   }
+
+  useEffect(() => {
+    if (needsPlace) void navigate({ to: '/onboarding', search: { step: 1 }, replace: true });
+  }, [navigate, needsPlace]);
 
   // Coming back without a step opens the first unfinished one (in the address, so Back works).
   useEffect(() => {
@@ -348,6 +352,15 @@ export function OnboardingPage() {
       <div className="flex min-w-0 flex-col gap-6">
         <ApprovalBanner onboarding />
         <ProgressBar step={step} />
+        {placeNote && step === 1 ? (
+          <div
+            role="status"
+            className="flex items-center gap-2.5 rounded-xl bg-info-tint px-3 py-2.5 text-sm text-foreground"
+          >
+            <InfoIcon aria-hidden="true" className="size-4 shrink-0 text-info" />
+            Add your place first. The other steps need it.
+          </div>
+        ) : null}
         {step === 1 ? (
           <PlaceStep
             account={account.data}
@@ -647,9 +660,11 @@ function PlaceStep({
 
 // ——— Step 2: First unit ————————————————————————————————————————————————
 
+/** A count on a grouped row (Pattern Guide §3.4). Put it inside a RowGroup. */
 function CountField({
   id,
   label,
+  hint,
   value,
   onChange,
   min,
@@ -657,28 +672,23 @@ function CountField({
 }: {
   readonly id: string;
   readonly label: string;
+  readonly hint?: string | undefined;
   readonly value: number;
   readonly onChange: (value: number) => void;
   readonly min: number;
   readonly max: number;
 }) {
   return (
-    <Field>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <NumberField
+    <RowControl label={label} hint={hint} labelFor={id}>
+      <InlineStepper
         id={id}
+        label={label}
         value={value}
+        onValueChange={onChange}
         min={min}
         max={max}
-        onValueChange={(next) => onChange(next ?? min)}
-      >
-        <NumberFieldGroup className="w-40">
-          <NumberFieldDecrement aria-label={`Fewer: ${label}`} />
-          <NumberFieldInput />
-          <NumberFieldIncrement aria-label={`More: ${label}`} />
-        </NumberFieldGroup>
-      </NumberField>
-    </Field>
+      />
+    </RowControl>
   );
 }
 
@@ -839,17 +849,22 @@ function UnitStep({
                 Beds are grouped by room, like "Room 2A · 6 beds".
               </FieldDescription>
             </Field>
-            <CountField
-              id="ob-beds"
-              label="How many beds in this room?"
-              value={beds}
-              onChange={setBeds}
-              min={1}
-              max={20}
-            />
-            <p className="text-sm text-muted-foreground">
-              We'll create Bed 1 to Bed {beds} in {room.trim() || 'this room'}.
-            </p>
+            <RowGroup
+              footer={
+                <span aria-live="polite">
+                  We'll create Bed 1 to Bed {beds} in {room.trim() || 'this room'}.
+                </span>
+              }
+            >
+              <CountField
+                id="ob-beds"
+                label="Beds in this room"
+                value={beds}
+                onChange={setBeds}
+                min={1}
+                max={20}
+              />
+            </RowGroup>
           </>
         ) : (
           <>
@@ -863,7 +878,7 @@ function UnitStep({
                 onChange={(event) => setName(event.target.value)}
               />
             </Field>
-            <div className="flex flex-wrap gap-6">
+            <RowGroup>
               <CountField
                 id="ob-guests"
                 label="Guests"
@@ -875,12 +890,13 @@ function UnitStep({
               <CountField
                 id="ob-rooms"
                 label="Bedrooms"
+                hint={rooms === 0 ? 'Studio' : undefined}
                 value={rooms}
                 onChange={setRooms}
                 min={0}
                 max={20}
               />
-            </div>
+            </RowGroup>
           </>
         )}
       </StepFrame>
@@ -1090,33 +1106,25 @@ function PriceStep({
           <FieldLabel htmlFor="ob-base">Price per night</FieldLabel>
           <MoneyInput id="ob-base" value={base} onValueChange={setBase} />
         </Field>
-        {group.length === 1 ? (
-          <CountField
-            id="ob-base-guests"
-            label="Guests included"
-            value={guests}
-            onChange={setGuests}
-            min={1}
-            max={target.unit.max_guests}
-          />
-        ) : null}
-        <div className="flex items-start justify-between gap-4 rounded-lg border border-border bg-card p-3">
-          <div className="space-y-0.5">
-            <label id="ob-weekend-label" htmlFor="ob-weekend" className="text-sm font-medium">
-              Charge more on some days?
-            </label>
-            <p id="ob-weekend-hint" className="text-sm text-muted-foreground">
-              Friday and Saturday nights. A Friday night means checking in on Friday.
-            </p>
-          </div>
-          <Switch
-            id="ob-weekend"
-            aria-labelledby="ob-weekend-label"
-            aria-describedby="ob-weekend-hint"
+        <RowGroup>
+          {group.length === 1 ? (
+            <CountField
+              id="ob-base-guests"
+              label="Guests included"
+              hint={`Up to ${target.unit.max_guests} can stay`}
+              value={guests}
+              onChange={setGuests}
+              min={1}
+              max={target.unit.max_guests}
+            />
+          ) : null}
+          <RowSwitch
+            label="Charge more on weekends"
+            hint="Friday and Saturday nights"
             checked={weekend}
             onCheckedChange={setWeekend}
           />
-        </div>
+        </RowGroup>
         {weekend ? (
           <Field>
             <FieldLabel htmlFor="ob-weekend-price">Friday and Saturday price</FieldLabel>
@@ -1465,10 +1473,8 @@ function RulesStep({
           <legend className="text-sm font-medium">House rules</legend>
           <div className="flex flex-wrap gap-2">
             {HOUSE_RULE_CHIPS.map((rule) => (
-              <Toggle
+              <ChoiceChip
                 key={rule}
-                variant="outline"
-                className="min-h-11 rounded-full px-3 aria-pressed:border-primary aria-pressed:bg-primary-tint sm:min-h-9"
                 pressed={rules.includes(rule)}
                 onPressedChange={(pressed) =>
                   setRules((list) =>
@@ -1476,9 +1482,8 @@ function RulesStep({
                   )
                 }
               >
-                {rules.includes(rule) ? <CheckIcon aria-hidden="true" /> : null}
                 {rule}
-              </Toggle>
+              </ChoiceChip>
             ))}
           </div>
           <p className="text-sm text-muted-foreground">

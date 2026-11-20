@@ -36,8 +36,10 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
     const state = switches.resolveInitialSwitchState(search, window.sessionStorage, {
       as: 'owner:ulap-suites',
     });
+    // D64: the dashboard serves its own copy of the demo media (see vite.config.ts), so photo
+    // links are relative and load on any deploy without the storefront.
     const bundle = await switches.createSwitchClientBundle(state, {
-      storefrontOrigin: env.STOREFRONT_ORIGIN,
+      storefrontOrigin: '',
     });
     const options = switches.getSwitchViewAsOptions(bundle.clock);
     const activeOption = options.find((opt) => opt.key === state.as);

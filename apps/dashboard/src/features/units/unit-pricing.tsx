@@ -1,15 +1,9 @@
 import { useId } from 'react';
 import { AMENITY_GROUPS, type AmenitiesRow, type OwnerUnitDetailView } from '@smartapp/core';
-import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
-import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
-import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from '@smartapp/ui/components/number-field';
+import { Field, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
+import { RowControl, RowGroup, RowPicker } from '@smartapp/ui/compositions/grouped-rows';
+import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import type { PriceDraft } from '@smartapp/ui/compositions/price-editor';
 
@@ -91,48 +85,6 @@ export function sameDraft(a: unknown, b: unknown): boolean {
 
 // ——— Fields ————————————————————————————————————————————————
 
-function Count({
-  id,
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  suffix,
-  invalid,
-}: {
-  readonly id: string;
-  readonly label: string;
-  readonly value: number;
-  readonly onChange: (value: number) => void;
-  readonly min: number;
-  readonly max: number;
-  readonly suffix?: string | undefined;
-  readonly invalid?: boolean | undefined;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <NumberField
-        id={id}
-        className="w-auto"
-        value={value}
-        min={min}
-        max={max}
-        onValueChange={(next) => onChange(next ?? min)}
-      >
-        <NumberFieldGroup className="w-36" aria-invalid={invalid ? true : undefined}>
-          <NumberFieldDecrement aria-label={`Less: ${label}`} />
-          <NumberFieldInput />
-          <NumberFieldIncrement aria-label={`More: ${label}`} />
-        </NumberFieldGroup>
-      </NumberField>
-      {suffix ? (
-        <span className="text-sm whitespace-nowrap text-muted-foreground">{suffix}</span>
-      ) : null}
-    </div>
-  );
-}
-
 const HOLD_OPTIONS: readonly { minutes: number; label: string }[] = [
   { minutes: 30, label: '30 minutes' },
   { minutes: 60, label: '1 hour' },
@@ -142,7 +94,28 @@ const HOLD_OPTIONS: readonly { minutes: number; label: string }[] = [
   { minutes: 1440, label: '24 hours' },
 ];
 
-/** Booking rules for nightly units (OW-09). Each field has a one-line hint. */
+/** Picker choices that always include the saved value, even an unusual one. */
+function choices(
+  values: readonly number[],
+  current: number,
+  label: (value: number) => string,
+): { value: number; label: string }[] {
+  const all = values.includes(current) ? [...values] : [...values, current].sort((a, b) => a - b);
+  return all.map((value) => ({ value, label: label(value) }));
+}
+
+const nights = (count: number) => `${count} ${count === 1 ? 'night' : 'nights'}`;
+const daysAhead = (count: number) =>
+  count === 0 ? 'Same day' : `${count} ${count === 1 ? 'day' : 'days'} ahead`;
+const windowLabel = (days: number) =>
+  days === 365 ? '1 year' : days === 730 ? '2 years' : `${days} days`;
+
+/** Short text for the Booking rules section header. */
+export function rulesSummary(value: RulesDraft): string {
+  return `${value.minNights}–${value.maxNights} nights · ${value.downPaymentPercent}% down payment`;
+}
+
+/** Booking rules for nightly units (OW-09) as grouped rows (Pattern Guide §3.2–3.4). */
 export function BookingRulesFields({
   value,
   onChange,
@@ -157,114 +130,87 @@ export function BookingRulesFields({
   const holdOptions = HOLD_OPTIONS.some((option) => option.minutes === value.holdMinutes)
     ? HOLD_OPTIONS
     : [...HOLD_OPTIONS, { minutes: value.holdMinutes, label: `${value.holdMinutes} minutes` }];
+  const stayError = errors.minNights ?? errors.maxNights;
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field data-invalid={errors.minNights ? true : undefined}>
-          <FieldLabel htmlFor={`${ids}-min`}>Shortest stay</FieldLabel>
-          <Count
+    <div className="flex flex-col gap-6">
+      <RowGroup
+        title="Length of stay"
+        footer={
+          stayError ? (
+            <span className="text-destructive">{stayError}</span>
+          ) : (
+            'Longer stays ask you first by message.'
+          )
+        }
+      >
+        <RowControl label="Shortest stay" hint="Nights" labelFor={`${ids}-min`}>
+          <InlineStepper
             id={`${ids}-min`}
             label="Shortest stay"
             value={value.minNights}
-            onChange={(minNights) => set({ minNights })}
+            onValueChange={(minNights) => set({ minNights })}
             min={1}
-            max={365}
-            suffix="nights"
-            invalid={errors.minNights !== undefined}
+            max={30}
+            unit="nights"
           />
-          <FieldDescription>Guests can't book fewer nights than this.</FieldDescription>
-          <FieldError>{errors.minNights}</FieldError>
-        </Field>
-        <Field data-invalid={errors.maxNights ? true : undefined}>
-          <FieldLabel htmlFor={`${ids}-max`}>Longest stay</FieldLabel>
-          <Count
-            id={`${ids}-max`}
-            label="Longest stay"
-            value={value.maxNights}
-            onChange={(maxNights) => set({ maxNights })}
-            min={1}
-            max={365}
-            suffix="nights"
-            invalid={errors.maxNights !== undefined}
-          />
-          <FieldDescription>Longer stays ask you first by message.</FieldDescription>
-          <FieldError>{errors.maxNights}</FieldError>
-        </Field>
-      </div>
-      <Field>
-        <FieldLabel htmlFor={`${ids}-dp`}>Down payment</FieldLabel>
-        <Count
-          id={`${ids}-dp`}
-          label="Down payment"
-          value={value.downPaymentPercent}
-          onChange={(downPaymentPercent) => set({ downPaymentPercent })}
-          min={10}
-          max={100}
-          suffix="% of the total"
+        </RowControl>
+        <RowPicker
+          label="Longest stay"
+          value={value.maxNights}
+          options={choices([7, 14, 30, 60, 90, 180, 365], value.maxNights, nights)}
+          onValueChange={(maxNights) => set({ maxNights })}
         />
-        <FieldDescription>
-          What guests pay to confirm. They pay the rest as you agree.
-        </FieldDescription>
-      </Field>
-      <Field>
-        <FieldLabel htmlFor={`${ids}-hold`}>Time to send payment</FieldLabel>
-        <NativeSelect
-          id={`${ids}-hold`}
-          className="w-full sm:w-60"
-          value={String(value.holdMinutes)}
-          onChange={(event) => set({ holdMinutes: Number(event.target.value) })}
-        >
-          {holdOptions.map((option) => (
-            <NativeSelectOption key={option.minutes} value={String(option.minutes)}>
-              {option.label}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <FieldDescription>
-          We hold the dates this long while the guest sends the down payment.
-        </FieldDescription>
-      </Field>
-      <Field>
-        <FieldLabel htmlFor={`${ids}-prep`}>Nights to prepare between stays</FieldLabel>
-        <Count
-          id={`${ids}-prep`}
+        <RowControl
           label="Nights to prepare"
-          value={value.prepNights}
-          onChange={(prepNights) => set({ prepNights })}
-          min={0}
-          max={2}
-          suffix="nights"
-        />
-        <FieldDescription>We keep these nights free after each stay for cleaning.</FieldDescription>
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field>
-          <FieldLabel htmlFor={`${ids}-notice`}>Book at least</FieldLabel>
-          <Count
-            id={`${ids}-notice`}
-            label="Advance notice"
-            value={value.advanceNoticeDays}
-            onChange={(advanceNoticeDays) => set({ advanceNoticeDays })}
+          hint="Kept free after each stay for cleaning"
+          labelFor={`${ids}-prep`}
+        >
+          <InlineStepper
+            id={`${ids}-prep`}
+            label="Nights to prepare"
+            value={value.prepNights}
+            onValueChange={(prepNights) => set({ prepNights })}
             min={0}
-            max={60}
-            suffix="days ahead"
+            max={2}
+            unit="nights"
           />
-          <FieldDescription>0 lets guests book for tonight.</FieldDescription>
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={`${ids}-window`}>Book up to</FieldLabel>
-          <Count
-            id={`${ids}-window`}
-            label="Booking window"
-            value={value.bookingWindowDays}
-            onChange={(bookingWindowDays) => set({ bookingWindowDays })}
-            min={1}
-            max={730}
-            suffix="days ahead"
-          />
-          <FieldDescription>How far ahead your calendar is open.</FieldDescription>
-        </Field>
-      </div>
+        </RowControl>
+      </RowGroup>
+
+      <RowGroup title="Payment" footer="We hold the dates while the guest sends the down payment.">
+        <RowPicker
+          label="Down payment"
+          hint="What guests pay to confirm"
+          value={value.downPaymentPercent}
+          options={choices([10, 20, 30, 50, 100], value.downPaymentPercent, (pct) =>
+            pct === 100 ? 'Full payment' : `${pct}% of the total`,
+          )}
+          onValueChange={(downPaymentPercent) => set({ downPaymentPercent })}
+        />
+        <RowPicker
+          label="Time to send payment"
+          value={value.holdMinutes}
+          options={holdOptions.map((option) => ({ value: option.minutes, label: option.label }))}
+          onValueChange={(holdMinutes) => set({ holdMinutes })}
+        />
+      </RowGroup>
+
+      <RowGroup title="Calendar">
+        <RowPicker
+          label="Book at least"
+          hint="Same day lets guests book for tonight"
+          value={value.advanceNoticeDays}
+          options={choices([0, 1, 2, 3, 7, 14, 30], value.advanceNoticeDays, daysAhead)}
+          onValueChange={(advanceNoticeDays) => set({ advanceNoticeDays })}
+        />
+        <RowPicker
+          label="Book up to"
+          hint="How far ahead your calendar is open"
+          value={value.bookingWindowDays}
+          options={choices([30, 60, 90, 180, 365, 730], value.bookingWindowDays, windowLabel)}
+          onValueChange={(bookingWindowDays) => set({ bookingWindowDays })}
+        />
+      </RowGroup>
     </div>
   );
 }
@@ -282,7 +228,7 @@ export function LeaseFields({
   const ids = useId();
   const set = (change: Partial<LeaseDraft>) => onChange({ ...value, ...change });
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <Field data-invalid={error ? true : undefined}>
         <FieldLabel htmlFor={`${ids}-rent`}>Monthly rent</FieldLabel>
         <MoneyInput
@@ -294,46 +240,41 @@ export function LeaseFields({
         />
         <FieldError>{error}</FieldError>
       </Field>
-      <Field>
-        <FieldLabel htmlFor={`${ids}-min`}>Shortest lease</FieldLabel>
-        <Count
-          id={`${ids}-min`}
-          label="Shortest lease"
-          value={value.minLeaseMonths}
-          onChange={(minLeaseMonths) => set({ minLeaseMonths })}
-          min={1}
-          max={24}
-          suffix="months"
-        />
-      </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field>
-          <FieldLabel htmlFor={`${ids}-advance`}>Advance</FieldLabel>
-          <Count
-            id={`${ids}-advance`}
+      <RowGroup title="Lease" footer="The deposit is returned when the tenant moves out.">
+        <RowControl label="Shortest lease" hint="Months" labelFor={`${ids}-min`}>
+          <InlineStepper
+            id={`${ids}-min`}
+            label="Shortest lease"
+            value={value.minLeaseMonths}
+            onValueChange={(minLeaseMonths) => set({ minLeaseMonths })}
+            min={1}
+            max={24}
+            unit="months"
+          />
+        </RowControl>
+        <RowControl label="Advance" hint="Months paid before moving in" labelFor={`${ids}-adv`}>
+          <InlineStepper
+            id={`${ids}-adv`}
             label="Advance"
             value={value.advanceMonths}
-            onChange={(advanceMonths) => set({ advanceMonths })}
+            onValueChange={(advanceMonths) => set({ advanceMonths })}
             min={0}
             max={6}
-            suffix="months"
+            unit="months"
           />
-          <FieldDescription>Months of rent paid before moving in.</FieldDescription>
-        </Field>
-        <Field>
-          <FieldLabel htmlFor={`${ids}-deposit`}>Deposit</FieldLabel>
-          <Count
-            id={`${ids}-deposit`}
+        </RowControl>
+        <RowControl label="Deposit" hint="Months" labelFor={`${ids}-dep`}>
+          <InlineStepper
+            id={`${ids}-dep`}
             label="Deposit"
             value={value.depositMonths}
-            onChange={(depositMonths) => set({ depositMonths })}
+            onValueChange={(depositMonths) => set({ depositMonths })}
             min={0}
             max={6}
-            suffix="months"
+            unit="months"
           />
-          <FieldDescription>Returned when the tenant moves out.</FieldDescription>
-        </Field>
-      </div>
+        </RowControl>
+      </RowGroup>
     </div>
   );
 }

@@ -27,14 +27,6 @@ import {
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
 import { Field, FieldLabel } from '@smartapp/ui/components/field';
-import {
-  ResponsiveDialog,
-  ResponsiveDialogContent,
-  ResponsiveDialogDescription,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-} from '@smartapp/ui/components/responsive-dialog';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/sortable';
 import {
@@ -45,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from '@smartapp/ui/components/table';
+import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
@@ -53,6 +46,7 @@ import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { useKeyboardInset } from '@smartapp/ui/hooks/use-keyboard-inset';
 import { notify } from '@smartapp/ui/lib/notify';
 import { cn } from '@smartapp/ui/lib/utils';
+import { useLastDefined } from '@smartapp/ui/hooks/use-last-defined';
 import { useDashboard } from '@/app/dashboard-context';
 import { useOwnerPropertyQuery } from '@/data/property/reads';
 import { extractAppError } from '@/data/shared';
@@ -147,6 +141,8 @@ export function UnitsPage() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [reordering, setReordering] = useState(false);
   const [notReady, setNotReady] = useState<NotReady | null>(null);
+  // Keep the list while the sheet slides away (Pattern Guide §2).
+  const shownNotReady = useLastDefined(notReady);
   const [priceOpen, setPriceOpen] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
 
@@ -337,9 +333,10 @@ export function UnitsPage() {
   const selectedIds = [...selected].filter((id) => byId.has(id));
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h1 className="font-heading text-2xl font-semibold">Units</h1>
+      {/* Phones show the title in the top bar. */}
+      <h1 className="font-heading text-2xl font-semibold max-md:sr-only">Units</h1>
       {all.length > 0 ? (
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
             className="min-h-11 sm:min-h-9"
@@ -452,8 +449,12 @@ export function UnitsPage() {
     />
   );
 
+  // Pattern guide §3.8: a table only when the list is long enough to need scanning.
+  const useTable = all.length > 8;
+
   return (
-    <section className="space-y-5 pb-24 lg:pb-0">
+    // Room under the last card for the floating Add button (48 px + gap) on phones and tablets.
+    <section className="space-y-5 pb-20 lg:pb-0">
       {header}
 
       <div role="group" aria-label="Show" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -507,8 +508,8 @@ export function UnitsPage() {
         </p>
       ) : (
         <>
-          {/* Phones and tablets: cards */}
-          <ul className="grid gap-3 sm:grid-cols-2 lg:hidden">
+          {/* Cards: rows on phones, a grid from tablet up. A table only for long lists on desktop. */}
+          <ul className={cn('grid gap-3 md:grid-cols-2 xl:grid-cols-3', useTable && 'lg:hidden')}>
             {entries.map((entry) =>
               entry.kind === 'unit' ? (
                 <li key={entry.key}>
@@ -521,7 +522,7 @@ export function UnitsPage() {
                   />
                 </li>
               ) : (
-                <li key={entry.key} className="sm:col-span-2">
+                <li key={entry.key} className="md:col-span-2 xl:col-span-3">
                   <RoomCard
                     label={entry.label}
                     beds={entry.beds}
@@ -534,8 +535,13 @@ export function UnitsPage() {
               ),
             )}
           </ul>
-          {/* Desktop: a plain table */}
-          <div className="hidden overflow-hidden rounded-xl border border-border bg-card lg:block">
+          {/* Desktop with more than 8 units: a plain table */}
+          <div
+            className={cn(
+              'hidden overflow-hidden rounded-xl border border-border bg-card',
+              useTable && 'lg:block',
+            )}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -682,20 +688,20 @@ export function UnitsPage() {
         </div>
       ) : null}
 
-      <ResponsiveDialog open={priceOpen} onOpenChange={setPriceOpen}>
-        <ResponsiveDialogContent>
-          <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Change price for {countWord(selectedIds)}</ResponsiveDialogTitle>
-            <ResponsiveDialogDescription>
-              Nightly units get this price a night; monthly units get it a month.
-            </ResponsiveDialogDescription>
-          </ResponsiveDialogHeader>
-          <Field>
-            <FieldLabel htmlFor="bulk-price">New price</FieldLabel>
-            <MoneyInput id="bulk-price" value={price} onValueChange={setPrice} per="each" />
-          </Field>
-          <ResponsiveDialogFooter>
-            <Button variant="outline" className="min-h-11" onClick={() => setPriceOpen(false)}>
+      <AppSheet
+        open={priceOpen}
+        onOpenChange={setPriceOpen}
+        size="sm"
+        title={`Change price for ${countWord(selectedIds)}`}
+        description="Nightly units get this price a night; monthly units get it a month."
+        footer={
+          <>
+            <Button
+              data-sheet-cancel=""
+              variant="outline"
+              className="min-h-11"
+              onClick={() => setPriceOpen(false)}
+            >
               Cancel
             </Button>
             <AsyncButton
@@ -728,58 +734,58 @@ export function UnitsPage() {
             >
               Change price
             </AsyncButton>
-          </ResponsiveDialogFooter>
-        </ResponsiveDialogContent>
-      </ResponsiveDialog>
+          </>
+        }
+      >
+        <Field>
+          <FieldLabel htmlFor="bulk-price">New price</FieldLabel>
+          <MoneyInput id="bulk-price" value={price} onValueChange={setPrice} per="each" />
+        </Field>
+      </AppSheet>
 
-      <ResponsiveDialog
+      <AppSheet
         open={notReady !== null}
         onOpenChange={(open) => !open && setNotReady(null)}
+        size="sm"
+        title={
+          shownNotReady?.units.length === 1
+            ? `${shownNotReady.units[0]?.name ?? 'This unit'} can't be listed yet`
+            : `${shownNotReady?.units.length ?? 0} units can't be listed yet`
+        }
+        description="Finish these first, then show it on your page."
+        footer={
+          <Button className="min-h-11" onClick={() => setNotReady(null)}>
+            Got it
+          </Button>
+        }
       >
-        <ResponsiveDialogContent>
-          <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>
-              {notReady?.units.length === 1
-                ? `${notReady.units[0]?.name ?? 'This unit'} can't be listed yet`
-                : `${notReady?.units.length ?? 0} units can't be listed yet`}
-            </ResponsiveDialogTitle>
-            <ResponsiveDialogDescription>
-              Finish these first, then show it on your page.
-            </ResponsiveDialogDescription>
-          </ResponsiveDialogHeader>
-          <ul className="space-y-3">
-            {notReady?.units.map((unit) => (
-              <li key={unit.id} className="space-y-1">
-                {notReady.units.length > 1 ? (
-                  <p className="text-sm font-medium">{unit.name}</p>
-                ) : null}
-                <ul className="space-y-1">
-                  {unit.missing.map((missing) => (
-                    <li key={missing}>
-                      <Link
-                        to="/units/$unitId"
-                        params={{ unitId: unit.id }}
-                        search={{ section: missing === 'photos' ? 'photos' : 'price' }}
-                        className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary-hover underline-offset-4 hover-hover:hover:underline"
-                      >
-                        {missing === 'photos' ? (
-                          <ImageIcon aria-hidden="true" className="size-4" />
-                        ) : null}
-                        {MISSING_LABEL[missing] ?? missing}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-          <ResponsiveDialogFooter>
-            <Button variant="outline" className="min-h-11" onClick={() => setNotReady(null)}>
-              Close
-            </Button>
-          </ResponsiveDialogFooter>
-        </ResponsiveDialogContent>
-      </ResponsiveDialog>
+        <ul className="space-y-3">
+          {shownNotReady?.units.map((unit) => (
+            <li key={unit.id} className="space-y-1">
+              {shownNotReady.units.length > 1 ? (
+                <p className="text-sm font-medium">{unit.name}</p>
+              ) : null}
+              <ul className="space-y-1">
+                {unit.missing.map((missing) => (
+                  <li key={missing}>
+                    <Link
+                      to="/units/$unitId"
+                      params={{ unitId: unit.id }}
+                      search={{ section: missing === 'photos' ? 'photos' : 'price' }}
+                      className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary-hover underline-offset-4 hover-hover:hover:underline"
+                    >
+                      {missing === 'photos' ? (
+                        <ImageIcon aria-hidden="true" className="size-4" />
+                      ) : null}
+                      {MISSING_LABEL[missing] ?? missing}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </AppSheet>
 
       {sheet}
     </section>
@@ -878,10 +884,12 @@ function UnitCard({
 }) {
   const price = unitPriceText(item);
   return (
-    <article className="relative overflow-hidden rounded-xl border border-border bg-card">
-      <Cover item={item} />
+    // Pattern guide §3.8: a row card with an 88 px thumbnail on phones, a photo card in a grid
+    // from tablet up.
+    <article className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-card p-2 md:block md:p-0">
+      <Cover item={item} className="w-[88px] shrink-0 rounded-lg md:w-full md:rounded-none" />
       {selecting ? (
-        <div className="absolute top-2 left-2 z-10 flex size-11 items-center justify-center rounded-lg bg-background/90">
+        <div className="absolute top-1/2 left-2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-background/90 md:top-2 md:translate-y-0">
           <Checkbox
             aria-label={`Select ${item.unit.name}`}
             checked={checked}
@@ -889,7 +897,7 @@ function UnitCard({
           />
         </div>
       ) : null}
-      <div className="flex items-start gap-2 p-3">
+      <div className="flex min-w-0 flex-1 items-start gap-1 md:gap-2 md:p-3">
         <div className="min-w-0 flex-1 space-y-1">
           <Link
             to="/units/$unitId"

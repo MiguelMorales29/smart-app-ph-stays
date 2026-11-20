@@ -197,7 +197,7 @@ export function KitPatternsTab() {
           height="full"
           footer={
             <>
-              <Button variant="outline" onClick={() => setSheet('none')}>
+              <Button data-sheet-cancel="" variant="outline" onClick={() => setSheet('none')}>
                 Cancel
               </Button>
               <Button onClick={() => setSheet('none')}>Save and add photos</Button>

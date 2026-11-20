@@ -2,36 +2,30 @@ import { Link } from '@tanstack/react-router';
 import { WifiOffIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { LoadingState } from '@smartapp/ui/compositions/loading-state';
 import { NotAllowedState } from '@smartapp/ui/compositions/not-allowed-state';
 import { useDashboard } from '@/app/dashboard-context';
 import { ApprovalBanner } from '@/app/auth/approval-banner';
-import { SetupChecklistCard } from './setup-checklist-card';
+import { SetupChecklistCard, useSetupComplete } from './setup-checklist-card';
 
 export function HomePage() {
-  const { client, homeState, today, reload } = useDashboard();
+  const { homeState, reload } = useDashboard();
+  const setupComplete = useSetupComplete();
 
   return (
     <section className="space-y-6">
       <ApprovalBanner />
-      <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Dashboard home</h1>
-        <p className="text-sm text-muted-foreground">Coming in phase 8</p>
-        {client ? (
-          <p className="text-xs text-muted-foreground">
-            Scenario: {client.pack} · Role: {client.session.role}
-            {today ? ` · Manila date: ${today}` : ''}
-          </p>
-        ) : null}
-      </div>
+      {/* Phones show the title in the top bar; Pattern Guide §3.10: no developer text here. */}
+      <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only">Home</h1>
 
       {homeState.kind === 'loading' ? <LoadingState label="Loading dashboard home" /> : null}
 
       {homeState.kind === 'error' ? (
         <ErrorState
-          title="Could not load dashboard home"
-          message={`${homeState.message} (${homeState.code})`}
+          title="We couldn't load your home page"
+          message={homeState.message}
           onRetry={reload}
         />
       ) : null}
@@ -51,8 +45,8 @@ export function HomePage() {
 
       {homeState.kind === 'not_allowed' ? (
         <NotAllowedState
-          title="Owner sign-in required"
-          message={`Current view-as role (${homeState.role}) cannot load an owner dashboard.`}
+          title="Sign in as an owner"
+          message="This page is for property owners. Sign in with your owner account to see it."
           action={
             <Button
               variant="outline"
@@ -68,14 +62,22 @@ export function HomePage() {
 
       {homeState.kind === 'ready' ? <SetupChecklistCard /> : null}
 
-      {homeState.kind === 'ready' ? (
-        <p className="text-sm text-muted-foreground">
-          Sidebar and bottom dock counts are wired to <code>ownerHome</code> (
-          {homeState.counts.arrivals_today} arrivals today · {homeState.counts.departures_today}{' '}
-          departures · {homeState.counts.proofs_to_check} proofs to check ·{' '}
-          {homeState.counts.holds_expiring_soon} holds expiring · {homeState.counts.unread_threads}{' '}
-          unread threads).
-        </p>
+      {homeState.kind === 'ready' && setupComplete ? (
+        <EmptyState
+          icon={<MilestonePicture art="live" size="sm" />}
+          title="Nothing needs you right now"
+          description="New bookings, arrivals and payments to check will show up here."
+          action={
+            <Button
+              variant="outline"
+              className="min-h-11 sm:min-h-9"
+              nativeButton={false}
+              render={<Link to="/calendar" />}
+            >
+              Open your calendar
+            </Button>
+          }
+        />
       ) : null}
     </section>
   );

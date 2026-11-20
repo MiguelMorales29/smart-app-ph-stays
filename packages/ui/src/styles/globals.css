@@ -199,6 +199,13 @@
 
 /* Floating developer switches (preview and local builds only). Sits above the
    phone bottom dock and the storefront action bar instead of taking layout space. */
+/* D63: on phones the Preview pill moves into the account menu when the page has one. */
+@media (max-width: 767px) {
+  body:has([data-dev-panel-menu]) [data-dev-pill] {
+    display: none;
+  }
+}
+
 @utility dev-pill-anchor {
   position: fixed;
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
