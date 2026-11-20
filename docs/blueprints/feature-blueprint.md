@@ -206,6 +206,9 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | OW-26 | Storage meter with warnings at 80, 95 and 100 %, and a ZIP export of bookings, payments and proofs | 1 | M | `files`, `data_exports`, `create_export` |
 | OW-27 | Duplicate a unit, bulk actions with Undo, and sample data to replace | 1 | S | `duplicate_unit` |
 | OW-28 | Copy a listing for Facebook: text with price, highlights and the page link | 1 | S | `units` |
+| OW-29 | Send a push notice to guests and members: title, one line, optional photo, link to a unit or the page; send now or schedule (O11) | 1 | M | `push_campaigns`, outbox, PL-02 |
+| OW-30 | Push notice audience and limits: only people who agreed to promos; a weekly send limit; a preview of how many people get it (O11) | 1 | M | `push_subscriptions`, marketing consent |
+| OW-31 | Push notice results: sent, opened, and bookings from the notice (O11) | 1 | S | `push_campaigns` |
 
 ### Super admin (SA)
 
