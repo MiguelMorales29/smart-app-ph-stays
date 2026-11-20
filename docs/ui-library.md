@@ -144,6 +144,7 @@ Reuse these before reaching for a raw component; they already handle light/dark,
 _(No other installed files were modified.)_
 | `packages/ui/src/components/accordion.tsx` | P4-5 | Installed from the official shadcn base-nova source (local registry, D60). No edits. |
 | `packages/ui/src/components/accordion.tsx` | P4.5-A | The panel animated to `auto` with tw-animate keyframes that only know Radix/Bits/Reka height variables, so Base UI panels snapped. Now the panel itself transitions `height` with `--accordion-panel-height` and `data-starting-style` / `data-ending-style` at `duration-slow`, as Base UI documents. |
+| `packages/ui/src/components/tabs.tsx` | P4.5-A | Inactive tab text was `text-foreground/60`, which measures 4.23:1 on the warm quiet fill `#EFEDE6` (D61). It now uses `text-muted-foreground` (4.70:1); dark mode already did. |
 
 ## Credits
 
