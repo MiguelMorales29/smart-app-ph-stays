@@ -19,6 +19,11 @@ import { HomePage } from '@/features/home/home-page';
 import { OnboardingPage } from '@/features/onboarding/onboarding-page';
 import { UnitEditPage, type UnitEditSearch } from '@/features/units/unit-edit-page';
 import { UnitsPage, type UnitsSearch } from '@/features/units/units-page';
+import { AccountSettingsPage } from '@/features/settings/account-settings-page';
+import { HoursSettingsPage } from '@/features/settings/hours-settings-page';
+import { PaymentsSettingsPage } from '@/features/settings/payments-settings-page';
+import { PoliciesSettingsPage } from '@/features/settings/policies-settings-page';
+import { PropertySettingsPage } from '@/features/settings/property-settings-page';
 import { SettingsIndexPage } from '@/features/settings/settings-index-page';
 
 const rootRoute = createRootRoute({
@@ -208,15 +213,15 @@ const settingsParent = { to: '/settings', title: 'Settings' } as const;
 const settingsPaymentsRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/payments',
-  staticData: { page: { title: 'Payment accounts', parent: settingsParent } },
-  component: () => <PlaceholderScreen title="Payment accounts" phase={4} />,
+  staticData: { page: { title: 'Payments', parent: settingsParent } },
+  component: PaymentsSettingsPage,
 });
 
 const settingsPoliciesRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/policies',
-  staticData: { page: { title: 'Policies & rules', parent: settingsParent } },
-  component: () => <PlaceholderScreen title="Policies & rules" phase={4} />,
+  staticData: { page: { title: 'Policies', parent: settingsParent } },
+  component: PoliciesSettingsPage,
 });
 
 const settingsNoticesRoute = createRoute({
@@ -244,21 +249,21 @@ const settingsPropertyRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/property',
   staticData: { page: { title: 'Property details', parent: settingsParent } },
-  component: () => <PlaceholderScreen title="Property details" phase={4} />,
+  component: PropertySettingsPage,
 });
 
 const settingsHoursRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/hours',
-  staticData: { page: { title: 'Reply & viewing hours', parent: settingsParent } },
-  component: () => <PlaceholderScreen title="Reply & viewing hours" phase={4} />,
+  staticData: { page: { title: 'Hours', parent: settingsParent } },
+  component: HoursSettingsPage,
 });
 
 const settingsAccountRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/settings/account',
-  staticData: { page: { title: 'My account', parent: settingsParent } },
-  component: () => <PlaceholderScreen title="My account" phase={4} />,
+  staticData: { page: { title: 'Account', parent: settingsParent } },
+  component: AccountSettingsPage,
 });
 
 const settingsStorageRoute = createRoute({

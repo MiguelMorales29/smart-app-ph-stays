@@ -21,9 +21,11 @@ import { PreviewRibbon } from '@/components/PreviewRibbon';
 import { AppSidebar } from './AppSidebar';
 import { TopBar } from './TopBar';
 import { useResponsiveSidebarOpen } from './use-sidebar-open';
+import { useSwipeBack } from './use-swipe-back';
 
 export function AppFrame() {
   const formFactor = useFormFactor();
+  useSwipeBack();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { client, counts, forcedOffline } = useDashboard();
   const page = usePageMeta();

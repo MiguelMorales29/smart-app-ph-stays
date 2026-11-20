@@ -41,7 +41,8 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 - [x] P4-6 Prices, amenities and booking rules
 - [x] P4.5-A Pattern Guide v2 patterns: warm colours, motion, sheet, rows, segmented pill, stepper, chips, save pill, section nav
 - [x] P4.5-B Refit Phase 4 screens on the patterns, demo photos, Preview switch
-- [ ] P4-7 Settings and the property switcher
+- [x] P4-7 Settings and the property switcher
+  - Follow-ups (open): the property switcher needs a demo owner with 2 properties and the data hooks reading the active property (`?p=`); saved replies need a contract operation; uploading your own profile photo needs a photo URL on the profile.
 - [ ] P4-8 Close-out: owner journey test, component tests, budget, docs
 
 ## Later phases
