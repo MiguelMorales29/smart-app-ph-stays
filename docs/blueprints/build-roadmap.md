@@ -119,10 +119,10 @@ Every page in this stage gets the ten-step research pass before it is built. The
 #### Phase 7. Conversation, payment proof and notices (slices 5 and 6, screens)
 
 - **Goal:** the guest sends a proof of payment; the owner approves it; a receipt appears.
-- **Covers:** the booking conversation; the proof card; the owner's approve and reject steps; the receipt; the notice settings; the install and allow-notices page.
+- **Covers:** the booking conversation; the proof card; the owner's approve and reject steps; the receipt; the notice settings; the install and allow-notices page; owner push campaigns (OW-29 to OW-31, decision O11: send, schedule, audience and limits, results).
 - **Not yet:** real files, email or push (phase 12).
 - **Read first:** Feature blueprint section 9 (all).
-- **Settle with Claude:** what the owner sees first when a proof arrives; the wording of a rejection; what the receipt says.
+- **Settle with Claude:** what the owner sees first when a proof arrives; the wording of a rejection; what the receipt says; O11 (owner push campaigns: consent, send limit, what a notice carries, discounts as text or promo codes, which plan).
 
 #### Phase 8. Daily work and members (slices 7 and 8, screens)
 

@@ -54,6 +54,7 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 - [ ] Owner journey e2e test and the six component tests (needs Node 24.15 for jsdom 31; the repo pins 24.14).
 - [ ] Property switcher: a demo owner with 2 properties and the data hooks reading `?p=`.
 - [ ] Saved replies (needs a contract operation) and uploading your own profile photo.
+- [ ] Plan owner push campaigns (O11, OW-29 to OW-31) for Phase 7: a key selling point; settle consent, send limit, content, discounts and plan before the Phase 7 screens.
 
 ## Later phases
 
