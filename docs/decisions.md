@@ -106,6 +106,8 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 
 - D71 (Lex, 2026-11-22) **Public address: `smartapp.webserbisyo.com/<client>`** (for example `smartapp.webserbisyo.com/ulap-suites`), replacing the planned `stay.webserbisyo.com` (Feature blueprint 7a, E8). Path style stays (no subdomain per client); free, on the domain already owned. The domain is set up in Phase 14, before any guest installs, because a later domain move makes installed guests reinstall and allow notices again. A short bought domain (`smartapp.ph`) may come later, ideally during the pilot while installs are few; owners' own domains stay a wave 3 add-on. The owner dashboard and API addresses are chosen in Phase 14 (options: `owner.webserbisyo.com` or `smartapp.webserbisyo.com/owner`); `owner` and `smartapp` are added to the reserved slugs now.
 
+- D72 (Lex, 2026-11-22) **Add unit asks one question: "What do guests get?"** with three answers (Whole place, Private room, Bed space), like Airbnb's place type. Bed space only changes the fields (room name, number of beds, price for each bed). No dropdown on "+ Add". Lesson for every UI prompt: check the data logic and the words of each screen against best practice before writing it, so a beginner owner never answers the same question twice.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
