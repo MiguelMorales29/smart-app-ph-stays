@@ -30,4 +30,10 @@ describe('words', () => {
       expect(words.banks[bank].trim().length).toBeGreaterThan(0);
     }
   });
+
+  it('defines editor conflict copy', () => {
+    expect(words.editor.draftConflict).toBe(
+      'Someone saved a newer version. Load the newer one or keep yours.',
+    );
+  });
 });

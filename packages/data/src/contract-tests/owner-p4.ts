@@ -3,6 +3,7 @@ import {
   MAX_UPLOAD_SIZE_BYTES,
   centavos,
   readErrorDetails,
+  words,
   type AppError,
   type Result,
 } from '@smartapp/core';
@@ -42,6 +43,10 @@ const ILAW_OWNER_SESSION: Session = {
   role: 'owner',
   accountId: DEMO_IDS.ilawResidences.account,
   profileId: DEMO_IDS.people.owners.ilawResidences,
+};
+const SUPER_ADMIN_SESSION: Session = {
+  role: 'super_admin',
+  profileId: DEMO_IDS.platform.superAdminProfile,
 };
 
 function assertOk<T>(result: Result<T>): T {
@@ -1627,7 +1632,8 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         ),
       );
       expect(conflictErr.code).toBe('invalid_move');
-      expect(conflictErr.message).toBe(
+      expect(conflictErr.message).toBe(words.errorReasons.changed_elsewhere);
+      expect(words.editor.draftConflict).toBe(
         'Someone saved a newer version. Load the newer one or keep yours.',
       );
       const conflictDetails = readErrorDetails(conflictErr);
@@ -1660,10 +1666,12 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       );
       expect(changesAfterDiscard).toEqual([]);
 
-      // 5. publishPropertyPage blocker: no cover photo
+      // 5. Cover photo fallback on Ulap Suites: when draft.hero.cover and seo.sharePictureFile are null,
+      // page_media.hero_cover and share_picture fall back to the first property photo, and publish succeeds.
       const noCoverDraft = {
         ...discarded.draft,
         hero: { cover: null, photos: [] },
+        seo: { ...discarded.draft.seo, sharePictureFile: null },
       };
       const savedNoCover = assertOk(
         await source.savePageDraft(
@@ -1677,18 +1685,16 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
           ULAP_OWNER_SESSION,
         ),
       );
-      const blockedNoCover = assertErr(
-        await source.publishPropertyPage(
-          {
-            idempotencyKey: nextKey(),
-            accountId: DEMO_IDS.ulapSuites.account,
-            propertyId: DEMO_IDS.ulapSuites.property,
-            expectedVersion: editor.version,
-          },
+      const editorAfterNoCover = assertOk(
+        await source.getPageEditor(
+          { accountId: DEMO_IDS.ulapSuites.account, propertyId: DEMO_IDS.ulapSuites.property },
           ULAP_OWNER_SESSION,
         ),
       );
-      expect(blockedNoCover.code).toBe('invalid_move');
+      expect(editorAfterNoCover.preview.page_media.hero_cover?.url).toContain('/demo-media/');
+      expect(editorAfterNoCover.preview.page_media.share_picture?.file_id).toBe(
+        editorAfterNoCover.preview.page_media.hero_cover?.file_id,
+      );
 
       // 6. Restore cover photo + new tagline, then publishPropertyPage succeeds and increments version
       assertOk(
@@ -1724,6 +1730,180 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         ),
       );
       expect(changesAfterPublish).toEqual([]);
+
+      // 7. Onboarding owner with no hero cover: blocked before any photo exists, then with one unit photo and no hero cover can publish
+      const applied = assertOk(
+        await source.applyAsOwner(
+          {
+            method: 'password',
+            idempotencyKey: nextKey(),
+            fullName: 'Liza Navarro',
+            email: 'liza.navarro@example.com',
+            mobile: '0917 555 0909',
+            password: 'secure-password-123',
+            placeName: 'Liza Ridge Stay',
+            rents: 'staycation',
+            unitCountBand: '1',
+            propertyCountBand: '1',
+            city: 'Tagaytay City',
+            facebookPage: null,
+          },
+          GUEST_SESSION,
+        ),
+      );
+      assertOk(
+        await source.approveAccount(
+          { idempotencyKey: nextKey(), accountId: applied.account.id },
+          SUPER_ADMIN_SESSION,
+        ),
+      );
+      const newOwnerSession: Session = {
+        role: 'owner',
+        accountId: applied.account.id,
+        profileId: applied.profile.id,
+      };
+      const newProp = assertOk(
+        await source.saveProperty(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            propertyId: null,
+            expectedUpdatedAt: null,
+            name: 'Liza Ridge Stay',
+            slug: 'liza-ridge-stay',
+            tagline: 'Quiet ridge weekend cabin',
+            description: 'One cozy cabin in Tagaytay.',
+            addressLine: '18 Ridge Road',
+            barangay: 'Maharlika East',
+            city: 'Tagaytay City',
+            province: 'Cavite',
+            region: 'CALABARZON',
+            latitude: null,
+            longitude: null,
+            mapUrl: null,
+            showExactLocation: false,
+            contact: {
+              phone: '+639175550909',
+              messenger: null,
+              facebook: null,
+              instagram: null,
+              tiktok: null,
+              viber: null,
+              whatsapp: null,
+              google_review_url: null,
+            },
+            privacyContact: 'liza.navarro@example.com',
+            logoFileId: null,
+          },
+          newOwnerSession,
+        ),
+      );
+      const newUnit = assertOk(
+        await source.saveUnit(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            propertyId: newProp.id,
+            unitId: null,
+            expectedUpdatedAt: null,
+            slug: 'pine-cabin',
+            name: 'Pine Cabin',
+            mode: 'short_stay',
+            unitType: 'entire_place',
+            groupLabel: null,
+            description: 'Cozy pine cabin.',
+            maxGuests: 2,
+            bedrooms: 1,
+            beds: 1,
+            bathrooms: 1,
+            floorAreaSqm: 28,
+            arrivalInfo: null,
+            amenityIds: [],
+            stayTerms: null,
+            leaseTerms: null,
+          },
+          newOwnerSession,
+        ),
+      );
+
+      // Before any photo exists (no hero.cover, no property photo, no unit photo), publishPropertyPage blocks with no_cover_photo
+      const blockedEmpty = assertErr(
+        await source.publishPropertyPage(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            propertyId: newProp.id,
+            expectedVersion: 0,
+          },
+          newOwnerSession,
+        ),
+      );
+      expect(blockedEmpty.code).toBe('invalid_move');
+      expect(blockedEmpty.details?.['blocker']).toBe('no_cover_photo');
+
+      // Upload and save ONE unit photo (no hero.cover set)
+      const uploadReq = assertOk(
+        await source.requestUpload(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            purpose: 'unit_photo',
+            mime: 'image/webp',
+            sizeBytes: 110_000,
+            width: 1600,
+            height: 1200,
+            filename: 'pine-cabin-1.webp',
+          },
+          newOwnerSession,
+        ),
+      );
+      const confirmedPhoto = assertOk(
+        await source.confirmUpload(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            fileId: uploadReq.file.id,
+            width: 1600,
+            height: 1200,
+            usedByTable: 'listing_photos',
+            usedById: newUnit.unit.id,
+          },
+          newOwnerSession,
+        ),
+      );
+      assertOk(
+        await source.saveListingPhotos(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            propertyId: newProp.id,
+            unitId: newUnit.unit.id,
+            photos: [{ fileId: confirmedPhoto.id, altText: 'Pine Cabin front deck' }],
+          },
+          newOwnerSession,
+        ),
+      );
+
+      // Now publishPropertyPage succeeds using the unit photo as cover fallback!
+      const onboardingPublished = assertOk(
+        await source.publishPropertyPage(
+          {
+            idempotencyKey: nextKey(),
+            accountId: applied.account.id,
+            propertyId: newProp.id,
+            expectedVersion: 0,
+          },
+          newOwnerSession,
+        ),
+      );
+      expect(onboardingPublished.version).toBe(1);
+      expect(onboardingPublished.published?.hero.cover).toBeNull();
+
+      const liveOnboardingProp = assertOk(
+        await source.getProperty({ slug: 'liza-ridge-stay' }, GUEST_SESSION),
+      );
+      expect(liveOnboardingProp.page_media.hero_cover?.file_id).toBe(confirmedPhoto.id);
+      expect(liveOnboardingProp.page_media.share_picture?.file_id).toBe(confirmedPhoto.id);
     });
   });
 }

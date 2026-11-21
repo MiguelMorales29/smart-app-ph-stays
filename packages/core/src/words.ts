@@ -25,7 +25,8 @@ const errorReasonMessages = {
   not_image: 'Upload a JPEG, PNG or WebP image.',
   last_payment_method: 'Keep at least one payment method turned on so guests can pay.',
   bank_limit: 'You can add up to 3 bank accounts. Edit or turn off an existing one instead.',
-  changed_elsewhere: 'Someone saved a newer version. Load the newer one or keep yours.',
+  changed_elsewhere:
+    'Someone updated this while you were editing. Reload the page to see the latest details.',
   wallet_not_checked:
     'Check your GCash, Maya or bank history first, then tick the box before approving.',
   wrong_password: 'That password is incorrect. Enter your current password and try again.',
@@ -48,10 +49,15 @@ const bankLabels = {
   other: 'Other bank',
 } as const satisfies Record<Bank, string>;
 
+const editorMessages = {
+  draftConflict: 'Someone saved a newer version. Load the newer one or keep yours.',
+} as const;
+
 export const words = {
   appName: 'Smart App PH',
   productName: 'Stays and Rentals',
   errors: errorMessages,
   errorReasons: errorReasonMessages,
+  editor: editorMessages,
   banks: bankLabels,
 } as const;

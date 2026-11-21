@@ -22,7 +22,17 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
   const baseProfiles = buildBaseProfiles(createdAt);
   world.profiles.push(...baseProfiles.brandOwnerProfiles);
 
-  const ulap = buildUlapSuitesBrand(today);
+  const studioFog = DEMO_IDS.ulapSuites.units.studioFog;
+  const taalView = DEMO_IDS.ulapSuites.units.taalView1br;
+  const ulap = buildUlapSuitesBrand(today, {
+    extraUnits: 3,
+    pageUnits: [
+      studioFog,
+      taalView,
+      DEMO_IDS.ulapSuites.units.ridgeSuite1br,
+      DEMO_IDS.ulapSuites.units.cloudCornerStudio,
+    ],
+  });
   const bahay = buildBahayBatisBrand(today);
   const ilaw = buildIlawResidencesBrand(today);
   const lorna = buildTitaLornaDormBrand(today);
@@ -36,8 +46,6 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
   const bc = bahayCustomers.byKey;
 
   const ulapStory = new AccountStoryBuilder(ulap, today, clock);
-  const studioFog = DEMO_IDS.ulapSuites.units.studioFog;
-  const taalView = DEMO_IDS.ulapSuites.units.taalView1br;
 
   const mustCustomer = (
     map: Readonly<Record<string, (typeof ulapCustomers.customers)[0]>>,
@@ -342,11 +350,6 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
   // D73 / P5-1: Ulap Suites gets 8 units in the marketing pack (today 2), reusing its existing demo photos
   // in a different order per unit: a mix of whole places and private rooms, one hidden, one draft,
   // prices from ₱2,200 to ₱4,800 a night, with extra_units = 3 (5 included + 3 extra = 8 limit).
-  ulap.subscription = {
-    ...ulap.subscription,
-    extra_units: 3,
-  };
-
   const studioFogPhotos = ulap.listingPhotos
     .filter((lp) => lp.unit_id === studioFog)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -619,30 +622,6 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
       });
     }
   }
-
-  ulap.propertyPage = {
-    ...ulap.propertyPage,
-    published: ulap.propertyPage.published
-      ? {
-          ...ulap.propertyPage.published,
-          units: [
-            studioFog,
-            taalView,
-            DEMO_IDS.ulapSuites.units.ridgeSuite1br,
-            DEMO_IDS.ulapSuites.units.cloudCornerStudio,
-          ],
-        }
-      : null,
-    draft: {
-      ...ulap.propertyPage.draft,
-      units: [
-        studioFog,
-        taalView,
-        DEMO_IDS.ulapSuites.units.ridgeSuite1br,
-        DEMO_IDS.ulapSuites.units.cloudCornerStudio,
-      ],
-    },
-  };
 
   appendBrandToWorld(world, ulap, ulapStory.build());
   appendBrandToWorld(world, bahay, bahayStory.build());

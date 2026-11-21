@@ -6,12 +6,23 @@ import { DEMO_IDS, makeDemoUuid } from '../ids.js';
 import { buildBrandMediaFromManifest, resolveNextHolidayWindows } from './shared.js';
 import type { BrandBundle } from './shared.js';
 
-export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
+export interface BuildUlapSuitesBrandOptions {
+  readonly extraUnits?: number;
+  readonly pageUnits?: readonly string[];
+}
+
+export function buildUlapSuitesBrand(
+  today: CalendarDate,
+  options: BuildUlapSuitesBrandOptions = {},
+): BrandBundle {
   const groupHex = '10';
   const createdAt = manilaWallTime(addDays(today, -60), '09:00').toISOString();
   const ids = DEMO_IDS.ulapSuites;
   const ownerId = DEMO_IDS.people.owners.ulapSuites;
   const holidays = resolveNextHolidayWindows(today);
+  const featuredUnits = options.pageUnits
+    ? [...options.pageUnits]
+    : [ids.units.studioFog, ids.units.taalView1br];
 
   const media = buildBrandMediaFromManifest({
     brandSlug: 'ulap-suites',
@@ -76,7 +87,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       photoFile: null,
       languages: ['Tagalog', 'English'],
     },
-    units: [ids.units.studioFog, ids.units.taalView1br],
+    units: featuredUnits,
     highlights: [
       DEMO_IDS.amenities.wifi,
       DEMO_IDS.amenities.projector,
@@ -225,7 +236,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       status: 'active',
       trial_ends_on: addDays(today, -46),
       paid_through: addDays(today, 20),
-      extra_units: 0,
+      extra_units: options.extraUnits ?? 0,
       paused_at: null,
       created_at: createdAt,
       updated_at: createdAt,

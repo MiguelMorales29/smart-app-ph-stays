@@ -65,6 +65,7 @@ import {
   nowIsoFromClock,
   quoteForUnit,
   releaseExpiredHolds,
+  resolveEffectiveCoverFileId,
   resolveThreadAccess,
   sha256Hex,
   toFailAppError,
@@ -2123,8 +2124,14 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
             return err(reasonError('invalid_move', 'changed_elsewhere'));
           }
 
-          // Imitates publish blocker (P5-1 §7a): cover photo is required before publishing.
-          if (page.draft.hero.cover === null) {
+          // Imitates publish blocker (P5-1 §7a): cover photo is required before publishing,
+          // falling back to first property photo or cover photo of the first listed/active unit.
+          const effectiveCoverFileId = resolveEffectiveCoverFileId(
+            world,
+            prop.id,
+            page.draft.hero.cover,
+          );
+          if (effectiveCoverFileId === null) {
             return err(
               appError('invalid_move', 'Add a cover photo before publishing your page.', {
                 blocker: 'no_cover_photo',

@@ -604,6 +604,55 @@ export interface BuildPropertyViewOptions {
   readonly propertyId?: string;
 }
 
+/**
+ * Resolves the effective cover photo file ID for a property page:
+ * 1. `pageCoverFileId` (`hero.cover`) when not null
+ * 2. First property photo (`unit_id === null`, by `sort_order`)
+ * 3. Cover photo of the first listed unit (by `sort_order`), or the first non-archived unit with a photo
+ *    when no listed unit has one yet (e.g. an owner finishing onboarding with one unit photo).
+ */
+export function resolveEffectiveCoverFileId(
+  world: DemoWorld,
+  propertyId: string,
+  pageCoverFileId: string | null,
+): string | null {
+  if (pageCoverFileId !== null) {
+    return pageCoverFileId;
+  }
+
+  const firstPropertyPhoto = world.listing_photos
+    .filter((lp) => lp.property_id === propertyId && lp.unit_id === null)
+    .sort((a, b) => a.sort_order - b.sort_order)[0];
+  if (firstPropertyPhoto) {
+    return firstPropertyPhoto.file_id;
+  }
+
+  const activeUnits = world.units
+    .filter((u) => u.property_id === propertyId && u.archived_at === null)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const listedUnits = activeUnits.filter((u) => u.status === 'listed');
+
+  for (const unit of listedUnits) {
+    const firstUnitPhoto = world.listing_photos
+      .filter((lp) => lp.property_id === propertyId && lp.unit_id === unit.id)
+      .sort((a, b) => a.sort_order - b.sort_order)[0];
+    if (firstUnitPhoto) {
+      return firstUnitPhoto.file_id;
+    }
+  }
+
+  for (const unit of activeUnits) {
+    const firstUnitPhoto = world.listing_photos
+      .filter((lp) => lp.property_id === propertyId && lp.unit_id === unit.id)
+      .sort((a, b) => a.sort_order - b.sort_order)[0];
+    if (firstUnitPhoto) {
+      return firstUnitPhoto.file_id;
+    }
+  }
+
+  return null;
+}
+
 export function buildPropertyView(
   world: DemoWorld,
   slug: string,
@@ -808,9 +857,14 @@ export function buildPropertyView(
         activePageContent.logo ?? property.logo_file_id,
         `${property.name} logo`,
       );
+  const effectiveCoverFileId = resolveEffectiveCoverFileId(
+    world,
+    property.id,
+    activePageContent.hero.cover,
+  );
   const heroCoverPhoto = isPaused
     ? null
-    : resolveFileToPagePhoto(activePageContent.hero.cover, `${property.name} cover photo`);
+    : resolveFileToPagePhoto(effectiveCoverFileId, `${property.name} cover photo`);
   const heroPhotos = isPaused
     ? []
     : activePageContent.hero.photos
@@ -824,7 +878,7 @@ export function buildPropertyView(
   const sharePicture = isPaused
     ? null
     : resolveFileToPagePhoto(
-        activePageContent.seo.sharePictureFile ?? activePageContent.hero.cover,
+        activePageContent.seo.sharePictureFile ?? effectiveCoverFileId,
         `${property.name} share preview`,
       );
 
