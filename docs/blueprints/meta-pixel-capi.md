@@ -118,7 +118,7 @@ Five standard events follow an owner from first visit to first payment. Nothing 
 
 | Event | When | Where | Browser | Server | Event id | Data |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PageView` | Any of the three page types loads | `stay.webserbisyo.com/`, `host.webserbisyo.com/signup`, `/onboarding` | Yes | No | none | none |
+| `PageView` | Any of the three page types loads | `smartapp.webserbisyo.com/<slug>`, `host.webserbisyo.com/signup`, `/onboarding` | Yes | No | none | none |
 | `ViewContent` | The landing page's plans section scrolls into view, once per visit | Landing page | Yes | No | random | `content_name: "plans"` |
 | `CompleteRegistration` | The owner's account is created after the email code | `/signup` | Yes, after the API answers | Yes, `website` | `CompleteRegistration:<account id>` | `status: true`, `content_name` = property type picked (`stays`, `rentals`, `both`) |
 | `StartTrial` | The super admin approves the account and the trial starts (`approve_account`) | Admin screen | No | Yes, `other` | `StartTrial:<account id>` | none |

@@ -104,6 +104,8 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 - D69 (Lex, 2026-11-22) **Owner edits a received booking on the guest's request** (BK-21, Phase 6): guest count, guest name and contact, a note; dates through BK-13. The price is quoted again, any difference shows as a line, the guest is told in the conversation and the change is in the booking history. **Rental applications can be added or edited by hand** (RN-12, Phase 15).
 - D70 **Phase 5 split and review loop** (2026-11-22): eight Antigravity prompts, P5-0 to P5-7 (docs/prompts/P5-guide.md). Antigravity opens each PR and waits for green CI; Claude reviews the code and the Vercel preview (390 px and 1280 px, light and dark) before merging. The property switcher, saved replies and uploading a profile photo move to Phase 8.
 
+- D71 (Lex, 2026-11-22) **Public address: `smartapp.webserbisyo.com/<client>`** (for example `smartapp.webserbisyo.com/ulap-suites`), replacing the planned `stay.webserbisyo.com` (Feature blueprint 7a, E8). Path style stays (no subdomain per client); free, on the domain already owned. The domain is set up in Phase 14, before any guest installs, because a later domain move makes installed guests reinstall and allow notices again. A short bought domain (`smartapp.ph`) may come later, ideally during the pilot while installs are few; owners' own domains stay a wave 3 add-on. The owner dashboard and API addresses are chosen in Phase 14 (options: `owner.webserbisyo.com` or `smartapp.webserbisyo.com/owner`); `owner` and `smartapp` are added to the reserved slugs now.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.

@@ -456,7 +456,7 @@ The splash has two layers.
 
 ### Web address
 
-1. Wave 1 keeps the planned address `stay.webserbisyo.com/<slug>` (System blueprint 8.4), the same path style as the food app. One certificate, no DNS work per owner, and each property still installs as its own app through its own manifest, with `id` and `scope` set to `/<slug>/`.
+1. Wave 1 uses the address `smartapp.webserbisyo.com/<slug>` (D71, replacing `stay.webserbisyo.com` from System blueprint 8.4), the same path style as the food app. One certificate, no DNS work per owner, and each property still installs as its own app through its own manifest, with `id` and `scope` set to `/<slug>/`.
 2. The owner can change the slug through `change_slug`: 3 to 40 characters (`D28`), a–z, 0–9 and hyphens, no reserved word (admin, api, app, host, stay, www, help, login, `demo-media` (`D23`) and others). Old slugs keep redirecting permanently, so printed QR codes and shared links keep working. Up to 3 changes a year.
 3. No subdomains such as `<slug>.webserbisyo.com`. A wildcard needs its own certificate and DNS setup and a reserved list against our own subdomains, and gives owners little more than the path.
 4. An owner's own domain (`www.theirplace.com`) is a paid add-on in wave 3, added through the Vercel Domains API: the owner adds a DNS record, we verify it, Vercel issues the certificate. Vercel's Pro plan allows unlimited custom domains per project (Hobby stops at 50) and limits additions to 100 an hour, so a simple queue is enough.
