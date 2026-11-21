@@ -181,7 +181,7 @@ Every page in this stage gets the ten-step research pass before it is built. The
 #### Phase 14. Hardening and pilot launch
 
 - **Goal:** safe and fast enough for a real owner.
-- **Covers:** the installable app and its offline frame; the security checklist; the speed budget; error and uptime alerts; backups and a live database kept apart from development; domains and deployment; the privacy and terms pages; the launch gates (NPC registration, Vercel's commercial terms, BIR and the business permit).
+- **Covers:** the installable app and its offline frame; the security checklist; the speed budget; error and uptime alerts; backups and a live database kept apart from development; domains and deployment (`smartapp.webserbisyo.com/<client>`, D71, set up before any guest installs; choose the dashboard and API addresses); the privacy and terms pages; the launch gates (NPC registration, Vercel's commercial terms, BIR and the business permit).
 - **Read first:** System blueprint (security, hosting and launch sections); Knowledge base; Stack register section 9.
 - **Done when:** one real owner takes one real booking.
 
