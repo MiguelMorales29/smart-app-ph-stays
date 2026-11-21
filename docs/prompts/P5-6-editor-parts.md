@@ -4,7 +4,7 @@ Model: Gemini 4 Argon, Medium. Planning mode. After P5-5 is merged.
 
 Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7a "The sections" table (every rule in it), "Readability is fixed for the owner, not blocked", decisions E3 to E9 and D31, D32. Files: the P5-5 engine, `packages/core/src/theme/palette.ts`, `packages/ui/src/compositions/photo-manager.tsx`, `grouped-rows.tsx`, `choice-chip.tsx`, `app-sheet.tsx`.
 
-Port from the food app (`../Smart-App-PH---FINAL-2026`, read-only):
+Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing):
 
 - Panels: `apps/dashboard/src/features/editor/panels/brand-panel.tsx`, `banners-panel.tsx`, `announcement-panel.tsx`, `opening-panel.tsx`, `about-panel.tsx`, `owned-panel.tsx`, `field-count.tsx`
 - Style: `style-card.tsx`, `palette-check.tsx`, `any-colour-picker.tsx`, `use-logo-colours.ts`, `logo-loupe.tsx`, `logo-tools.ts`, `logo-places.tsx`, `font-picker.tsx`, `banner-text.ts`, `picture.ts`
