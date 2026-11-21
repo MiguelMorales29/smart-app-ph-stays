@@ -35,7 +35,8 @@ Every read and write Phase 5 screens need exists in the contract, has Zod input 
 4. **Errors:** add `draft_conflict` to the error codes, with owner words in the error copy ("Someone saved a newer version. Load the newer one or keep yours.").
 5. **Preview channel schema** in `packages/core/src/editor/preview-messages.ts`: the Zod messages between the dashboard and the preview frame (`draft`, `select-part`, `hover-part`, `go-to-page`, `ready`, `part-clicked`). **Port** from the food app's `apps/storefront/src/features/preview/preview-messages.ts`; rename shop to property.
 6. **Demo data:** each of the 5 brands has a full published page and a draft with 1 to 3 differences (so "Draft with N changes" shows). Ulap Suites has 3 banners, an announcement and 6 FAQ; Tita Lorna Dorm has none of those (the empty look). Use existing demo media only.
-7. **Memory adapter:** answer every new operation; `savePageDraft` keeps state for the session like the other writes; `?pack=slow` delays; `?pack=error` fails them.
+7. **More demo units (D73).** Ulap Suites gets 8 units in the `marketing` pack (today it has 2), reusing its existing demo photos in a different order per unit: a mix of whole places and private rooms, one hidden, one draft, prices from ₱2,200 to ₱4,800 a night, so the Units grid, Reorder and Select can be checked. Keep the demo invariants and snapshot tests passing (update snapshots on purpose). The `empty` pack still has none.
+8. **Memory adapter:** answer every new operation; `savePageDraft` keeps state for the session like the other writes; `?pack=slow` delays; `?pack=error` fails them.
 
 ## Not in this task
 
