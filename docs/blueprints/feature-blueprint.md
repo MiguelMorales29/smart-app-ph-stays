@@ -142,6 +142,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | BK-10 | Ask a question before booking (moved to wave 2 with `RN-01`; `D30`) | 2 | S | `create_inquiry` |
 | BK-11 | Weekly and monthly discounts shown in the breakdown | 1 | S | `quote_stay` |
 | BK-12 | Notify me: web push for status changes | 1 | S | `push_subscriptions` |
+| BK-20 | Enter a promo or referral code when booking: the server checks it, shows the discount line or the reason in words; a hold reserves one use (O12, O13) | 1 | M | `discount_redemptions` |
 | BK-13 | Ask to change dates in the chat; the owner moves the booking | 1 | S | `change_booking_dates` |
 | BK-14 | Guest list and IDs for building registration, with a due time and a parking plate | 1 | S | `booking_guests` |
 | BK-15 | Cancellation presets: before confirming, the guest sees what comes back or how to move the dates | 1 | M | `properties` |
@@ -157,6 +158,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | MB-04 | Rewards: see what is unlocked, claim it, show the code and QR, use a discount at booking | 3 | M | `redeem_reward` |
 | MB-05 | Welcome stamp or points, and the member perk, on joining | 3 | S | `stamp_cards`, `stamp_ledger` |
 | MB-06 | Tenant card: a stamp for each rent bill paid in full by its due date; private to the tenant | 3 | S | `stamp_cards`, `stamp_ledger` |
+| MB-07 | My referral code and link, friends who booked, and rewards earned after their stays (O12) | 1 | M | `referrals` |
 
 ### Rentals, customer side (RN)
 
@@ -209,6 +211,12 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | OW-29 | Send a push notice to guests and members: title, one line, optional photo, link to a unit or the page; send now or schedule (O11) | 1 | M | `push_campaigns`, outbox, PL-02 |
 | OW-30 | Push notice audience and limits: only people who agreed to promos; a weekly send limit; a preview of how many people get it (O11) | 1 | M | `push_subscriptions`, marketing consent |
 | OW-31 | Push notice results: sent, opened, and bookings from the notice (O11) | 1 | S | `push_campaigns` |
+| OW-32 | Discount rules: ₱ or % off (cap), free night or perk; units, stay dates, minimum nights and total, dates, new guests only, total and per-guest uses (O13) | 1 | M | `discount_rules` |
+| OW-33 | Promo codes: a shared code with a total limit, or a batch of single-use codes without look-alike characters; pause; share by copy, push or page (O13) | 1 | M | `discount_codes` |
+| OW-34 | Automatic deals with no code (for example weekday 15% off) (O13) | 1 | S | `discount_rules` |
+| OW-35 | Referral settings: friend and referrer amounts, tenant version, monthly limit, pause (O12) | 1 | M | `referrals` |
+| OW-36 | Push notices carry a code and pick a group: everyone who agreed, past guests, members close to a reward (O11, O13) | 1 | S | `push_campaigns` |
+| OW-37 | Results per code, notice and referral: used, bookings, money earned, discount given (O12, O13) | 1 | S | `discount_redemptions` |
 
 ### Super admin (SA)
 

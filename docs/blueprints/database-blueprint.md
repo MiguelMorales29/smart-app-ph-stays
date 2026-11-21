@@ -1432,7 +1432,7 @@ Airbnb's host calendar has about fifteen booking settings. This design had eight
 | Weekly and monthly discounts | **Added** | Two percent columns on the stay terms |
 | Message the host before booking | **Added** | An inquiry can be opened on any unit |
 | Arrival instructions after booking | **Added** | `arrival_info` on the property and the unit |
-| Early-bird, last-minute and custom promotions | No | Later, with promo codes |
+| Early-bird, last-minute and custom promotions | **Planned for Phase 7** | Discount engine and promo codes (O13, `docs/rewards-and-promotions.md`) |
 | Minimum nights by weekday; no check-in on chosen days | No | Later |
 | Guest controls for children, infants, pets, events | Text only | Structured later |
 | Security deposit for a stay | No | Later. Leases already have a deposit |
@@ -1455,7 +1455,7 @@ Each later feature adds tables or values. None changes a row that already exists
 | Calendar feeds | A new `calendar_feeds` table; `unit_occupancy.kind` gains `external` |
 | Staff sign-ins | `account_members.role` already allows `staff`; a new permissions table |
 | Room types with a count | A new `unit_types` table; `units` gains an optional link to it |
-| Promo codes and promotions | A new `promos` table; `booking_lines` already has `discount` lines |
+| Promo codes and promotions | **Planned (O12, O13):** `discount_rules`, `discount_codes`, `discount_redemptions`, `referrals`, `push_campaigns`; `booking_lines` already has `discount` lines |
 | Add-ons at booking | `unit_fees` gains an optional flag; lines already carry fees |
 | Reviews | A`lready in wave 1 as stay_reviews (addition 20)` |
 | Meter readings | A new `meter_readings` table; bill lines already have water and electricity |
