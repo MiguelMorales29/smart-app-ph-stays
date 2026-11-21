@@ -60,19 +60,19 @@ export function TopBar({
       />
       <Breadcrumb className="min-w-0">
         <BreadcrumbList>
-          {page.parent ? (
-            <Fragment>
+          {(page.parents ?? (page.parent ? [page.parent] : [])).map((crumb) => (
+            <Fragment key={crumb.to}>
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  className="inline-flex items-center pointer-coarse:min-h-11"
-                  render={<Link to={page.parent.to} />}
+                  className="inline-flex max-w-48 items-center truncate pointer-coarse:min-h-11"
+                  render={<Link to={crumb.to} />}
                 >
-                  {page.parent.title}
+                  {crumb.title}
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
             </Fragment>
-          ) : null}
+          ))}
           <BreadcrumbItem>
             <BreadcrumbPage className="truncate">{page.title}</BreadcrumbPage>
           </BreadcrumbItem>

@@ -356,6 +356,67 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavDef[] = [
   },
 ];
 
+export interface HomeNeedsYouItem {
+  readonly id:
+    | 'arrivals_today'
+    | 'departures_today'
+    | 'proofs_to_check'
+    | 'holds_expiring_soon'
+    | 'unread_threads';
+  readonly label: string;
+  readonly count: number;
+  readonly to: '/calendar' | '/payments' | '/bookings' | '/inbox';
+  readonly icon: LucideIcon;
+}
+
+/**
+ * Shared by the Home nav badge (`resolveNavCount('home_total', counts)`) and the Home "Needs you"
+ * list (D67, D73) so the badge number always equals the sum of rows shown on Home.
+ */
+export function buildHomeNeedsYouItems(
+  counts: OwnerHomeCountsView | null,
+): readonly HomeNeedsYouItem[] {
+  if (!counts) return [];
+  const all: readonly HomeNeedsYouItem[] = [
+    {
+      id: 'arrivals_today',
+      label: 'Arrivals today',
+      count: counts.arrivals_today,
+      to: '/calendar',
+      icon: CalendarDaysIcon,
+    },
+    {
+      id: 'departures_today',
+      label: 'Departures today',
+      count: counts.departures_today,
+      to: '/calendar',
+      icon: KeyRoundIcon,
+    },
+    {
+      id: 'proofs_to_check',
+      label: 'Payment proofs to check',
+      count: counts.proofs_to_check,
+      to: '/payments',
+      icon: CreditCardIcon,
+    },
+    {
+      id: 'holds_expiring_soon',
+      label: 'Holds ending soon',
+      count: counts.holds_expiring_soon,
+      to: '/bookings',
+      icon: ClipboardCheckIcon,
+    },
+    {
+      id: 'unread_threads',
+      label: 'Unread messages',
+      count: counts.unread_threads,
+      to: '/inbox',
+      icon: MessageSquareIcon,
+    },
+  ];
+  return all.filter((item) => item.count > 0);
+}
+
 export function resolveNavCount(
   countKey: DashboardNavDef['countKey'],
   counts: OwnerHomeCountsView | null,
@@ -363,12 +424,7 @@ export function resolveNavCount(
   if (!countKey || !counts) return undefined;
   switch (countKey) {
     case 'home_total': {
-      const total =
-        counts.arrivals_today +
-        counts.departures_today +
-        counts.proofs_to_check +
-        counts.holds_expiring_soon +
-        counts.unread_threads;
+      const total = buildHomeNeedsYouItems(counts).reduce((sum, item) => sum + item.count, 0);
       return total > 0 ? total : undefined;
     }
     case 'holds':

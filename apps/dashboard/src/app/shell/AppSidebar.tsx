@@ -78,7 +78,12 @@ export function AppSidebar() {
                 <PlusIcon aria-hidden="true" />
                 <span className="group-data-[collapsible=icon]:hidden">New</span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="start" sideOffset={6} className="min-w-60">
+              <DropdownMenuContent
+                side="right"
+                align="start"
+                sideOffset={6}
+                className="min-w-[280px]"
+              >
                 {quickAddItems.map((item) => (
                   <DropdownMenuItem
                     key={item.id}

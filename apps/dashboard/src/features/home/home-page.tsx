@@ -1,18 +1,24 @@
-import { Link } from '@tanstack/react-router';
+import { createElement } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { ChevronRightIcon, WifiOffIcon } from 'lucide-react';
+import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { RowButton, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { LoadingState } from '@smartapp/ui/compositions/loading-state';
 import { NotAllowedState } from '@smartapp/ui/compositions/not-allowed-state';
 import { useDashboard } from '@/app/dashboard-context';
 import { ApprovalBanner } from '@/app/auth/approval-banner';
+import { buildHomeNeedsYouItems } from '@/app/nav-config';
 import { SetupChecklistCard, useSetupComplete } from './setup-checklist-card';
 
 export function HomePage() {
-  const { homeState, reload } = useDashboard();
+  const navigate = useNavigate();
+  const { homeState, counts, reload } = useDashboard();
   const setupComplete = useSetupComplete();
+  const needsYouItems = buildHomeNeedsYouItems(counts);
 
   return (
     <section className="space-y-6 pb-8">
@@ -62,7 +68,21 @@ export function HomePage() {
 
       {homeState.kind === 'ready' ? <SetupChecklistCard /> : null}
 
-      {homeState.kind === 'ready' && setupComplete ? (
+      {homeState.kind === 'ready' && needsYouItems.length > 0 ? (
+        <RowGroup title="Needs you">
+          {needsYouItems.map((item) => (
+            <RowButton
+              key={item.id}
+              label={item.label}
+              icon={createElement(item.icon)}
+              value={<Badge className="tabular">{item.count}</Badge>}
+              onClick={() => void navigate({ to: item.to })}
+            />
+          ))}
+        </RowGroup>
+      ) : null}
+
+      {homeState.kind === 'ready' && setupComplete && needsYouItems.length === 0 ? (
         <EmptyState
           icon={<MilestonePicture art="live" size="sm" />}
           title="Nothing needs you right now"
