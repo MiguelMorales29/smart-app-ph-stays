@@ -38,10 +38,10 @@ export interface BrandBundle {
   readonly account: AccountsRow;
   readonly member: AccountMembersRow;
   readonly application: OwnerApplicationsRow;
-  readonly subscription: SubscriptionsRow;
+  subscription: SubscriptionsRow;
   readonly subscriptionPayment: SubscriptionPaymentsRow;
   readonly property: PropertiesRow;
-  readonly propertyPage: PropertyPagesRow;
+  propertyPage: PropertyPagesRow;
   readonly units: UnitsRow[];
   readonly stayTerms: UnitStayTermsRow[];
   readonly leaseTerms: UnitLeaseTermsRow[];

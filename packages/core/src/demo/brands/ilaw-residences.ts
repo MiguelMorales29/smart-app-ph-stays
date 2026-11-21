@@ -28,7 +28,7 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
     createdAt,
   });
 
-  const draft: PropertyPageDraft = {
+  const published: PropertyPageDraft = {
     logo: ids.logoFile,
     tagline: 'Come home to a lit window',
     about:
@@ -49,11 +49,13 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       },
       sections: {
         banners: true,
+        announcement: true,
         about: true,
         units: true,
         highlights: true,
         rules: true,
         location: true,
+        times: true,
         faq: true,
       },
     },
@@ -100,6 +102,19 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         'Pet-friendly, fiber-ready Studio and 1BR apartments in Kapitolyo, Pasig with rooftop deck and keycard security.',
       sharePictureFile: media.heroPhotoFileIds[0] ?? null,
       hideFromSearch: false,
+    },
+  };
+
+  const draft: PropertyPageDraft = {
+    ...published,
+    look: {
+      ...published.look,
+      fontPair: 'elegant',
+      announcement: {
+        text: 'Saturday morning viewings open for Studio A and 1BR B in Kapitolyo.',
+        tone: 'info',
+        endDate: null,
+      },
     },
   };
 
@@ -256,8 +271,8 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       property_id: ids.property,
       account_id: ids.account,
       draft,
-      published: draft,
-      draft_rev: 1,
+      published,
+      draft_rev: 2,
       version: 1,
       draft_updated_at: createdAt,
       published_at: createdAt,

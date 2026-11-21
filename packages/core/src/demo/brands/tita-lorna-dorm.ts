@@ -49,7 +49,7 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
     createdAt,
   });
 
-  const draft: PropertyPageDraft = {
+  const published: PropertyPageDraft = {
     logo: ids.logoFile,
     tagline: 'Study hard. Tita has the rest.',
     about:
@@ -61,21 +61,19 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       accentColor: '#2F6AE0',
       logoShape: 'rounded',
       fontPair: 'homey',
-      banners: media.banners,
+      banners: [],
       bannerSeconds: 5,
-      announcement: {
-        text: 'Second-semester bed spaces open for Room 2A (ladies) and Room 3B (gents) — all-in water, Wi-Fi, and night air-con.',
-        tone: 'warning',
-        endDate: null,
-      },
+      announcement: null,
       sections: {
-        banners: true,
+        banners: false,
+        announcement: false,
         about: true,
         units: true,
         highlights: true,
         rules: true,
         location: true,
-        faq: true,
+        times: true,
+        faq: false,
       },
     },
     install: {
@@ -103,24 +101,22 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       DEMO_IDS.amenities.lockers,
       DEMO_IDS.amenities.rooftopLaundry,
     ],
-    faq: [
-      {
-        question: 'What is included in the all-in monthly rate?',
-        answer:
-          'Water, fiber Wi-Fi, evening-to-morning air-conditioning, study hall power, and use of the common kitchen.',
-      },
-      {
-        question: 'Is there a curfew?',
-        answer:
-          'Residents have 24/7 biometric access for late review classes; visitors are allowed in the ground-floor lounge until 8:00 pm.',
-      },
-    ],
+    faq: [],
     seo: {
       title: "Tita Lorna's Dorm Sampaloc · All-In Student Bed Spaces",
       description:
         'Safe student dorm near University Belt in Sampaloc, Manila. Ladies and gents air-con rooms with 24/7 study hall.',
       sharePictureFile: media.heroPhotoFileIds[0] ?? null,
       hideFromSearch: false,
+    },
+  };
+
+  const draft: PropertyPageDraft = {
+    ...published,
+    tagline: 'Safe U-Belt bed spaces. Study hard, Tita has the rest.',
+    look: {
+      ...published.look,
+      logoShape: 'circle',
     },
   };
 
@@ -373,8 +369,8 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       property_id: ids.property,
       account_id: ids.account,
       draft,
-      published: draft,
-      draft_rev: 1,
+      published,
+      draft_rev: 2,
       version: 1,
       draft_updated_at: createdAt,
       published_at: createdAt,

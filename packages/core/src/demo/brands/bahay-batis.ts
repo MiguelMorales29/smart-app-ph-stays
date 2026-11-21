@@ -28,7 +28,7 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
     createdAt,
   });
 
-  const draft: PropertyPageDraft = {
+  const published: PropertyPageDraft = {
     logo: ids.logoFile,
     tagline: 'Your own hot spring, your own rules',
     about:
@@ -49,11 +49,13 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
       },
       sections: {
         banners: true,
+        announcement: true,
         about: true,
         units: true,
         highlights: true,
         rules: true,
         location: true,
+        times: true,
         faq: true,
       },
     },
@@ -100,6 +102,15 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
         'Exclusive 4-bedroom private hot-spring house in Pansol, Calamba for up to 20 guests. Videoke, billiards, half court, and kiddie slide.',
       sharePictureFile: media.heroPhotoFileIds[0] ?? null,
       hideFromSearch: false,
+    },
+  };
+
+  const draft: PropertyPageDraft = {
+    ...published,
+    tagline: 'Private warm spring villa in Pansol, just for your group',
+    host: {
+      ...published.host,
+      languages: ['Tagalog', 'English', 'Kapampangan'],
     },
   };
 
@@ -254,8 +265,8 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
       property_id: ids.property,
       account_id: ids.account,
       draft,
-      published: draft,
-      draft_rev: 1,
+      published,
+      draft_rev: 2,
       version: 1,
       draft_updated_at: createdAt,
       published_at: createdAt,

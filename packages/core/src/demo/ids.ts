@@ -94,6 +94,12 @@ export const DEMO_IDS = {
     units: {
       studioFog: 'dec0de10-0005-4000-8000-000000000001',
       taalView1br: 'dec0de10-0005-4000-8000-000000000002',
+      pineNookRoom: 'dec0de10-0005-4000-8000-000000000003',
+      cloudCornerStudio: 'dec0de10-0005-4000-8000-000000000004',
+      ridgeSuite1br: 'dec0de10-0005-4000-8000-000000000005',
+      sunriseRoom: 'dec0de10-0005-4000-8000-000000000006',
+      skylineLoft2br: 'dec0de10-0005-4000-8000-000000000007',
+      gardenPatioStudio: 'dec0de10-0005-4000-8000-000000000008',
     },
     paymentAccounts: {
       gcash: 'dec0de10-0009-4000-8000-000000000001',
