@@ -193,7 +193,7 @@
 
 @utility pb-dock {
   padding-bottom: calc(
-    env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2
+    env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2 + 1.25rem
   );
 }
 
@@ -215,7 +215,7 @@ body:has([data-dev-panel-menu]) [data-dev-pill] {
 }
 
 :root:has([data-slot='bottom-dock']) {
-  --dev-pill-lift: calc(var(--dock-height) + var(--dock-offset) * 2);
+  --dev-pill-lift: calc(var(--dock-height) + var(--dock-offset) * 2 + 1.25rem);
 }
 
 :root:has([data-slot='property-action-bar'] > *) {

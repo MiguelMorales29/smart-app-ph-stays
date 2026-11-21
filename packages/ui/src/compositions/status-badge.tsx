@@ -1,12 +1,15 @@
 import { createElement } from 'react';
-import type { BookingStatus, PaymentStatus } from '@smartapp/core';
+import type { BookingStatus, PaymentStatus, UnitStatus } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
 import { cn } from 'cn';
 import {
   CheckCircle2Icon,
   ClockIcon,
+  EyeIcon,
+  EyeOffIcon,
   HourglassIcon,
   KeyRoundIcon,
+  PencilIcon,
   RotateCcwIcon,
   SparklesIcon,
   XCircleIcon,
@@ -85,5 +88,66 @@ export function PaymentStatusBadge({
       {createElement(meta.icon, { 'aria-hidden': true })}
       <span>{meta.label}</span>
     </Badge>
+  );
+}
+
+export const UNIT_STATUS_META: Readonly<
+  Record<
+    UnitStatus,
+    {
+      readonly label: string;
+      readonly icon: LucideIcon;
+      readonly tone: string;
+      readonly iconTone: string;
+    }
+  >
+> = {
+  listed: {
+    label: 'Listed',
+    icon: EyeIcon,
+    tone: 'bg-success-tint text-foreground [&>svg]:text-success',
+    iconTone: 'text-success',
+  },
+  unlisted: {
+    label: 'Hidden',
+    icon: EyeOffIcon,
+    tone: 'bg-muted text-foreground [&>svg]:text-muted-foreground',
+    iconTone: 'text-muted-foreground',
+  },
+  draft: {
+    label: 'Draft',
+    icon: PencilIcon,
+    tone: 'bg-warning-tint text-foreground [&>svg]:text-warning',
+    iconTone: 'text-warning',
+  },
+};
+
+/** Draft, Listed or Hidden: an icon, a word and a colour. Use `overlay` when placed over a photo. */
+export function UnitStatusBadge({
+  status,
+  overlay = false,
+  className,
+}: {
+  readonly status: UnitStatus;
+  readonly overlay?: boolean | undefined;
+  readonly className?: string | undefined;
+}) {
+  const item = UNIT_STATUS_META[status];
+  const Icon = item.icon;
+  return (
+    <span
+      data-slot="unit-status-badge"
+      data-status={status}
+      className={cn(
+        'inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-medium',
+        overlay
+          ? 'border border-border/70 bg-card/90 text-foreground shadow-xs backdrop-blur-xs'
+          : item.tone,
+        className,
+      )}
+    >
+      <Icon aria-hidden="true" className={cn('size-3.5', overlay && item.iconTone)} />
+      {item.label}
+    </span>
   );
 }
