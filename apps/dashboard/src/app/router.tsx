@@ -171,7 +171,7 @@ const unitsRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/units',
   validateSearch: parseUnitsSearch,
-  staticData: { page: { title: 'Units' } },
+  staticData: { page: { title: 'Units', wide: true } },
   component: lazyRouteComponent(() => import('@/features/units/units-page'), 'UnitsPage'),
 });
 

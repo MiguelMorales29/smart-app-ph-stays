@@ -5,6 +5,7 @@ import {
   DASHBOARD_NAV_ITEMS,
   QUICK_ADD_ITEMS,
   SETTINGS_NAV_ITEMS,
+  buildHomeNeedsYouItems,
   resolveNavCount,
 } from './nav-config';
 import { DASHBOARD_ROUTE_CATALOG } from '../features/kit/route-catalog';
@@ -62,6 +63,26 @@ describe('dashboard navigation & route catalog', () => {
     };
 
     expect(resolveNavCount('home_total', counts)).toBe(15);
+    expect(buildHomeNeedsYouItems(counts).map((item) => [item.id, item.count, item.to])).toEqual([
+      ['arrivals_today', 2, '/calendar'],
+      ['departures_today', 1, '/calendar'],
+      ['proofs_to_check', 3, '/payments'],
+      ['holds_expiring_soon', 4, '/bookings'],
+      ['unread_threads', 5, '/inbox'],
+    ]);
+    expect(
+      buildHomeNeedsYouItems({
+        ...counts,
+        departures_today: 0,
+        holds_expiring_soon: 0,
+      }).reduce((sum, item) => sum + item.count, 0),
+    ).toBe(
+      resolveNavCount('home_total', {
+        ...counts,
+        departures_today: 0,
+        holds_expiring_soon: 0,
+      }),
+    );
     expect(resolveNavCount('holds', counts)).toBe(4);
     expect(resolveNavCount('unread', counts)).toBe(5);
     expect(resolveNavCount('proofs', counts)).toBe(3);

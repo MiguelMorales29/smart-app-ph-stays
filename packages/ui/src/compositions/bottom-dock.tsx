@@ -75,9 +75,9 @@ function DockActionButton({ action }: { readonly action: BottomDockAction }) {
         type="button"
         aria-label={action.label ?? 'Add'}
         onClick={action.onClick}
-        className="press flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm outline-none hover-hover:hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
+        className="press relative -translate-y-6 flex size-13 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-4 ring-background outline-none hover-hover:hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <PlusIcon aria-hidden="true" className="size-5" />
+        <PlusIcon aria-hidden="true" className="size-6" />
       </button>
     </div>
   );

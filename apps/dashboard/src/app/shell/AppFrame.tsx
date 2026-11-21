@@ -90,7 +90,8 @@ export function AppFrame() {
             id="main"
             tabIndex={-1}
             className={cn(
-              'mx-auto w-full max-w-5xl flex-1 px-4 py-6 outline-none sm:px-6',
+              'mx-auto w-full flex-1 px-4 py-6 outline-none sm:px-6',
+              page.wide ? 'max-w-7xl' : 'max-w-5xl',
               showDock && 'pb-dock',
             )}
           >

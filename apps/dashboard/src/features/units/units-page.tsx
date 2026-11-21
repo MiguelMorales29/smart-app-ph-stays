@@ -42,7 +42,6 @@ import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
-import { useKeyboardInset } from '@smartapp/ui/hooks/use-keyboard-inset';
 import { notify } from '@smartapp/ui/lib/notify';
 import { cn } from '@smartapp/ui/lib/utils';
 import { useLastDefined } from '@smartapp/ui/hooks/use-last-defined';
@@ -57,7 +56,14 @@ import {
   useReorderUnitsMutation,
 } from '@/data/units/writes';
 import { AddUnitSheet } from './add-unit-sheet';
-import { MISSING_LABEL, UNIT_TYPE_LABEL, UnitStatusBadge, unitPriceText } from './unit-words';
+import {
+  MISSING_LABEL,
+  UNIT_STATUS_META,
+  UNIT_TYPE_LABEL,
+  UnitStatusBadge,
+  unitPriceText,
+  unitSummaryText,
+} from './unit-words';
 
 export type UnitsFilter = 'listed' | 'hidden' | 'drafts';
 
@@ -66,18 +72,22 @@ export interface UnitsSearch {
   readonly add?: 'unit' | 'beds';
 }
 
-const FILTERS: readonly { value: UnitsFilter | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'listed', label: 'Listed' },
-  { value: 'hidden', label: 'Hidden' },
-  { value: 'drafts', label: 'Drafts' },
-];
-
 const FILTER_STATUS: Record<UnitsFilter, UnitStatus> = {
   listed: 'listed',
   hidden: 'unlisted',
   drafts: 'draft',
 };
+
+const FILTERS: readonly {
+  readonly value: UnitsFilter | 'all';
+  readonly label: string;
+  readonly status?: UnitStatus;
+}[] = [
+  { value: 'all', label: 'All' },
+  { value: 'listed', label: 'Listed', status: 'listed' },
+  { value: 'hidden', label: 'Hidden', status: 'unlisted' },
+  { value: 'drafts', label: 'Drafts', status: 'draft' },
+];
 
 type Entry =
   | { readonly kind: 'unit'; readonly key: string; readonly item: OwnerUnitListItemView }
@@ -134,7 +144,6 @@ export function UnitsPage() {
   const archive = useArchiveUnitMutation();
   const duplicate = useDuplicateUnitMutation();
   const reorder = useReorderUnitsMutation();
-  const keyboard = useKeyboardInset();
 
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -330,49 +339,8 @@ export function UnitsPage() {
   }
 
   const selectedIds = [...selected].filter((id) => byId.has(id));
-  const header = (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      {/* Phones show the title in the top bar. */}
-      <h1 className="font-heading text-2xl font-semibold max-md:sr-only">Units</h1>
-      {all.length > 0 ? (
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="min-h-11 sm:min-h-9"
-            aria-pressed={reordering}
-            onClick={() => {
-              setReordering((on) => !on);
-              setSelecting(false);
-            }}
-          >
-            <GripVerticalIcon aria-hidden="true" />
-            {reordering ? 'Done' : 'Reorder'}
-          </Button>
-          <Button
-            variant="outline"
-            className="min-h-11 sm:min-h-9"
-            aria-pressed={selecting}
-            onClick={() => {
-              setSelecting((on) => !on);
-              setReordering(false);
-              setSelected(new Set());
-            }}
-          >
-            {selecting ? <XIcon aria-hidden="true" /> : <ListChecksIcon aria-hidden="true" />}
-            {selecting ? 'Cancel' : 'Select'}
-          </Button>
-          <Button
-            className="hidden min-h-9 lg:inline-flex"
-            disabled={propertyId === null}
-            onClick={() => openAdd('unit')}
-          >
-            <PlusIcon aria-hidden="true" />
-            Add
-          </Button>
-        </div>
-      ) : null}
-    </div>
-  );
+  // TopBar already shows "Units" at every size (D73).
+  const srTitle = <h1 className="sr-only">Units</h1>;
 
   const sheet = (
     <AddUnitSheet
@@ -388,7 +356,7 @@ export function UnitsPage() {
   if (all.length === 0) {
     return (
       <section className="space-y-6">
-        {header}
+        {srTitle}
         <EmptyState
           icon={<MilestonePicture art="no_units" size="sm" />}
           title="No units yet"
@@ -435,35 +403,117 @@ export function UnitsPage() {
   const useTable = all.length > 8;
 
   return (
-    // Room under the last card for the floating Add button (48 px + gap) on phones and tablets.
-    <section className="space-y-5 pb-20 lg:pb-0">
-      {header}
+    <section className={cn('space-y-4', selecting && selectedIds.length > 0 && 'pb-20 lg:pb-0')}>
+      {srTitle}
 
-      <div role="group" aria-label="Show" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {FILTERS.map((item) => {
-          const active = (filter ?? 'all') === item.value;
-          const value = item.value;
-          const count =
-            value === 'all'
-              ? all.length
-              : all.filter((unit) => unit.unit.status === FILTER_STATUS[value]).length;
-          return (
-            <Button
-              key={item.value}
-              variant="outline"
-              aria-pressed={active}
-              className={cn(
-                'min-h-11 shrink-0 rounded-full sm:min-h-9',
-                active &&
-                  'border-primary bg-primary-tint text-foreground hover-hover:hover:bg-primary-tint',
-              )}
-              onClick={() => setFilter(item.value)}
-            >
-              {item.label}
-              <span className="text-muted-foreground tabular">{count}</span>
-            </Button>
-          );
-        })}
+      {/* D73: phones put [+ Add unit] (left) and ⋯ (right) above the chips; desktop puts them on the right of the chips row. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="order-1 flex items-center justify-between gap-2 sm:order-2 sm:shrink-0 sm:justify-end">
+          <Button
+            className="min-h-11 sm:min-h-9"
+            disabled={propertyId === null}
+            onClick={() => openAdd('unit')}
+          >
+            <PlusIcon aria-hidden="true" />
+            Add unit
+          </Button>
+          <div className="flex items-center gap-2">
+            {reordering ? (
+              <Button
+                variant="outline"
+                className="min-h-11 sm:min-h-9"
+                onClick={() => setReordering(false)}
+              >
+                Done
+              </Button>
+            ) : null}
+            {selecting ? (
+              <Button
+                variant="outline"
+                className="min-h-11 sm:min-h-9"
+                onClick={() => {
+                  setSelecting(false);
+                  setSelected(new Set());
+                }}
+              >
+                <XIcon aria-hidden="true" />
+                Cancel
+              </Button>
+            ) : null}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-11 sm:size-9"
+                    aria-label="More unit actions"
+                  />
+                }
+              >
+                <MoreHorizontalIcon aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setReordering((on) => !on);
+                    setSelecting(false);
+                  }}
+                >
+                  <GripVerticalIcon aria-hidden="true" />
+                  {reordering ? 'Done reordering' : 'Reorder'}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelecting((on) => !on);
+                    setReordering(false);
+                    setSelected(new Set());
+                  }}
+                >
+                  <ListChecksIcon aria-hidden="true" />
+                  {selecting ? 'Cancel selection' : 'Select'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div
+          role="group"
+          aria-label="Show"
+          className="order-2 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:order-1 sm:pb-0"
+        >
+          {FILTERS.map((item) => {
+            const active = (filter ?? 'all') === item.value;
+            const value = item.value;
+            const count =
+              value === 'all'
+                ? all.length
+                : all.filter((unit) => unit.unit.status === FILTER_STATUS[value]).length;
+            const statusMeta = item.status ? UNIT_STATUS_META[item.status] : null;
+            const StatusIcon = statusMeta?.icon ?? null;
+            return (
+              <Button
+                key={item.value}
+                variant="outline"
+                aria-pressed={active}
+                className={cn(
+                  'min-h-11 shrink-0 rounded-full sm:min-h-9',
+                  count === 0 && !active && 'text-muted-foreground',
+                  active &&
+                    'border-primary bg-primary-tint text-foreground hover-hover:hover:bg-primary-tint',
+                )}
+                onClick={() => setFilter(item.value)}
+              >
+                {StatusIcon && statusMeta ? (
+                  <StatusIcon aria-hidden="true" className={cn('size-3.5', statusMeta.iconTone)} />
+                ) : null}
+                {item.label}
+                <span className="text-muted-foreground tabular">{count}</span>
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
       {reordering ? (
@@ -490,11 +540,16 @@ export function UnitsPage() {
         </p>
       ) : (
         <>
-          {/* Cards: rows on phones, a grid from tablet up. A table only for long lists on desktop. */}
-          <ul className={cn('grid gap-3 md:grid-cols-2 xl:grid-cols-3', useTable && 'lg:hidden')}>
+          {/* Cards: rows on phones (< 640px), auto-fill grid from 640px up (2 on tablet, 3 on 1280px, 4 from 1536px). */}
+          <ul
+            className={cn(
+              'grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]',
+              useTable && 'lg:hidden',
+            )}
+          >
             {entries.map((entry) =>
               entry.kind === 'unit' ? (
-                <li key={entry.key}>
+                <li key={entry.key} className="flex">
                   <UnitCard
                     item={entry.item}
                     selecting={selecting}
@@ -504,7 +559,7 @@ export function UnitsPage() {
                   />
                 </li>
               ) : (
-                <li key={entry.key} className="md:col-span-2 xl:col-span-3">
+                <li key={entry.key} className="sm:col-span-full">
                   <RoomCard
                     label={entry.label}
                     beds={entry.beds}
@@ -647,19 +702,6 @@ export function UnitsPage() {
             }}
           >
             Change price
-          </Button>
-        </div>
-      ) : null}
-
-      {!selecting && !reordering && keyboard === 0 ? (
-        <div className="dock-pill fixed inset-x-0 z-20 mx-auto flex h-auto! -translate-y-[calc(100%+0.75rem)] justify-center lg:hidden">
-          <Button
-            className="h-12 rounded-full px-5 shadow-lg"
-            disabled={propertyId === null}
-            onClick={() => openAdd('unit')}
-          >
-            <PlusIcon aria-hidden="true" />
-            Add unit
           </Button>
         </div>
       ) : null}
@@ -860,12 +902,18 @@ function UnitCard({
 }) {
   const price = unitPriceText(item);
   return (
-    // Pattern guide §3.8: a row card with an 88 px thumbnail on phones, a photo card in a grid
-    // from tablet up.
-    <article className="relative flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-card p-2 md:block md:p-0">
-      <Cover item={item} className="w-[88px] shrink-0 rounded-lg md:w-full md:rounded-none" />
+    // D73: row card with an 88 px thumbnail on phones (< 640px), full-height photo card in the grid from 640px up.
+    <article className="relative flex h-full w-full items-center gap-3 overflow-hidden rounded-xl border border-border bg-card p-2.5 sm:flex-col sm:items-stretch sm:gap-0 sm:p-0">
+      <div className="relative w-[88px] shrink-0 overflow-hidden rounded-lg sm:w-full sm:rounded-none">
+        <Cover item={item} className="w-full" />
+        <UnitStatusBadge
+          status={item.unit.status}
+          overlay
+          className="pointer-events-none absolute top-1 left-1 z-10 max-sm:h-5 max-sm:px-1.5 max-sm:text-[11px] sm:top-2.5 sm:left-2.5"
+        />
+      </div>
       {selecting ? (
-        <div className="absolute top-1/2 left-2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-background/90 md:top-2 md:translate-y-0">
+        <div className="absolute top-2 right-2 z-20 flex size-11 items-center justify-center rounded-lg bg-card/90 shadow-xs">
           <Checkbox
             aria-label={`Select ${item.unit.name}`}
             checked={checked}
@@ -873,27 +921,21 @@ function UnitCard({
           />
         </div>
       ) : null}
-      <div className="flex min-w-0 flex-1 items-start gap-1 md:gap-2 md:p-3">
-        <div className="min-w-0 flex-1 space-y-1">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 sm:p-3.5">
+        <div className="flex items-center justify-between gap-2">
           <Link
             to="/units/$unitId"
             params={{ unitId: item.unit.id }}
-            className="line-clamp-2 font-medium after:absolute after:inset-0 after:content-['']"
+            className="min-w-0 flex-1 truncate font-medium after:absolute after:inset-0 after:content-['']"
           >
             {item.unit.name}
           </Link>
-          <p className="text-sm text-muted-foreground">
-            {UNIT_TYPE_LABEL[item.unit.unit_type]}
-            {price ? (
-              <>
-                {' · '}
-                <span className="text-foreground tabular">{price}</span>
-              </>
-            ) : null}
-          </p>
-          <UnitStatusBadge status={item.unit.status} />
+          <div className="relative z-10 -mr-1.5 shrink-0">{menu}</div>
         </div>
-        <div className="relative z-10">{menu}</div>
+        <p className="truncate text-sm text-muted-foreground">{unitSummaryText(item.unit)}</p>
+        <p className="text-sm font-medium text-foreground tabular">
+          {price ?? <span className="font-normal text-muted-foreground">No price yet</span>}
+        </p>
       </div>
     </article>
   );
