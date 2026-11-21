@@ -1,9 +1,11 @@
-import { createElement } from 'react';
-import { Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { createElement, useState } from 'react';
+import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { cn } from '@smartapp/ui/lib/utils';
 import { Button } from '@smartapp/ui/components/button';
 import { SidebarInset, SidebarProvider } from '@smartapp/ui/components/sidebar';
+import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { BottomDock } from '@smartapp/ui/compositions/bottom-dock';
+import { RowButton, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
 import { OfflineBanner } from '@smartapp/ui/compositions/offline-banner';
 import { PausedAccountBanner } from '@smartapp/ui/compositions/paused-account-banner';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
@@ -12,6 +14,7 @@ import { useDashboard } from '@/app/dashboard-context';
 import {
   ACTIVE_WAVE,
   DASHBOARD_NAV_ITEMS,
+  QUICK_ADD_ITEMS,
   isActiveRoutePath,
   resolveNavCount,
 } from '@/app/nav-config';
@@ -26,13 +29,16 @@ import { useSwipeBack } from './use-swipe-back';
 export function AppFrame() {
   const formFactor = useFormFactor();
   useSwipeBack();
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { client, counts, forcedOffline } = useDashboard();
   const page = usePageMeta();
   useDocumentTitle(page.title);
   const { sidebarOpen, onSidebarOpenChange } = useResponsiveSidebarOpen(formFactor);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
 
   const visibleItems = DASHBOARD_NAV_ITEMS.filter((item) => item.wave <= ACTIVE_WAVE);
+  const quickAddItems = QUICK_ADD_ITEMS.filter((item) => item.wave <= ACTIVE_WAVE);
 
   function toNavItem(item: (typeof visibleItems)[number]): NavItem {
     const count = resolveNavCount(item.countKey, counts);
@@ -94,11 +100,36 @@ export function AppFrame() {
       </SidebarProvider>
 
       {showDock ? (
-        <BottomDock
-          label="Owner dashboard navigation"
-          items={dockItems}
-          more={{ label: 'More', items: moreItems }}
-        />
+        <>
+          <BottomDock
+            label="Owner dashboard navigation"
+            items={dockItems}
+            action={{ label: 'Add', onClick: () => setQuickAddOpen(true) }}
+            more={{ label: 'More', items: moreItems }}
+          />
+          <AppSheet
+            open={quickAddOpen}
+            onOpenChange={setQuickAddOpen}
+            title="Add"
+            height="half"
+            size="sm"
+          >
+            <RowGroup>
+              {quickAddItems.map((item) => (
+                <RowButton
+                  key={item.id}
+                  label={item.label}
+                  hint={item.hint}
+                  icon={createElement(item.icon)}
+                  onClick={() => {
+                    setQuickAddOpen(false);
+                    void navigate({ to: item.to, search: item.search });
+                  }}
+                />
+              ))}
+            </RowGroup>
+          </AppSheet>
+        </>
       ) : null}
     </div>
   );

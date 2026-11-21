@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { WifiOffIcon } from 'lucide-react';
+import { ChevronRightIcon, WifiOffIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
@@ -15,7 +15,7 @@ export function HomePage() {
   const setupComplete = useSetupComplete();
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 pb-8">
       <ApprovalBanner />
       {/* Phones show the title in the top bar; Pattern Guide §3.10: no developer text here. */}
       <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only">Home</h1>
@@ -78,6 +78,18 @@ export function HomePage() {
             </Button>
           }
         />
+      ) : null}
+
+      {homeState.kind === 'ready' ? (
+        <div className="flex justify-center pt-1">
+          <Link
+            to="/bookings"
+            className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary-hover underline-offset-4 hover-hover:hover:underline sm:min-h-9"
+          >
+            <span>See all bookings</span>
+            <ChevronRightIcon aria-hidden="true" className="size-4" />
+          </Link>
+        </div>
       ) : null}
     </section>
   );
