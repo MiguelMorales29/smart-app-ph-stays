@@ -44,6 +44,8 @@
     "class-variance-authority": "0.7.1",
     "cn": "catalog:",
     "date-fns": "4.4.0",
+    "embla-carousel-autoplay": "8.6.0",
+    "embla-carousel-react": "8.6.0",
     "lucide-react": "catalog:",
     "react": "catalog:",
     "react-day-picker": "10.0.2",
