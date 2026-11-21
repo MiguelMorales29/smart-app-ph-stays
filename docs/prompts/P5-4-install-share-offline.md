@@ -4,7 +4,7 @@ Model: Gemini Flash, High. Planning mode. After P5-2 is merged.
 
 Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7a "Splash and app icon" (rules 1 to 8) and "Web address", PA-05 to PA-08, Stack register (Serwist). Files: `apps/storefront/src/app/[slug]/install/page.tsx`, `privacy/page.tsx`, `layout.tsx`.
 
-Port from the food app (`../Smart-App-PH---FINAL-2026`, read-only):
+Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing):
 
 - `apps/storefront/src/app/[shop]/manifest.webmanifest/route.ts`
 - `apps/storefront/src/app/[shop]/splash/[size]/route.ts`

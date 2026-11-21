@@ -4,7 +4,7 @@ Model: Gemini 4 Argon, Medium. Planning mode. After P5-1 is merged.
 
 Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7 (`/` brief), §7a "The sections" (parts 4 to 15) and decisions E4, E5, E7, E9. Files: `apps/storefront/src/app/[slug]/`, `components/frames/PropertyFrame.tsx`, `packages/ui/src/compositions/property-theme.tsx`, `packages/core/src/theme/palette.ts`.
 
-Port from the food app (`../Smart-App-PH---FINAL-2026`, read-only):
+Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing):
 
 - `packages/ui/src/compositions/banner-carousel.tsx` and `banner-carousel-slides.tsx` (the timer dots, Pause, reduced motion, loads only for 2+ slides)
 - `apps/storefront/src/features/home/components/announcement-strip.tsx`, `home-hero.tsx`, `home-info-card.tsx`, `home-sections.tsx`, `shop-footer.tsx` (structure and the show/hide part switch)

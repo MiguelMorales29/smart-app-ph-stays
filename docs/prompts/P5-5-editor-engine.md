@@ -4,7 +4,7 @@ Model: Gemini 4 Argon, High. Planning mode. After P5-2 is merged (P5-3 and P5-4 
 
 Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7a "How the editor works" (steps 1 to 9) and decisions E1, E2, Stack register (Zustand with zundo). Contract from P5-1: `getPageEditor`, `savePageDraft`, `discardPageDraft`, `publishPropertyPage`, `getPageChanges`, and `packages/core/src/editor/preview-messages.ts`.
 
-Port from the food app (`../Smart-App-PH---FINAL-2026`, read-only; it is the approved engine, decision E2):
+Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing; it is the approved engine, decision E2):
 
 - `apps/dashboard/src/features/editor/screens/editor.tsx`, `use-editor-draft.ts`, `preview-frame.tsx`, `preview-pages.tsx`, `parts-list.tsx`, `part-panel.tsx`, `phone-sheet.tsx`, `use-sheet-gestures.ts`, `editor-top-bar.tsx`, `editor-dialogs.tsx`, `parts.ts`
 - `apps/storefront/src/app/[shop]/preview/page.tsx` and `apps/storefront/src/features/preview/`
