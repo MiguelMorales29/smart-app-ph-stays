@@ -675,7 +675,7 @@ export function UnitsPage() {
         <div
           role="region"
           aria-label="Selected units"
-          className="dock-pill fixed inset-x-3 z-40 mx-auto flex -translate-y-[calc(100%+0.75rem)] items-center gap-2 rounded-2xl border border-border bg-popover px-3 shadow-lg lg:static lg:h-auto lg:max-w-none lg:translate-y-0 lg:rounded-xl lg:py-2 lg:shadow-none"
+          className="dock-pill fixed inset-x-3 z-40 mx-auto flex -translate-y-[calc(100%+0.75rem)] items-center gap-2 rounded-2xl border border-border bg-popover px-3 shadow-lg lg:sticky lg:bottom-4 lg:h-auto lg:max-w-none lg:translate-y-0 lg:rounded-xl lg:py-2 lg:shadow-lg"
         >
           <span className="flex-1 text-sm font-medium tabular">{selectedIds.length} selected</span>
           <Button
