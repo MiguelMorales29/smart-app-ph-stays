@@ -2,7 +2,7 @@
 
 Model: Gemini Flash, High. Planning mode. After P5-2 is merged.
 
-Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7a "Splash and app icon" (rules 1 to 8) and "Web address", PA-05 to PA-08, Stack register (Serwist). Files: `apps/storefront/src/app/[slug]/install/page.tsx`, `privacy/page.tsx`, `layout.tsx`.
+Read first: AGENTS.md, docs/prompts/P5-guide.md, docs/research/phase-5-guest-pages.md (section 3), Feature blueprint §7a "Splash and app icon" (rules 1 to 8) and "Web address", PA-05 to PA-08, Stack register (Serwist). Files: `apps/storefront/src/app/[slug]/install/page.tsx`, `privacy/page.tsx`, `layout.tsx`.
 
 Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing):
 
@@ -31,7 +31,15 @@ Each property installs as its own app with its own name, icon and splash, on And
    - The ported `app-splash.tsx`: shown only in standalone mode, only on a cold start, the same colour as layer 1.
    - Animations None or Fade in wave 1. `install.splashAnimation` true means Fade; Logo pulse, Logo rise and Progress line are wave 2.
    - It leaves when the first screen is ready, at most 1.2 s. Still for reduced motion.
-5. **`/install` page (PA-05):** steps for the phone in hand (Android: the install prompt or the menu; iPhone Safari: Share → Add to Home Screen, with simple drawings, not screenshots); "Already installed" state. The Install button in the top bar from P5-2 uses the same rules.
+5. **`/install` page (PA-05):**
+   - Steps for the phone in hand, with simple drawings (not screenshots):
+     - Android Chrome: the install prompt (`beforeinstallprompt`) or the menu → Install app.
+     - iPhone, iOS 26 and later: Safari → Share → Add to Home Screen → keep "Open as Web App" on → Add.
+     - Older iPhones: Safari → Share → Add to Home Screen.
+   - **In-app browsers (D76):** detect Facebook, Messenger, Instagram and TikTok in-app browsers (user agent: `FBAN`, `FBAV`, `FB_IAB`, `Messenger`, `Instagram`, `musical_ly`/`BytedanceWebview`). There, installing is impossible, so show "Open this page in Safari (or Chrome) to install it" with a Copy link button and the 2-step drawing (⋯ → Open in browser). Put the detector in `packages/core` with unit tests for each user agent.
+   - "Already installed" state when running standalone.
+   - The installed app keeps its own storage, separate from Safari: after installing, a guest with an open booking sees "Find my booking" so the link is not lost (link to `/find`).
+   - The Install button in the top bar from P5-2 uses the same rules (in an in-app browser it opens the "Open in Safari or Chrome" sheet).
 6. **Share previews (PA-08):**
    - A generated Open Graph picture per property (`opengraph-image`): cover photo, name, area, logo, 1200 × 630.
    - Per unit: the unit cover and name.
@@ -53,5 +61,6 @@ Push notices (Phase 12). Wave 2 splash animations. Custom domains (wave 3).
 - Lighthouse PWA checks pass on Ulap Suites (installable, maskable icon, theme colour).
 - Screenshots: the manifest JSON, the 3 icons, one iPhone launch picture, the install page on iPhone and Android sizes, a share preview for a property and a unit (open the OG image URL).
 - Offline checked in Chrome DevTools: no price or date is shown from cache.
+- The in-app browser message checked with a Facebook in-app user agent (DevTools device emulation), and the detector's unit tests pass.
 - `pnpm check` green. PROGRESS: tick P5-4. One CHANGELOG line.
 - Open the PR, wait for green CI, **do not merge**. Report the PR number.

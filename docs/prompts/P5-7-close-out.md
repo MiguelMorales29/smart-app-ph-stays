@@ -25,7 +25,10 @@ Phase 5 is covered by tests, inside its budgets, and documented, ready for Lex's
    - the editor's part list (show/hide switch)
 3. **Journey tests** (Playwright, phone size):
    - **Owner:** sign in → `/editor` → change the tagline and a colour → Publish → open `/<slug>` and see both.
-   - **Guest:** `/<slug>` → a unit → pick dates and 2 guests → the price breakdown matches `quoteStay` → Reserve reaches the Phase 6 placeholder with the dates in the address.
+   - **Guest:** `/<slug>` → a unit → pick dates and 2 guests → the price breakdown matches `quoteStay` and the stay total (with the cleaning fee) is the largest price → Reserve reaches the Phase 6 placeholder with the dates in the address.
+   - **Check-out on a taken night:** a stay that ends on the first night of an existing booking can be picked (D75).
+   - **In-app browser:** with a Facebook in-app user agent, Install shows "Open in Safari or Chrome" (D76).
+   - **Small fix from the P5-0b review:** on phone unit rows, the status on the 88 px thumbnail becomes an icon-only dot with the word for screen readers (the word "Listed" covered most of the photo).
 4. **Budgets:**
    - Extend `tooling/check-budget.ts` to the storefront: the property page's first load at most 170 KB gzipped of JavaScript.
    - No carousel code when the page has fewer than 2 banners.
