@@ -107,11 +107,12 @@ Every page in this stage gets the ten-step research pass before it is built. The
 - **Not yet:** real installing and push.
 - **Read first:** Feature blueprint sections 7 (property app) and 7a (all); Stack register section 7 (Zustand).
 - **Settle with Claude:** the sections offered at first launch; what the phone preview shows; how the install look differs on Android and iPhone.
+- **Plan (22 Nov 2026, D65 to D70):** eight Antigravity prompts in `docs/prompts/P5-guide.md`: P5-0 Phase 4 fixes (dock Home · Calendar · + · Inbox · More, Edit unit as Settings-style rows, badges, Preview switch), P5-1 data contract, P5-2 property page, P5-3 unit page, P5-4 install, share and offline, P5-5 editor engine, P5-6 editor parts, P5-7 tests and close-out. Claude reviews each PR's code and Vercel preview before it is merged.
 
 #### Phase 6. Dates, price and holding a booking (slice 4, screens)
 
 - **Goal:** a visitor picks dates, sees the price and holds them; the owner blocks dates and adds a booking by hand.
-- **Covers:** date picking; the price breakdown; guest details; the hold and its countdown; the owner's calendar, blocks and manual bookings.
+- **Covers:** date picking; the price breakdown; guest details; the hold and its countdown; the owner's calendar (with a List view of bookings, D65), blocks and manual bookings from the quick-add sheet (OW-38); editing a received booking at the guest's request (BK-21, D69).
 - **Not yet:** the real rule that two people can never hold the same night. It lives in the database (phase 10); here the mock only imitates it.
 - **Read first:** Database blueprint section 4 and the Short stay tables in section 5; Feature blueprint sections 8 and 10.
 - **Settle with Claude:** how date picking behaves on a phone; the least a guest must type; how the hold time is shown; the calendar for one unit and for many.
@@ -127,7 +128,7 @@ Every page in this stage gets the ten-step research pass before it is built. The
 #### Phase 8. Daily work and members (slices 7 and 8, screens)
 
 - **Goal:** the owner's everyday pages, and a guest who becomes a member.
-- **Covers:** Home, the bookings board, guests and the activity list; joining with an email code (the screen only); a member's bookings; finding a lost booking link.
+- **Covers:** Home, the bookings board, guests and the activity list; the property switcher (an owner with 2 properties), saved replies and uploading your own profile photo (moved from Phase 4, D70); joining with an email code (the screen only); a member's bookings; finding a lost booking link.
 - **Read first:** Feature blueprint sections 4 and 7.
 - **Settle with Claude:** what Home shows first on a phone; what a member gets that a guest does not.
 
@@ -189,7 +190,7 @@ Every page in this stage gets the ten-step research pass before it is built. The
 #### Phase 15. Rentals (wave 2)
 
 - **Goal:** long-term renting, from the first question to the monthly bill.
-- **Covers:** inquiries and viewings; reserving a unit; leases and move-in; monthly bills with utility readings and rent payments; repair requests and the tenant's page; staff sign-ins; reports.
+- **Covers:** inquiries and viewings; adding or editing a rental application by hand (RN-12, D69); reserving a unit; leases and move-in; monthly bills with utility readings and rent payments; repair requests and the tenant's page; staff sign-ins; reports.
 - **How:** the same loop in small: screens on mock data, a click-through, then the database and the API. It is split into its own phases when its turn comes.
 - **Read first:** Database blueprint section 6; Feature blueprint, the Rentals features and the "Renting a unit" flow.
 

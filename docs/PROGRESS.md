@@ -48,13 +48,26 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 ### Carry-over into Phase 5 (decided by Lex, 2026-11-21)
 
 - [ ] Lex's iPhone check of every Phase 4 screen (Safari bars, light and dark), with a screen recording of anything that feels broken.
-- [ ] Edit unit accordion on iPhone: opening one section closes the one above, so the page jumps (suspected; fix after the recording).
+- [ ] Edit unit accordion on iPhone: replaced by Settings-style rows in P5-0 (D66).
 - [ ] Re-check every component changed in Phase 4 / 4.5 on a real iPhone, not only in Chrome.
 - [ ] Desktop + mobile UX research pass (desktop patterns were not studied as deeply as mobile), then a combined Smart App pattern set.
-- [ ] Owner journey e2e test and the six component tests (needs Node 24.15 for jsdom 31; the repo pins 24.14).
-- [ ] Property switcher: a demo owner with 2 properties and the data hooks reading `?p=`.
-- [ ] Saved replies (needs a contract operation) and uploading your own profile photo.
-- [ ] Guest rewards and promotions for Phase 7 (`docs/rewards-and-promotions.md`): push campaigns (O11), referral (O12), discount engine and promo codes (O13); confirm the five O14 settings before the Phase 7 screens.
+- [ ] Owner journey e2e test and the six component tests (needs Node 24.15 for jsdom 31; the repo pins 24.14): in P5-7.
+- [ ] Property switcher, saved replies and uploading your own profile photo: moved to Phase 8 (D70).
+- [ ] (Phase 7) Guest rewards and promotions (`docs/rewards-and-promotions.md`): push campaigns (O11), referral (O12), discount engine and promo codes (O13); confirm the five O14 settings before the Phase 7 screens.
+
+## Phase 5. Public pages and the page editor (screens)
+
+Plan: `docs/prompts/P5-guide.md`. Decisions D65–D70. Claude reviews each PR (code and Vercel preview) before merge.
+
+- [ ] P5-0 Dock with +, Edit unit as Settings-style rows, badges, Preview switch, spacing (closes the accordion jump)
+- [ ] P5-1 Data contract for the public pages and the page editor
+- [ ] P5-2 Property page
+- [ ] P5-3 Unit page
+- [ ] P5-4 Install, splash, share previews, offline, privacy
+- [ ] P5-5 Page editor engine
+- [ ] P5-6 Page editor parts
+- [ ] P5-7 Tests (Node 24.15, component and journey tests) and close-out
+- [ ] Gate: Lex installs a property on his iPhone, and edits and publishes the page from the phone
 
 ## Later phases
 

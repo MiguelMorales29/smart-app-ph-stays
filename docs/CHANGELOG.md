@@ -36,3 +36,4 @@ One line per merged task, newest at the bottom.
 - 2026-11-21 P4-8 Phase 4 wrapped up: route pages load on demand (entry chunk 348 → 100 KB gzipped), `tooling/check-budget.ts` runs in CI, carry-over list for Phase 5 in PROGRESS.
 - 2026-11-21 Plan: owner push campaigns added for MVP A (O11, OW-29 to OW-31), built in Phase 7.
 - 2026-11-21 Plan: guest rewards and promotions (`docs/rewards-and-promotions.md`): discount engine, promo codes and referral move to Phase 7 with push campaigns (O12 to O14, OW-32 to OW-37, BK-20, MB-07).
+- 2026-11-22 Plan: Phase 5 in eight Antigravity prompts (`docs/prompts/P5-guide.md`, P5-0 to P5-7); dock Home · Calendar · + · Inbox · More with a quick-add sheet, Edit unit as Settings-style rows, badge rule, Preview switch in the account menu everywhere, owner edits a received booking (BK-21, Phase 6), manual rental applications (RN-12, Phase 15), quick add (OW-38); Claude reviews each PR before merge (D65 to D70).

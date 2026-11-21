@@ -146,6 +146,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | BK-13 | Ask to change dates in the chat; the owner moves the booking | 1 | S | `change_booking_dates` |
 | BK-14 | Guest list and IDs for building registration, with a due time and a parking plate | 1 | S | `booking_guests` |
 | BK-15 | Cancellation presets: before confirming, the guest sees what comes back or how to move the dates | 1 | M | `properties` |
+| BK-21 | The owner edits a received booking when the guest asks: guest count, name and contact, a note (dates through BK-13); the price is quoted again, any difference is a line, the guest is told in the conversation, and the change is in the history (D69) | 1 | S | `bookings`, `booking_events` |
 | BK-16 | Rate your stay (1 to 5 stars and a note) from the private link after checkout, then the owner's Google review link | 1 | S | `stay_reviews`, `submit_review` |
 
 ### Members and rewards (MB)
@@ -175,6 +176,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | RN-09 | Lease renewal reminders and a late fee rule; a warning when a renewal raises rent above the rent cap | 2 | S | `leases`, `remind_lease_end`, `add_late_fees` |
 | RN-10 | Move-in and move-out checklist with photos, confirmed by the tenant | 2 | S | `inspections`, `save_inspection` |
 | RN-11 | Rental application details on an inquiry: occupants, move-in date, work, pets, a short note | 2 | S | `inquiries` |
+| RN-12 | The owner adds a rental application by hand (walk-in or phone) or edits a received one when the applicant asks; the applicant is told in the conversation (D69) | 2 | S | `inquiries` |
 
 ### Owner dashboard (OW)
 
@@ -217,6 +219,7 @@ Every feature has a fixed ID. **Wave** matches the Database blueprint: 1 is the 
 | OW-35 | Referral settings: friend and referrer amounts, tenant version, monthly limit, pause (O12) | 1 | M | `referrals` |
 | OW-36 | Push notices carry a code and pick a group: everyone who agreed, past guests, members close to a reward (O11, O13) | 1 | S | `push_campaigns` |
 | OW-37 | Results per code, notice and referral: used, bookings, money earned, discount given (O12, O13) | 1 | S | `discount_redemptions` |
+| OW-38 | Quick add: the centre + in the phone dock ("+ New" in the desktop sidebar) opens Manual booking, Block dates, Add unit, Record cash payment; later Send notice and Add tenant (D65) | 1 | S |  |
 
 ### Super admin (SA)
 

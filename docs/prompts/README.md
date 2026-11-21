@@ -1,5 +1,7 @@
 # Phase 1 guide: repository and stack
 
+> Later phases have their own guide: Phase 5 is in `P5-guide.md` (D70).
+
 Three prompts for Antigravity, run in order: P1-A, P1-B, P1-C. Each one is one branch and one pull request. Before them, do step 0 by hand.
 
 ## Step 0. Set up by hand (about 20 minutes)
