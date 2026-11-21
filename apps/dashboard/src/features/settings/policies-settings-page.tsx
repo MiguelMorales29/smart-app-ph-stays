@@ -311,9 +311,7 @@ function PoliciesForm({
       </RowGroup>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1.5 px-1 text-sm font-medium text-muted-foreground">
-          House rules
-        </legend>
+        <legend className="mb-1.5 text-sm font-medium text-muted-foreground">House rules</legend>
         <div className="flex flex-wrap gap-2">
           {ruleChips.map((rule) => (
             <ChoiceChip
@@ -370,7 +368,7 @@ function PoliciesForm({
       </Field>
 
       <section aria-labelledby="pol-preview" className="flex flex-col gap-2">
-        <h2 id="pol-preview" className="px-1 text-sm font-medium text-muted-foreground">
+        <h2 id="pol-preview" className="text-sm font-medium text-muted-foreground">
           How guests read it
         </h2>
         <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 text-sm">

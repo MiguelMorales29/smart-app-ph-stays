@@ -194,7 +194,7 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
       </RowGroup>
 
       <section className="flex flex-col gap-4" aria-labelledby="prop-contacts">
-        <h2 id="prop-contacts" className="px-1 text-sm font-medium text-muted-foreground">
+        <h2 id="prop-contacts" className="text-sm font-medium text-muted-foreground">
           How guests reach you
         </h2>
         <Field data-invalid={errors.phone ? true : undefined}>
@@ -243,7 +243,7 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
       </section>
 
       <section className="flex flex-col gap-4" aria-labelledby="prop-address">
-        <h2 id="prop-address" className="px-1 text-sm font-medium text-muted-foreground">
+        <h2 id="prop-address" className="text-sm font-medium text-muted-foreground">
           Address
         </h2>
         <Field data-invalid={errors.addressLine ? true : undefined}>

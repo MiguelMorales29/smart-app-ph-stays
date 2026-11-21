@@ -39,6 +39,13 @@ export const DASHBOARD_ROUTE_CATALOG: readonly RouteCatalogEntry[] = [
     frame: 'AppFrame',
     phase: 4,
   },
+  {
+    app: 'dashboard',
+    path: '/units/dec0de10-0005-4000-8000-000000000001/basics',
+    label: 'Edit unit section (Basics)',
+    frame: 'AppFrame',
+    phase: 5,
+  },
   { app: 'dashboard', path: '/guests', label: 'Guests', frame: 'AppFrame', phase: 8 },
   { app: 'dashboard', path: '/settings', label: 'Settings', frame: 'AppFrame', phase: 4 },
   {

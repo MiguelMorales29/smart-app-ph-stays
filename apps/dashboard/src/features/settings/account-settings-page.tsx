@@ -126,7 +126,7 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
       </Field>
 
       <section aria-labelledby="acct-look" className="flex flex-col gap-1.5">
-        <h2 id="acct-look" className="px-1 text-sm font-medium text-muted-foreground">
+        <h2 id="acct-look" className="text-sm font-medium text-muted-foreground">
           Appearance
         </h2>
         <SegmentedControl
@@ -135,7 +135,7 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
           onValueChange={setTheme}
           options={THEME_MODES.map((mode) => ({ value: mode, label: THEME_LABEL[mode] }))}
         />
-        <p className="px-1 text-sm text-muted-foreground">Saved on this device.</p>
+        <p className="text-sm text-muted-foreground">Saved on this device.</p>
       </section>
 
       <RowGroup title="Sign-in">

@@ -133,7 +133,7 @@ export function PaymentsSettingsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           <section aria-labelledby="pay-list" className="flex flex-col gap-1.5">
-            <h2 id="pay-list" className="px-1 text-sm font-medium text-muted-foreground">
+            <h2 id="pay-list" className="text-sm font-medium text-muted-foreground">
               Ways to pay
             </h2>
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
@@ -194,7 +194,7 @@ export function PaymentsSettingsPage() {
                 </li>
               ))}
             </ul>
-            <p className="px-1 text-sm text-muted-foreground">Guests see them in this order.</p>
+            <p className="text-sm text-muted-foreground">Guests see them in this order.</p>
           </section>
           <Button
             variant="outline"
@@ -608,7 +608,7 @@ function AccountForm({
       </Field>
 
       <section aria-labelledby="pay-preview" className="flex flex-col gap-1.5">
-        <h3 id="pay-preview" className="px-1 text-sm font-medium text-muted-foreground">
+        <h3 id="pay-preview" className="text-sm font-medium text-muted-foreground">
           What guests see
         </h3>
         <div className="rounded-2xl border border-border bg-muted p-4 text-sm">

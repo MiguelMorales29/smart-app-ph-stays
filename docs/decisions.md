@@ -103,6 +103,7 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 - D68 **Preview switch on desktop** moves into the account menu too (D63 now covers every screen size); nothing floats over page content. Unfinished settings rows show a "Soon" label.
 - D69 (Lex, 2026-11-22) **Owner edits a received booking on the guest's request** (BK-21, Phase 6): guest count, guest name and contact, a note; dates through BK-13. The price is quoted again, any difference shows as a line, the guest is told in the conversation and the change is in the booking history. **Rental applications can be added or edited by hand** (RN-12, Phase 15).
 - D70 **Phase 5 split and review loop** (2026-11-22): eight Antigravity prompts, P5-0 to P5-7 (docs/prompts/P5-guide.md). Antigravity opens each PR and waits for green CI; Claude reviews the code and the Vercel preview (390 px and 1280 px, light and dark) before merging. The property switcher, saved replies and uploading a profile photo move to Phase 8.
+- D72 (Lex, 2026-11-22) **Add unit asks one question**: on Units, "+ Add" opens the dialog directly (no dropdown); `?add=unit` and `?add=beds` still preselect the answer. Inside the dialog, one "What do guests get?" `RadioCards` group (Whole place, Private room, Bed space) replaces the segmented control plus two-card type picker, keeping typed values when switching answers.
 
 ## Open (not phase 1)
 
