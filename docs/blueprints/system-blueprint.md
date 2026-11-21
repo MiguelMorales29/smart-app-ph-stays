@@ -567,7 +567,7 @@ Every outgoing call goes through a queue table and carries a stable ID, so a ret
 | Development | Supabase free project | Building and demos; demo properties only |
 | Live | Separate Supabase Pro project | Real owners; created before the first paying owner |
 
-Proposed addresses, all on the domain already owned: `stay.webserbisyo.com/<property>` for the property app, `host.webserbisyo.com` for the dashboard, `api-stay.webserbisyo.com` for the API.
+Superseded by D71: the property app is `smartapp.webserbisyo.com/<property>`; the dashboard and API addresses are chosen in Phase 14. Original proposal, all on the domain already owned: `stay.webserbisyo.com/<property>` for the property app, `host.webserbisyo.com` for the dashboard, `api-stay.webserbisyo.com` for the API.
 
 ### 8.5 Growth path
 
