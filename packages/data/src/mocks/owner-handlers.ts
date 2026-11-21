@@ -7,6 +7,7 @@ import {
   checkSlugFormat,
   err,
   formatWallTime12h,
+  getPageChangesList,
   isValidBankAccount,
   isValidWalletMobile,
   manilaToday,
@@ -30,6 +31,7 @@ import {
   type OwnerUnitListItemView,
   type PaymentAccountsRow,
   type PropertiesRow,
+  type PropertyPageDraft,
   type RateOverridesRow,
   type Result,
   type SetupChecklistItemView,
@@ -43,7 +45,12 @@ import type { z } from 'zod';
 
 import { mediaUrl, type MediaConfig } from '../media.js';
 import type { ParsedDataSourceHandlers, Session } from '../source.js';
-import { addHoursIso, nowIsoFromClock, type DemoIdAllocator } from './helpers.js';
+import {
+  addHoursIso,
+  buildPropertyView,
+  nowIsoFromClock,
+  type DemoIdAllocator,
+} from './helpers.js';
 
 export const DEMO_OWNER_PASSWORD = 'demo-owner-pass';
 export const DEMO_PASSWORD_CODE = '123456';
@@ -375,7 +382,61 @@ type P4OwnerOperationName =
   | 'updateProfile'
   | 'changePassword'
   | 'signOutEverywhere'
-  | 'requestAccountDeletion';
+  | 'requestAccountDeletion'
+  | 'getPageEditor'
+  | 'savePageDraft'
+  | 'discardPageDraft'
+  | 'getPageChanges';
+
+function buildDefaultPropertyPageDraft(
+  property: {
+    readonly name: string;
+    readonly tagline: string | null;
+    readonly description: string | null;
+    readonly logo_file_id: string | null;
+  },
+  hostDisplayName: string,
+): PropertyPageDraft {
+  return {
+    logo: property.logo_file_id,
+    tagline: property.tagline,
+    about: property.description ? property.description.slice(0, 600) : null,
+    look: {
+      brandColor: '#2563EB',
+      pageColor: '#F8FAFC',
+      cardColor: '#FFFFFF',
+      accentColor: '#10B981',
+      logoShape: 'rounded',
+      fontPair: 'malinaw',
+      banners: [],
+      bannerSeconds: 5,
+      announcement: null,
+      sections: {},
+    },
+    install: {
+      homeScreenName: property.name.slice(0, 12),
+      splashColor: '#F8FAFC',
+      splashAnimation: true,
+      showName: true,
+      showTagline: false,
+    },
+    hero: { cover: null, photos: [] },
+    host: {
+      displayName: hostDisplayName,
+      photoFile: null,
+      languages: ['English', 'Tagalog'],
+    },
+    units: [],
+    highlights: [],
+    faq: [],
+    seo: {
+      title: property.name.slice(0, 60),
+      description: property.tagline ? property.tagline.slice(0, 155) : null,
+      sharePictureFile: null,
+      hideFromSearch: true,
+    },
+  };
+}
 
 export type P4OwnerHandlers = Pick<ParsedDataSourceHandlers, P4OwnerOperationName>;
 
@@ -2519,6 +2580,174 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           return ok(cleared);
         },
       );
+    },
+
+    async getPageEditor(input, session) {
+      const guard = await beforeCall('getPageEditor', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      const property =
+        input.propertyId !== undefined && input.propertyId !== null
+          ? world.properties.find(
+              (p) =>
+                p.id === input.propertyId &&
+                p.account_id === acctCheck.data &&
+                p.archived_at === null,
+            )
+          : world.properties.find((p) => p.account_id === acctCheck.data && p.archived_at === null);
+      if (!property) return err(appError('not_found'));
+
+      const page = world.property_pages.find(
+        (pg) => pg.property_id === property.id && pg.account_id === acctCheck.data,
+      );
+      if (!page) return err(appError('not_found'));
+
+      const previewResult = buildPropertyView(world, property.slug, mediaConfig, {
+        clock,
+        useDraft: page.draft,
+        propertyId: property.id,
+      });
+      if (!previewResult.ok) return previewResult;
+
+      return ok({
+        property_id: property.id,
+        draft: page.draft,
+        published: page.published,
+        draft_rev: page.draft_rev,
+        version: page.version,
+        draft_updated_at: page.draft_updated_at,
+        published_at: page.published_at,
+        preview: previewResult.data,
+      });
+    },
+
+    async savePageDraft(input, session) {
+      const guard = await beforeCall('savePageDraft', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'savePageDraft',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.savePageDraft.output,
+        async () => {
+          const pageIdx = world.property_pages.findIndex(
+            (pg) => pg.property_id === input.propertyId && pg.account_id === acctCheck.data,
+          );
+          if (pageIdx === -1) return err(appError('not_found'));
+          const page = world.property_pages[pageIdx];
+          if (!page) return err(appError('not_found'));
+
+          // Imitates optimistic concurrency check `where draft_rev = $expected_draft_rev` (P5-1).
+          if (page.draft_rev !== input.expectedDraftRev) {
+            return err(
+              reasonError('invalid_move', 'changed_elsewhere', {
+                draft: page.draft,
+                draft_rev: page.draft_rev,
+                draft_updated_at: page.draft_updated_at,
+              }),
+            );
+          }
+
+          const nowIso = nowIsoFromClock(clock);
+          const nextRev = page.draft_rev + 1;
+          world.property_pages[pageIdx] = {
+            ...page,
+            draft: structuredClone(input.draft),
+            draft_rev: nextRev,
+            draft_updated_at: nowIso,
+            updated_at: nowIso,
+          };
+
+          return ok({
+            draft_rev: nextRev,
+            draft_updated_at: nowIso,
+          });
+        },
+      );
+    },
+
+    async discardPageDraft(input, session) {
+      const guard = await beforeCall('discardPageDraft', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'discardPageDraft',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.discardPageDraft.output,
+        async () => {
+          const pageIdx = world.property_pages.findIndex(
+            (pg) => pg.property_id === input.propertyId && pg.account_id === acctCheck.data,
+          );
+          if (pageIdx === -1) return err(appError('not_found'));
+          const page = world.property_pages[pageIdx];
+          if (!page) return err(appError('not_found'));
+
+          const property = world.properties.find(
+            (p) => p.id === input.propertyId && p.account_id === acctCheck.data,
+          );
+          if (!property) return err(appError('not_found'));
+
+          const ownerProfile =
+            session.role === 'owner'
+              ? world.profiles.find((p) => p.id === session.profileId)
+              : undefined;
+          const nextDraft =
+            page.published !== null
+              ? structuredClone(page.published)
+              : buildDefaultPropertyPageDraft(property, ownerProfile?.full_name ?? property.name);
+
+          const nowIso = nowIsoFromClock(clock);
+          const nextRev = page.draft_rev + 1;
+          world.property_pages[pageIdx] = {
+            ...page,
+            draft: nextDraft,
+            draft_rev: nextRev,
+            draft_updated_at: nowIso,
+            updated_at: nowIso,
+          };
+
+          return ok({
+            draft: nextDraft,
+            draft_rev: nextRev,
+            draft_updated_at: nowIso,
+          });
+        },
+      );
+    },
+
+    async getPageChanges(input, session) {
+      const guard = await beforeCall('getPageChanges', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      const property =
+        input.propertyId !== undefined && input.propertyId !== null
+          ? world.properties.find(
+              (p) =>
+                p.id === input.propertyId &&
+                p.account_id === acctCheck.data &&
+                p.archived_at === null,
+            )
+          : world.properties.find((p) => p.account_id === acctCheck.data && p.archived_at === null);
+      if (!property) return err(appError('not_found'));
+
+      const page = world.property_pages.find(
+        (pg) => pg.property_id === property.id && pg.account_id === acctCheck.data,
+      );
+      if (!page) return err(appError('not_found'));
+
+      return ok(getPageChangesList(page.published, page.draft));
     },
   };
 }

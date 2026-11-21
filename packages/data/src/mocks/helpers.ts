@@ -1,13 +1,17 @@
 import {
+  CANCELLATION_PRESET_COPY,
   DEMO_IDS,
   addDays,
   appError,
   centavos,
+  eachNight,
   err,
   makeDemoUuid,
   manilaToday,
   nightsBetween,
   quoteStay,
+  systemClock,
+  weekdayOf,
   type AdminOwnerItemView,
   type AppError,
   type BookingBoardItemView,
@@ -15,13 +19,19 @@ import {
   type BookingsRow,
   type CalendarDate,
   type CalendarTimelineView,
+  type Centavos,
   type Clock,
   type DemoWorld,
   type ErrorCode,
   type InboxThreadItemView,
   type PaymentReviewItemView,
   type PaymentsRow,
+  type PropertiesRow,
+  type PropertyPageDraft,
   type PropertyView,
+  type PublicPagePhoto,
+  type PublicUnitCardView,
+  type PublicUnitView,
   type Result,
   type SubscriptionDerivedState,
   type ThreadView,
@@ -459,24 +469,196 @@ export async function resolveThreadAccess(params: {
   return err(appError('not_allowed'));
 }
 
+/**
+ * Works out the lowest nightly price for a short-stay unit over the next 60 nights
+ * starting at `today` (Manila calendar date), considering dated overrides, weekday rates,
+ * and the unit's base nightly rate (Feature blueprint §7a E9).
+ */
+export function computeLowestNightlyPriceNext60Nights(
+  world: DemoWorld,
+  unit: UnitsRow,
+  stayTerms: UnitStayTermsRow | null,
+  today: CalendarDate,
+): Centavos | null {
+  if (unit.mode !== 'short_stay' || stayTerms === null) {
+    return null;
+  }
+
+  const weekdayRates = world.weekday_rates.filter((r) => r.unit_id === unit.id);
+  const rateOverrides = world.rate_overrides.filter((r) => r.unit_id === unit.id);
+  const windowEnd = addDays(today, 60);
+  const nights = eachNight(today, windowEnd);
+
+  let lowest: Centavos = stayTerms.base_nightly_centavos;
+  for (let i = 0; i < nights.length; i += 1) {
+    const nightDate = nights[i];
+    if (!nightDate) continue;
+
+    const matchedOverride = rateOverrides.find(
+      (override) =>
+        nightsBetween(override.during.start, nightDate) >= 0 &&
+        nightsBetween(nightDate, override.during.end) > 0,
+    );
+
+    let nightRate: Centavos;
+    if (matchedOverride !== undefined) {
+      nightRate = matchedOverride.nightly_centavos;
+    } else {
+      const weekday = weekdayOf(nightDate);
+      const isoWeekday = weekday === 0 ? 7 : weekday;
+      const matchedWeekday = weekdayRates.find((r) => r.iso_weekday === isoWeekday);
+      nightRate =
+        matchedWeekday !== undefined
+          ? matchedWeekday.nightly_centavos
+          : stayTerms.base_nightly_centavos;
+    }
+
+    if (i === 0 || nightRate < lowest) {
+      lowest = nightRate;
+    }
+  }
+
+  return lowest;
+}
+
+function workOutHostReplyTime(world: DemoWorld, accountId: string): string {
+  const accountThreadIds = new Set(
+    world.threads.filter((t) => t.account_id === accountId).map((t) => t.id),
+  );
+  if (accountThreadIds.size === 0) {
+    return 'Usually replies within an hour';
+  }
+
+  const replyDiffsMinutes: number[] = [];
+  for (const threadId of accountThreadIds) {
+    const msgs = world.messages
+      .filter((m) => m.thread_id === threadId)
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    let firstCustomerMs: number | null = null;
+    for (const msg of msgs) {
+      if (msg.sender_kind === 'customer' && firstCustomerMs === null) {
+        firstCustomerMs = Date.parse(msg.created_at);
+      } else if (msg.sender_kind === 'owner' && firstCustomerMs !== null) {
+        const ownerMs = Date.parse(msg.created_at);
+        if (ownerMs >= firstCustomerMs) {
+          replyDiffsMinutes.push((ownerMs - firstCustomerMs) / 60_000);
+        }
+        break;
+      }
+    }
+  }
+
+  if (replyDiffsMinutes.length === 0) {
+    return 'Usually replies within an hour';
+  }
+
+  const avgMinutes = replyDiffsMinutes.reduce((sum, m) => sum + m, 0) / replyDiffsMinutes.length;
+  if (avgMinutes <= 90) {
+    return 'Usually replies within an hour';
+  }
+  if (avgMinutes <= 360) {
+    return 'Usually replies within a few hours';
+  }
+  return 'Usually replies within a day';
+}
+
+function workOutHostingSinceYear(
+  property: PropertiesRow,
+  accountCreatedAt: string,
+  pagePublishedAt: string | null,
+  clock: Clock,
+): number {
+  const sourceIso = property.published_at ?? pagePublishedAt ?? accountCreatedAt;
+  const parsedYear = Number(sourceIso.slice(0, 4));
+  if (Number.isInteger(parsedYear) && parsedYear >= 2000 && parsedYear <= 2100) {
+    return parsedYear;
+  }
+  return Number(manilaToday(clock).slice(0, 4));
+}
+
+function hasRecentPaymentAccountChanges(
+  world: DemoWorld,
+  accountId: string,
+  clock: Clock,
+): boolean {
+  // Imitates DB rule (PA-10): a payment account added or edited in the last 7 days after initial account setup.
+  const account = world.accounts.find((a) => a.id === accountId);
+  const accountCreatedMs = account ? Date.parse(account.created_at) : 0;
+  const nowMs = clock.now().getTime();
+  const sevenDaysMs = 7 * 86_400_000;
+
+  return world.payment_accounts.some((pa) => {
+    if (pa.account_id !== accountId || !pa.is_active) return false;
+    const updatedMs = Date.parse(pa.updated_at);
+    const createdMs = Date.parse(pa.created_at);
+    const editedAfterCreate = updatedMs !== createdMs;
+    const addedAfterAccountSetup = createdMs > accountCreatedMs + 60_000;
+    return updatedMs >= nowMs - sevenDaysMs && (editedAfterCreate || addedAfterAccountSetup);
+  });
+}
+
+export interface BuildPropertyViewOptions {
+  readonly clock?: Clock;
+  /** When set, builds the view from `draft` even if the property/page is unpublished (used by `getPageEditor` and `/[slug]/preview`). */
+  readonly useDraft?: PropertyPageDraft;
+  readonly propertyId?: string;
+}
+
 export function buildPropertyView(
   world: DemoWorld,
   slug: string,
   mediaConfig: MediaConfig,
+  options: BuildPropertyViewOptions = {},
 ): Result<PropertyView> {
-  const property = world.properties.find((p) => p.slug === slug && p.status === 'published');
+  const clock = options.clock ?? systemClock;
+  const isDraftPreview = options.useDraft !== undefined;
+
+  const property =
+    options.propertyId !== undefined
+      ? world.properties.find((p) => p.id === options.propertyId && p.archived_at === null)
+      : world.properties.find(
+          (p) =>
+            (p.slug === slug || p.old_slugs.includes(slug)) &&
+            p.archived_at === null &&
+            (isDraftPreview || p.status === 'published'),
+        );
   if (!property) {
     return err(appError('not_found'));
   }
 
   const page = world.property_pages.find((pg) => pg.property_id === property.id);
   const account = world.accounts.find((a) => a.id === property.account_id);
-  if (!page || page.published === null || !account) {
+  const activePageContent = options.useDraft ?? page?.published ?? null;
+  if (!page || activePageContent === null || !account) {
     return err(appError('not_found'));
   }
   const subscription = world.subscriptions.find((s) => s.account_id === account.id);
+  const isPaused = !isDraftPreview && subscription?.status === 'paused';
 
   const filesById = new Map(world.files.map((f) => [f.id, f]));
+  const listingPhotoAltByFileId = new Map(
+    world.listing_photos
+      .filter((lp) => lp.property_id === property.id)
+      .map((lp) => [lp.file_id, lp.alt_text]),
+  );
+
+  const resolveFileToPagePhoto = (
+    fileId: string | null,
+    fallbackAlt: string,
+  ): PublicPagePhoto | null => {
+    if (fileId === null) return null;
+    const file = filesById.get(fileId);
+    const url = file
+      ? mediaUrl(file, mediaConfig)
+      : mediaUrl({ bucket: 'listing-media', path: fileId }, mediaConfig);
+    const alt = listingPhotoAltByFileId.get(fileId) ?? fallbackAlt;
+    return {
+      file_id: fileId,
+      url,
+      alt: alt.slice(0, 200),
+    };
+  };
+
   const mapPhoto = (p: DemoWorld['listing_photos'][number]) => {
     const file = filesById.get(p.file_id);
     const url = file
@@ -492,13 +674,19 @@ export function buildPropertyView(
     };
   };
 
-  const listedUnits = world.units
-    .filter((u) => u.property_id === property.id && u.status === 'listed')
-    .sort((a, b) => a.sort_order - b.sort_order);
+  const today = manilaToday(clock);
+  const listedUnits = isPaused
+    ? []
+    : world.units
+        .filter(
+          (u) => u.property_id === property.id && u.archived_at === null && u.status === 'listed',
+        )
+        .sort((a, b) => a.sort_order - b.sort_order);
 
   const usedAmenityIds = new Set<string>();
-  const unitCards = listedUnits.map((unit) => {
+  const unitCards: PublicUnitCardView[] = listedUnits.map((unit) => {
     const stayTerms = world.unit_stay_terms.find((t) => t.unit_id === unit.id) ?? null;
+    const leaseTerms = world.unit_lease_terms.find((t) => t.unit_id === unit.id) ?? null;
     const unitPhotos = world.listing_photos
       .filter((lp) => lp.property_id === property.id && lp.unit_id === unit.id)
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -509,6 +697,7 @@ export function buildPropertyView(
         usedAmenityIds.add(ua.amenity_id);
         return ua.amenity_id;
       });
+    const priceFrom = computeLowestNightlyPriceNext60Nights(world, unit, stayTerms, today);
 
     return {
       id: unit.id,
@@ -517,6 +706,7 @@ export function buildPropertyView(
       name: unit.name,
       mode: unit.mode,
       unit_type: unit.unit_type,
+      group_label: unit.group_label,
       description: unit.description,
       max_guests: unit.max_guests,
       bedrooms: unit.bedrooms,
@@ -538,18 +728,259 @@ export function buildPropertyView(
             booking_window_days: stayTerms.booking_window_days,
           }
         : null,
+      lease_terms: leaseTerms
+        ? {
+            monthly_rent_centavos: leaseTerms.monthly_rent_centavos,
+            min_lease_months: leaseTerms.min_lease_months,
+            advance_months: leaseTerms.advance_months,
+            deposit_months: leaseTerms.deposit_months,
+            reservation_fee_centavos: leaseTerms.reservation_fee_centavos,
+            available_from: leaseTerms.available_from,
+            inclusions: leaseTerms.inclusions,
+          }
+        : null,
+      price_from: priceFrom,
       photos: unitPhotos,
       amenity_ids: amenityIds,
     };
   });
 
-  const propertyPhotos = world.listing_photos
-    .filter((lp) => lp.property_id === property.id && lp.unit_id === null)
+  // Also include any highlight amenity IDs chosen in the page draft/published
+  for (const hId of activePageContent.highlights) {
+    usedAmenityIds.add(hId);
+  }
+
+  const propertyPhotos = isPaused
+    ? []
+    : world.listing_photos
+        .filter((lp) => lp.property_id === property.id && lp.unit_id === null)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map(mapPhoto);
+
+  const amenities = isPaused
+    ? []
+    : world.amenities
+        .filter((a) => a.is_active && usedAmenityIds.has(a.id))
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((a) => ({
+          id: a.id,
+          code: a.code,
+          label: a.label,
+          icon: a.icon,
+          grp: a.grp,
+          sort_order: a.sort_order,
+        }));
+
+  const houseRules = isPaused
+    ? []
+    : world.house_rules
+        .filter((hr) => hr.property_id === property.id)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((hr) => ({
+          id: hr.id,
+          body: hr.body,
+          sort_order: hr.sort_order,
+        }));
+
+  const propertyBookingIds = new Set(
+    world.bookings.filter((b) => b.property_id === property.id).map((b) => b.id),
+  );
+  const reviews = isPaused
+    ? []
+    : world.stay_reviews
+        .filter((r) => propertyBookingIds.has(r.booking_id))
+        .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const averageStars =
+    reviews.length === 0
+      ? null
+      : Math.round((reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length) * 100) / 100;
+
+  const hostPhoto = isPaused
+    ? null
+    : resolveFileToPagePhoto(
+        activePageContent.host.photoFile,
+        `${activePageContent.host.displayName} photo`,
+      );
+  const logoPhoto = isPaused
+    ? null
+    : resolveFileToPagePhoto(
+        activePageContent.logo ?? property.logo_file_id,
+        `${property.name} logo`,
+      );
+  const heroCoverPhoto = isPaused
+    ? null
+    : resolveFileToPagePhoto(activePageContent.hero.cover, `${property.name} cover photo`);
+  const heroPhotos = isPaused
+    ? []
+    : activePageContent.hero.photos
+        .map((fileId, idx) => resolveFileToPagePhoto(fileId, `${property.name} photo ${idx + 1}`))
+        .filter((item): item is PublicPagePhoto => item !== null);
+  const bannerPhotos = isPaused
+    ? []
+    : activePageContent.look.banners
+        .map((b) => resolveFileToPagePhoto(b.photo, b.alt))
+        .filter((item): item is PublicPagePhoto => item !== null);
+  const sharePicture = isPaused
+    ? null
+    : resolveFileToPagePhoto(
+        activePageContent.seo.sharePictureFile ?? activePageContent.hero.cover,
+        `${property.name} share preview`,
+      );
+
+  const hostingSince = workOutHostingSinceYear(
+    property,
+    account.created_at,
+    page.published_at,
+    clock,
+  );
+  const replyTime = workOutHostReplyTime(world, account.id);
+  const paymentAccountsChangedRecently = hasRecentPaymentAccountChanges(world, account.id, clock);
+
+  return {
+    ok: true,
+    data: {
+      property: {
+        id: property.id,
+        account_id: property.account_id,
+        slug: property.slug,
+        name: property.name,
+        tagline: activePageContent.tagline ?? property.tagline,
+        description: activePageContent.about ?? property.description,
+        address_line: property.address_line,
+        barangay: property.barangay,
+        city: property.city,
+        province: property.province,
+        region: property.region,
+        country: property.country,
+        latitude: property.latitude,
+        longitude: property.longitude,
+        map_url: property.map_url,
+        checkin_time: property.checkin_time,
+        checkout_time: property.checkout_time,
+        cancellation_preset: property.cancellation_preset,
+        cancellation_note: property.cancellation_note,
+        privacy_contact: property.privacy_contact,
+        logo_file_id: activePageContent.logo ?? property.logo_file_id,
+        rebook_min_days: property.rebook_min_days,
+        rebook_within_months: property.rebook_within_months,
+        guest_ids_required: property.guest_ids_required,
+        guest_list_due_hours: property.guest_list_due_hours,
+        contact: property.contact,
+        show_exact_location: property.show_exact_location,
+        reply_hours: property.reply_hours,
+        viewing_hours: property.viewing_hours,
+      },
+      page: {
+        version: page.version,
+        published: activePageContent,
+      },
+      account: {
+        is_demo: account.is_demo,
+        is_verified: account.verified_at !== null,
+        is_paused: subscription?.status === 'paused',
+      },
+      host: {
+        display_name: activePageContent.host.displayName,
+        photo: hostPhoto,
+        languages: activePageContent.host.languages,
+        hosting_since: hostingSince,
+        reply_time: replyTime,
+      },
+      trust: {
+        is_verified: account.verified_at !== null,
+        payment_accounts_changed_recently: paymentAccountsChangedRecently,
+      },
+      page_media: {
+        logo: logoPhoto,
+        hero_cover: heroCoverPhoto,
+        hero_photos: heroPhotos,
+        banners: bannerPhotos,
+        host_photo: hostPhoto,
+        share_picture: sharePicture,
+      },
+      units: unitCards,
+      photos: propertyPhotos,
+      amenities,
+      house_rules: houseRules,
+      reviews: {
+        average_stars: averageStars,
+        review_count: reviews.length,
+        recent_reviews: reviews.slice(0, 10).map((r) => ({
+          id: r.id,
+          stars: r.stars,
+          note: r.note_hidden ? null : r.note,
+          created_at: r.created_at,
+        })),
+      },
+    },
+  };
+}
+
+export function buildPublicUnitView(
+  world: DemoWorld,
+  slug: string,
+  unitSlug: string,
+  mediaConfig: MediaConfig,
+  clock: Clock = systemClock,
+): Result<PublicUnitView> {
+  // Imitates DB lookup for a public unit page: unpublished properties, archived/hidden/draft units return not_found.
+  const property = world.properties.find(
+    (p) =>
+      (p.slug === slug || p.old_slugs.includes(slug)) &&
+      p.status === 'published' &&
+      p.archived_at === null,
+  );
+  if (!property) {
+    return err(appError('not_found'));
+  }
+
+  const page = world.property_pages.find((pg) => pg.property_id === property.id);
+  const account = world.accounts.find((a) => a.id === property.account_id);
+  if (!page || page.published === null || !account) {
+    return err(appError('not_found'));
+  }
+
+  const unit = world.units.find(
+    (u) =>
+      u.property_id === property.id &&
+      u.slug === unitSlug &&
+      u.archived_at === null &&
+      u.status === 'listed',
+  );
+  if (!unit) {
+    return err(appError('not_found'));
+  }
+
+  const subscription = world.subscriptions.find((s) => s.account_id === account.id);
+  const filesById = new Map(world.files.map((f) => [f.id, f]));
+  const mapPhoto = (p: DemoWorld['listing_photos'][number]) => {
+    const file = filesById.get(p.file_id);
+    const url = file
+      ? mediaUrl(file, mediaConfig)
+      : mediaUrl({ bucket: 'listing-media', path: p.file_id }, mediaConfig);
+    return {
+      id: p.id,
+      unit_id: p.unit_id,
+      file_id: p.file_id,
+      alt_text: p.alt_text,
+      sort_order: p.sort_order,
+      url,
+    };
+  };
+
+  const stayTerms = world.unit_stay_terms.find((t) => t.unit_id === unit.id) ?? null;
+  const leaseTerms = world.unit_lease_terms.find((t) => t.unit_id === unit.id) ?? null;
+  const unitPhotos = world.listing_photos
+    .filter((lp) => lp.property_id === property.id && lp.unit_id === unit.id)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map(mapPhoto);
-
+  const unitAmenityIds = world.unit_amenities
+    .filter((ua) => ua.unit_id === unit.id)
+    .map((ua) => ua.amenity_id);
+  const unitAmenitySet = new Set(unitAmenityIds);
   const amenities = world.amenities
-    .filter((a) => a.is_active && usedAmenityIds.has(a.id))
+    .filter((a) => a.is_active && unitAmenitySet.has(a.id))
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((a) => ({
       id: a.id,
@@ -569,74 +1000,98 @@ export function buildPropertyView(
       sort_order: hr.sort_order,
     }));
 
-  const propertyBookingIds = new Set(
-    world.bookings.filter((b) => b.property_id === property.id).map((b) => b.id),
-  );
-  const reviews = world.stay_reviews
-    .filter((r) => propertyBookingIds.has(r.booking_id))
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const today = manilaToday(clock);
+  const priceFrom = computeLowestNightlyPriceNext60Nights(world, unit, stayTerms, today);
 
-  const averageStars =
-    reviews.length === 0
-      ? null
-      : Math.round((reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length) * 100) / 100;
+  const stayTermsView = stayTerms
+    ? {
+        base_nightly_centavos: stayTerms.base_nightly_centavos,
+        base_guests: stayTerms.base_guests,
+        min_nights: stayTerms.min_nights,
+        max_nights: stayTerms.max_nights,
+        weekly_discount_percent: stayTerms.weekly_discount_percent,
+        monthly_discount_percent: stayTerms.monthly_discount_percent,
+        down_payment_percent: stayTerms.down_payment_percent,
+        hold_minutes: stayTerms.hold_minutes,
+        advance_notice_days: stayTerms.advance_notice_days,
+        booking_window_days: stayTerms.booking_window_days,
+      }
+    : null;
+
+  const leaseTermsView = leaseTerms
+    ? {
+        monthly_rent_centavos: leaseTerms.monthly_rent_centavos,
+        min_lease_months: leaseTerms.min_lease_months,
+        advance_months: leaseTerms.advance_months,
+        deposit_months: leaseTerms.deposit_months,
+        reservation_fee_centavos: leaseTerms.reservation_fee_centavos,
+        available_from: leaseTerms.available_from,
+        inclusions: leaseTerms.inclusions,
+      }
+    : null;
+
+  const unitCard: PublicUnitCardView = {
+    id: unit.id,
+    property_id: unit.property_id,
+    slug: unit.slug,
+    name: unit.name,
+    mode: unit.mode,
+    unit_type: unit.unit_type,
+    group_label: unit.group_label,
+    description: unit.description,
+    max_guests: unit.max_guests,
+    bedrooms: unit.bedrooms,
+    beds: unit.beds,
+    bathrooms: unit.bathrooms,
+    floor_area_sqm: unit.floor_area_sqm,
+    sort_order: unit.sort_order,
+    stay_terms: stayTermsView,
+    lease_terms: leaseTermsView,
+    price_from: priceFrom,
+    photos: unitPhotos,
+    amenity_ids: unitAmenityIds,
+  };
 
   return {
     ok: true,
     data: {
+      unit: unitCard,
+      price_from: priceFrom,
+      photos: unitPhotos,
+      amenities,
+      house_rules: houseRules,
+      stay_terms: stayTermsView,
+      lease_terms: leaseTermsView,
       property: {
         id: property.id,
         account_id: property.account_id,
         slug: property.slug,
         name: property.name,
-        tagline: property.tagline,
-        description: property.description,
-        address_line: property.address_line,
-        barangay: property.barangay,
         city: property.city,
         province: property.province,
-        region: property.region,
-        country: property.country,
-        latitude: property.latitude,
-        longitude: property.longitude,
-        map_url: property.map_url,
         checkin_time: property.checkin_time,
         checkout_time: property.checkout_time,
         cancellation_preset: property.cancellation_preset,
         cancellation_note: property.cancellation_note,
-        privacy_contact: property.privacy_contact,
-        logo_file_id: property.logo_file_id,
         rebook_min_days: property.rebook_min_days,
         rebook_within_months: property.rebook_within_months,
         guest_ids_required: property.guest_ids_required,
         guest_list_due_hours: property.guest_list_due_hours,
         contact: property.contact,
-        show_exact_location: property.show_exact_location,
-        reply_hours: property.reply_hours,
-        viewing_hours: property.viewing_hours,
-      },
-      page: {
-        version: page.version,
-        published: page.published,
+        cancellation_copy: CANCELLATION_PRESET_COPY[property.cancellation_preset],
+        min_nights: stayTerms?.min_nights ?? null,
+        max_nights: stayTerms?.max_nights ?? null,
       },
       account: {
         is_demo: account.is_demo,
         is_verified: account.verified_at !== null,
         is_paused: subscription?.status === 'paused',
       },
-      units: unitCards,
-      photos: propertyPhotos,
-      amenities,
-      house_rules: houseRules,
-      reviews: {
-        average_stars: averageStars,
-        review_count: reviews.length,
-        recent_reviews: reviews.slice(0, 10).map((r) => ({
-          id: r.id,
-          stars: r.stars,
-          note: r.note_hidden ? null : r.note,
-          created_at: r.created_at,
-        })),
+      page: {
+        version: page.version,
+        published: {
+          look: page.published.look,
+        },
       },
     },
   };

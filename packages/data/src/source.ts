@@ -108,6 +108,11 @@ export function createValidatedDataSource(
       operations.getProperty.output,
       handlers.getProperty,
     ),
+    getPublicUnit: wrapOp(
+      operations.getPublicUnit.input,
+      operations.getPublicUnit.output,
+      handlers.getPublicUnit,
+    ),
     getUnitCalendar: wrapOp(
       operations.getUnitCalendar.input,
       operations.getUnitCalendar.output,
@@ -466,6 +471,26 @@ export function createValidatedDataSource(
       operations.requestAccountDeletion.input,
       operations.requestAccountDeletion.output,
       handlers.requestAccountDeletion,
+    ),
+    getPageEditor: wrapOp(
+      operations.getPageEditor.input,
+      operations.getPageEditor.output,
+      handlers.getPageEditor,
+    ),
+    savePageDraft: wrapOp(
+      operations.savePageDraft.input,
+      operations.savePageDraft.output,
+      handlers.savePageDraft,
+    ),
+    discardPageDraft: wrapOp(
+      operations.discardPageDraft.input,
+      operations.discardPageDraft.output,
+      handlers.discardPageDraft,
+    ),
+    getPageChanges: wrapOp(
+      operations.getPageChanges.input,
+      operations.getPageChanges.output,
+      handlers.getPageChanges,
     ),
   } satisfies DataSource;
 }

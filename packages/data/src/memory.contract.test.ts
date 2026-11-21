@@ -213,4 +213,44 @@ describe('getDataSource, mediaUrl, and adapter options', () => {
       expect(slugChanged.data.oldSlugs).toContain('ulap-suites');
     }
   });
+
+  it('seeds 8 demo units on Ulap Suites in the marketing pack (6 listed, 1 hidden, 1 draft; D73, P5-1)', async () => {
+    const source = await getDataSource({
+      adapter: 'memory',
+      pack: 'marketing',
+      clock: { now: () => new Date(GOLDEN_CLOCK_ISO) },
+    });
+
+    const ownerUnits = await source.listOwnerUnits(
+      {
+        accountId: 'dec0de10-0001-4000-8000-000000000001',
+        propertyId: null,
+        includeArchived: false,
+      },
+      {
+        role: 'owner',
+        accountId: 'dec0de10-0001-4000-8000-000000000001',
+        profileId: 'dec0de01-0002-4000-8000-000000000001',
+      },
+    );
+    expect(ownerUnits.ok).toBe(true);
+    if (ownerUnits.ok) {
+      expect(ownerUnits.data).toHaveLength(8);
+      expect(ownerUnits.data.filter((u) => u.unit.status === 'listed')).toHaveLength(6);
+      expect(ownerUnits.data.filter((u) => u.unit.status === 'unlisted')).toHaveLength(1);
+      expect(ownerUnits.data.filter((u) => u.unit.status === 'draft')).toHaveLength(1);
+      expect(ownerUnits.data.some((u) => u.unit.unit_type === 'entire_place')).toBe(true);
+      expect(ownerUnits.data.some((u) => u.unit.unit_type === 'private_room')).toBe(true);
+    }
+
+    const publicProp = await source.getProperty({ slug: 'ulap-suites' }, { role: 'guest' });
+    expect(publicProp.ok).toBe(true);
+    if (publicProp.ok) {
+      expect(publicProp.data.units).toHaveLength(6);
+      for (const u of publicProp.data.units) {
+        expect(u.price_from).toBeGreaterThanOrEqual(220_000);
+        expect(u.price_from).toBeLessThanOrEqual(480_000);
+      }
+    }
+  });
 });

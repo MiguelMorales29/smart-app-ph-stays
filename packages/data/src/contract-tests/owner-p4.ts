@@ -33,6 +33,16 @@ const PAUSED_OWNER_SESSION: Session = {
   accountId: DEMO_IDS.people.extraAccounts.pausedAccount,
   profileId: DEMO_IDS.people.owners.paused,
 };
+const TITA_OWNER_SESSION: Session = {
+  role: 'owner',
+  accountId: DEMO_IDS.titaLornaDorm.account,
+  profileId: DEMO_IDS.people.owners.titaLornaDorm,
+};
+const ILAW_OWNER_SESSION: Session = {
+  role: 'owner',
+  accountId: DEMO_IDS.ilawResidences.account,
+  profileId: DEMO_IDS.people.owners.ilawResidences,
+};
 
 function assertOk<T>(result: Result<T>): T {
   if (!result.ok) {
@@ -1382,6 +1392,338 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
           ),
         ).code,
       ).toBe('not_allowed');
+    });
+
+    it('28. P5-1 public pages: getProperty (host, trust, page_media, price_from, lease_terms, paused contact-only) and getPublicUnit', async () => {
+      const { source } = await makeSource();
+      const nextKey = createKeyMaker('p5-public');
+
+      // 1. Short-stay property (Ulap Suites) includes host, trust, page_media, and price_from on unit cards
+      const ulapProp = assertOk(await source.getProperty({ slug: 'ulap-suites' }, GUEST_SESSION));
+      expect(ulapProp.host.display_name).toBe('Marco Villanueva');
+      expect(ulapProp.host.languages).toEqual(['Tagalog', 'English']);
+      expect(ulapProp.host.hosting_since).toBeGreaterThanOrEqual(2020);
+      expect(ulapProp.trust.is_verified).toBe(true);
+      expect(ulapProp.trust.payment_accounts_changed_recently).toBe(false);
+      expect(ulapProp.page_media.logo?.url).toContain('/demo-media/');
+      expect(ulapProp.page_media.hero_cover?.url).toContain('/demo-media/');
+      expect(ulapProp.page_media.hero_photos.length).toBeGreaterThanOrEqual(2);
+      expect(ulapProp.page_media.banners).toHaveLength(3);
+      expect(ulapProp.page?.published?.look.announcement?.text).toBeTruthy();
+      expect(ulapProp.page?.published?.faq).toHaveLength(6);
+      expect(ulapProp.units.every((u) => u.price_from !== null && u.price_from > 0)).toBe(true);
+
+      // 2. Long-term property (Tita Lorna's Dorm) has no banners/announcement/faq in published and has lease_terms on unit cards
+      const titaProp = assertOk(
+        await source.getProperty({ slug: 'tita-lorna-dorm' }, GUEST_SESSION),
+      );
+      expect(titaProp.page?.published?.look.banners).toEqual([]);
+      expect(titaProp.page?.published?.look.announcement).toBeNull();
+      expect(titaProp.page?.published?.faq).toEqual([]);
+      expect(titaProp.units.length).toBeGreaterThan(0);
+      expect(titaProp.units.every((u) => u.lease_terms !== null && u.price_from === null)).toBe(
+        true,
+      );
+
+      // 3. Paused account (Casa Soriano) returns contact details only (PA-09)
+      const pausedProp = assertOk(
+        await source.getProperty({ slug: 'casa-soriano-paused' }, GUEST_SESSION),
+      );
+      expect(pausedProp.account.is_paused).toBe(true);
+      expect(pausedProp.property.contact.phone).toBeTruthy();
+      expect(pausedProp.units).toEqual([]);
+      expect(pausedProp.photos).toEqual([]);
+      expect(pausedProp.amenities).toEqual([]);
+      expect(pausedProp.house_rules).toEqual([]);
+      expect(pausedProp.reviews).toEqual({
+        average_stars: null,
+        review_count: 0,
+        recent_reviews: [],
+      });
+
+      // 4. getPublicUnit for short-stay unit (studio-fog)
+      const studioUnit = assertOk(
+        await source.getPublicUnit({ slug: 'ulap-suites', unitSlug: 'studio-fog' }, GUEST_SESSION),
+      );
+      expect(studioUnit.unit.slug).toBe('studio-fog');
+      expect(studioUnit.photos.length).toBeGreaterThanOrEqual(3);
+      expect(studioUnit.photos[0]?.url).toContain('/demo-media/');
+      expect(studioUnit.amenities.length).toBeGreaterThan(0);
+      expect(studioUnit.house_rules.length).toBeGreaterThan(0);
+      expect(studioUnit.price_from).toBe(centavos(260_000));
+      expect(studioUnit.lease_terms).toBeNull();
+      expect(studioUnit.property.cancellation_copy.label.length).toBeGreaterThan(0);
+      expect(studioUnit.property.cancellation_copy.summary.length).toBeGreaterThan(0);
+      expect(studioUnit.property.checkin_time).toBe('14:00');
+      expect(studioUnit.property.checkout_time).toBe('12:00');
+      expect(studioUnit.stay_terms?.min_nights).toBe(2);
+      expect(studioUnit.page.published.look.brandColor).toBeTruthy();
+
+      // 5. getPublicUnit for long-term unit (room-2a-bed-1)
+      const bedUnit = assertOk(
+        await source.getPublicUnit(
+          { slug: 'tita-lorna-dorm', unitSlug: 'room-2a-bed-1' },
+          GUEST_SESSION,
+        ),
+      );
+      expect(bedUnit.unit.mode).toBe('long_term');
+      expect(bedUnit.price_from).toBeNull();
+      expect(bedUnit.lease_terms?.monthly_rent_centavos).toBeGreaterThan(0);
+      expect(bedUnit.lease_terms?.inclusions?.length).toBeGreaterThan(0);
+
+      // 6. getPublicUnit returns not_found for unknown unit, paused property, unpublished property, hidden/draft/archived unit
+      expect(
+        assertErr(
+          await source.getPublicUnit(
+            { slug: 'ulap-suites', unitSlug: 'no-such-unit' },
+            GUEST_SESSION,
+          ),
+        ).code,
+      ).toBe('not_found');
+      expect(
+        assertErr(
+          await source.getPublicUnit(
+            { slug: 'casa-soriano-paused', unitSlug: 'garden-casita' },
+            GUEST_SESSION,
+          ),
+        ).code,
+      ).toBe('not_found');
+      expect(
+        assertErr(
+          await source.getPublicUnit(
+            { slug: 'patio-verde-unpublished', unitSlug: 'patio-studio' },
+            GUEST_SESSION,
+          ),
+        ).code,
+      ).toBe('not_found');
+
+      // Hide studio-fog -> getPublicUnit returns not_found
+      assertOk(
+        await source.setUnitStatus(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            unitId: DEMO_IDS.ulapSuites.units.studioFog,
+            status: 'unlisted',
+            expectedUpdatedAt: null,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(
+        assertErr(
+          await source.getPublicUnit(
+            { slug: 'ulap-suites', unitSlug: 'studio-fog' },
+            GUEST_SESSION,
+          ),
+        ).code,
+      ).toBe('not_found');
+
+      // Editing a payment account flips trust.payment_accounts_changed_recently to true
+      assertOk(
+        await source.savePaymentAccount(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            paymentAccountId: DEMO_IDS.ulapSuites.paymentAccounts.gcash,
+            expectedUpdatedAt: null,
+            password: DEMO_OWNER_PASSWORD,
+            method: 'gcash',
+            bank: null,
+            bankName: null,
+            accountName: 'Marco Villanueva',
+            accountNumber: '0917 801 1101',
+            qrFileId: null,
+            instructions: 'Updated GCash note.',
+            isActive: true,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const ulapAfterPayEdit = assertOk(
+        await source.getProperty({ slug: 'ulap-suites' }, GUEST_SESSION),
+      );
+      expect(ulapAfterPayEdit.trust.payment_accounts_changed_recently).toBe(true);
+    });
+
+    it('29. P5-1 page editor: getPageEditor, getPageChanges, savePageDraft (with conflict), discardPageDraft, publishPropertyPage (with blockers)', async () => {
+      const { source } = await makeSource();
+      const nextKey = createKeyMaker('p5-editor');
+
+      // 1. All 5 demo properties with pages start with 1-3 draft differences (draft_rev = 2)
+      for (const [accountId, session] of [
+        [DEMO_IDS.ulapSuites.account, ULAP_OWNER_SESSION],
+        [DEMO_IDS.bahayBatis.account, BAHAY_OWNER_SESSION],
+        [DEMO_IDS.ilawResidences.account, ILAW_OWNER_SESSION],
+        [DEMO_IDS.titaLornaDorm.account, TITA_OWNER_SESSION],
+        [DEMO_IDS.people.extraAccounts.pausedAccount, PAUSED_OWNER_SESSION],
+      ] as const) {
+        const changes = assertOk(
+          await source.getPageChanges({ accountId, propertyId: null }, session),
+        );
+        expect(changes.length).toBeGreaterThanOrEqual(1);
+        expect(changes.length).toBeLessThanOrEqual(3);
+      }
+
+      // 2. getPageEditor returns draft, published, draft_rev, version, and preview built from draft
+      const editor = assertOk(
+        await source.getPageEditor(
+          { accountId: DEMO_IDS.ulapSuites.account, propertyId: null },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(editor.property_id).toBe(DEMO_IDS.ulapSuites.property);
+      expect(editor.draft_rev).toBe(2);
+      expect(editor.version).toBe(1);
+      expect(editor.preview.property.tagline).toBe(editor.draft.tagline);
+      expect(editor.draft.tagline).not.toBe(editor.published?.tagline);
+
+      // 3. savePageDraft increments draft_rev, is idempotent, and rejects stale expectedDraftRev with invalid_move + changed_elsewhere + newer draft in details
+      const editedDraft = {
+        ...editor.draft,
+        tagline: 'Fresh ridge mornings in Tagaytay.',
+      };
+      const saveKey = nextKey();
+      const saved1 = assertOk(
+        await source.savePageDraft(
+          {
+            idempotencyKey: saveKey,
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedDraftRev: 2,
+            draft: editedDraft,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(saved1.draft_rev).toBe(3);
+
+      // Idempotent replay
+      const replayedSave = assertOk(
+        await source.savePageDraft(
+          {
+            idempotencyKey: saveKey,
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedDraftRev: 2,
+            draft: editedDraft,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(replayedSave.draft_rev).toBe(3);
+
+      // Stale expectedDraftRev -> invalid_move + changed_elsewhere + { draft, draft_rev, draft_updated_at }
+      const conflictErr = assertErr(
+        await source.savePageDraft(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedDraftRev: 2,
+            draft: { ...editedDraft, tagline: 'Stale tab edit' },
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(conflictErr.code).toBe('invalid_move');
+      expect(conflictErr.message).toBe(
+        'Someone saved a newer version. Load the newer one or keep yours.',
+      );
+      const conflictDetails = readErrorDetails(conflictErr);
+      expect(conflictDetails.reason).toBe('changed_elsewhere');
+      expect(conflictDetails.draft_rev).toBe(3);
+      expect(conflictDetails.draft).toMatchObject({
+        tagline: 'Fresh ridge mornings in Tagaytay.',
+      });
+      expect(conflictDetails.draft_updated_at).toBe(saved1.draft_updated_at);
+
+      // 4. discardPageDraft copies published back to draft and increments draft_rev -> getPageChanges becomes []
+      const discarded = assertOk(
+        await source.discardPageDraft(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(discarded.draft_rev).toBe(4);
+      expect(discarded.draft).toEqual(editor.published);
+
+      const changesAfterDiscard = assertOk(
+        await source.getPageChanges(
+          { accountId: DEMO_IDS.ulapSuites.account, propertyId: DEMO_IDS.ulapSuites.property },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(changesAfterDiscard).toEqual([]);
+
+      // 5. publishPropertyPage blocker: no cover photo
+      const noCoverDraft = {
+        ...discarded.draft,
+        hero: { cover: null, photos: [] },
+      };
+      const savedNoCover = assertOk(
+        await source.savePageDraft(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedDraftRev: discarded.draft_rev,
+            draft: noCoverDraft,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const blockedNoCover = assertErr(
+        await source.publishPropertyPage(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedVersion: editor.version,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(blockedNoCover.code).toBe('invalid_move');
+
+      // 6. Restore cover photo + new tagline, then publishPropertyPage succeeds and increments version
+      assertOk(
+        await source.savePageDraft(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedDraftRev: savedNoCover.draft_rev,
+            draft: editedDraft,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const published = assertOk(
+        await source.publishPropertyPage(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            expectedVersion: editor.version,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(published.version).toBe(editor.version + 1);
+      expect(published.published?.tagline).toBe('Fresh ridge mornings in Tagaytay.');
+
+      const changesAfterPublish = assertOk(
+        await source.getPageChanges(
+          { accountId: DEMO_IDS.ulapSuites.account, propertyId: DEMO_IDS.ulapSuites.property },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(changesAfterPublish).toEqual([]);
     });
   });
 }
