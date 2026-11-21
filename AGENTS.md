@@ -6,7 +6,7 @@ This file is the rule book for every AI coder in this repository. It stays short
 
 ## Where we are
 
-**Phase 5 of 16: public pages and the page editor (next).** Phase 4 (owner start and listing, with the 4.5 UX pass) is wrapped up; start Phase 5 with the carry-over list in `docs/PROGRESS.md` (iPhone check, accordion jump, desktop + mobile research). Phases 1 to 3 are done: the demo world and data layer (Phase 2, `docs/demo-data.md`) and the look, components and app frames (Phase 3, `docs/ui-library.md`, `/kit` pages). No database and no real sign-in yet. The phases are in `docs/blueprints/build-roadmap.md`; progress is ticked in `docs/PROGRESS.md`.
+**Phase 5 of 16: public pages and the page editor (in progress).** Run the prompts in `docs/prompts/P5-guide.md` in order (P5-0 to P5-7); each PR waits for Claude's review of the code and the Vercel preview before it is merged (D70). Phase 4 (owner start and listing, with the 4.5 UX pass) is wrapped up. Phases 1 to 3 are done: the demo world and data layer (Phase 2, `docs/demo-data.md`) and the look, components and app frames (Phase 3, `docs/ui-library.md`, `/kit` pages). No database and no real sign-in yet. The phases are in `docs/blueprints/build-roadmap.md`; progress is ticked in `docs/PROGRESS.md`.
 
 Order of work (decided 2026-11-16): inside each wave, the screens are built first on mock data, then the real database and API for the same screens. A page on mock data is **UI approved**; it is **Done** only when it runs on the real database.
 
