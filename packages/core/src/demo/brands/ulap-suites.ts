@@ -6,12 +6,23 @@ import { DEMO_IDS, makeDemoUuid } from '../ids.js';
 import { buildBrandMediaFromManifest, resolveNextHolidayWindows } from './shared.js';
 import type { BrandBundle } from './shared.js';
 
-export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
+export interface BuildUlapSuitesBrandOptions {
+  readonly extraUnits?: number;
+  readonly pageUnits?: readonly string[];
+}
+
+export function buildUlapSuitesBrand(
+  today: CalendarDate,
+  options: BuildUlapSuitesBrandOptions = {},
+): BrandBundle {
   const groupHex = '10';
   const createdAt = manilaWallTime(addDays(today, -60), '09:00').toISOString();
   const ids = DEMO_IDS.ulapSuites;
   const ownerId = DEMO_IDS.people.owners.ulapSuites;
   const holidays = resolveNextHolidayWindows(today);
+  const featuredUnits = options.pageUnits
+    ? [...options.pageUnits]
+    : [ids.units.studioFog, ids.units.taalView1br];
 
   const media = buildBrandMediaFromManifest({
     brandSlug: 'ulap-suites',
@@ -29,7 +40,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
     createdAt,
   });
 
-  const draft: PropertyPageDraft = {
+  const published: PropertyPageDraft = {
     logo: ids.logoFile,
     tagline: 'Your weekend above the clouds',
     about:
@@ -50,11 +61,13 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       },
       sections: {
         banners: true,
+        announcement: true,
         about: true,
         units: true,
         highlights: true,
         rules: true,
         location: true,
+        times: true,
         faq: true,
       },
     },
@@ -74,7 +87,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       photoFile: null,
       languages: ['Tagalog', 'English'],
     },
-    units: [ids.units.studioFog, ids.units.taalView1br],
+    units: featuredUnits,
     highlights: [
       DEMO_IDS.amenities.wifi,
       DEMO_IDS.amenities.projector,
@@ -93,6 +106,26 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
         question: 'Is parking available on site?',
         answer: 'Yes, pay parking is available at the condo basement and clubhouse lot.',
       },
+      {
+        question: 'What time are check-in and check-out?',
+        answer:
+          'Check-in starts at 2:00 PM and check-out is by 12:00 PM so our housekeeping team can sanitize the unit.',
+      },
+      {
+        question: 'Can we cook our own meals inside the unit?',
+        answer:
+          'Yes! Studio units have an induction kitchenette and 1-bedroom or 2-bedroom suites have a full kitchen with rice cooker and cookware.',
+      },
+      {
+        question: 'How fast is the Wi-Fi for remote work and streaming?',
+        answer:
+          'Each unit has its own dedicated 100 Mbps fiber connection, ready for video calls and projector movie nights.',
+      },
+      {
+        question: 'Can guests use the condo swimming pool?',
+        answer:
+          'Yes, registered guests can use the shared outdoor pool; standard condo pool passes apply at the clubhouse desk.',
+      },
     ],
     seo: {
       title: 'Ulap Suites Tagaytay · Taal View Staycation',
@@ -100,6 +133,20 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
         'Book Studio Fog or 1BR Taal View directly. Projector movie nights, coffee bar, and Taal sunrise views in Tagaytay.',
       sharePictureFile: media.heroPhotoFileIds[0] ?? null,
       hideFromSearch: false,
+    },
+  };
+
+  const draft: PropertyPageDraft = {
+    ...published,
+    tagline: 'Wake up above the clouds in Tagaytay',
+    look: {
+      ...published.look,
+      bannerSeconds: 7,
+      announcement: {
+        text: 'Weekday staycations get 10% off when you book 7 nights or more directly here.',
+        tone: 'success',
+        endDate: addDays(today, 30),
+      },
     },
   };
 
@@ -189,7 +236,7 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       status: 'active',
       trial_ends_on: addDays(today, -46),
       paid_through: addDays(today, 20),
-      extra_units: 0,
+      extra_units: options.extraUnits ?? 0,
       paused_at: null,
       created_at: createdAt,
       updated_at: createdAt,
@@ -265,8 +312,8 @@ export function buildUlapSuitesBrand(today: CalendarDate): BrandBundle {
       property_id: ids.property,
       account_id: ids.account,
       draft,
-      published: draft,
-      draft_rev: 1,
+      published,
+      draft_rev: 2,
       version: 1,
       draft_updated_at: createdAt,
       published_at: createdAt,

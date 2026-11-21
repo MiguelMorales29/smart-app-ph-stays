@@ -6,6 +6,7 @@ import {
   addDays,
   appError,
   canMove,
+  checkSlugFormat,
   err,
   manilaToday,
   nightsBetween,
@@ -49,6 +50,7 @@ import {
   buildOwnerHomeCounts,
   buildPaymentsToReview,
   buildPropertyView,
+  buildPublicUnitView,
   buildUnitCalendarView,
   buildCalendarTimeline,
   buildThreadView,
@@ -63,6 +65,7 @@ import {
   nowIsoFromClock,
   quoteForUnit,
   releaseExpiredHolds,
+  resolveEffectiveCoverFileId,
   resolveThreadAccess,
   sha256Hex,
   toFailAppError,
@@ -192,7 +195,13 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
     async getProperty(input, session) {
       const guard = await beforeCall('getProperty', session);
       if (!guard.ok) return guard;
-      return buildPropertyView(world, input.slug, mediaConfig);
+      return buildPropertyView(world, input.slug, mediaConfig, { clock });
+    },
+
+    async getPublicUnit(input, session) {
+      const guard = await beforeCall('getPublicUnit', session);
+      if (!guard.ok) return guard;
+      return buildPublicUnitView(world, input.slug, input.unitSlug, mediaConfig, clock);
     },
 
     async getUnitCalendar(input, session) {
@@ -2104,14 +2113,51 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           const page = world.property_pages[pageIdx];
           if (!page) return err(appError('not_found'));
 
+          const propIdx = world.properties.findIndex(
+            (p) => p.id === input.propertyId && p.account_id === acctCheck.data,
+          );
+          if (propIdx === -1) return err(appError('not_found'));
+          const prop = world.properties[propIdx];
+          if (!prop) return err(appError('not_found'));
+
           if (page.version !== input.expectedVersion) {
-            return err(appError('invalid_move'));
+            return err(reasonError('invalid_move', 'changed_elsewhere'));
+          }
+
+          // Imitates publish blocker (P5-1 §7a): cover photo is required before publishing,
+          // falling back to first property photo or cover photo of the first listed/active unit.
+          const effectiveCoverFileId = resolveEffectiveCoverFileId(
+            world,
+            prop.id,
+            page.draft.hero.cover,
+          );
+          if (effectiveCoverFileId === null) {
+            return err(
+              appError('invalid_move', 'Add a cover photo before publishing your page.', {
+                blocker: 'no_cover_photo',
+              }),
+            );
+          }
+
+          // Imitates publish blocker (P5-1 §7a): property slug must be valid and not taken by another property.
+          const slugTakenOrInvalid =
+            checkSlugFormat(prop.slug) !== 'valid' ||
+            world.properties.some(
+              (p) => p.id !== prop.id && (p.slug === prop.slug || p.old_slugs.includes(prop.slug)),
+            );
+          if (slugTakenOrInvalid) {
+            return err(
+              reasonError('invalid_move', 'slug_taken', {
+                fields: { slug: words.errorReasons.slug_taken },
+              }),
+            );
           }
 
           const nowIso = nowIsoFromClock(clock);
+          const publishedPage = structuredClone(page.draft);
           const updated = {
             ...page,
-            published: page.draft,
+            published: publishedPage,
             version: page.version + 1,
             published_at: nowIso,
             published_by: session.profileId,
@@ -2119,17 +2165,17 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           };
           world.property_pages[pageIdx] = updated;
 
-          // D57: properties.status = 'published' decides whether the public page shows.
-          const propIdx = world.properties.findIndex((p) => p.id === input.propertyId);
-          const prop = propIdx !== -1 ? world.properties[propIdx] : undefined;
-          if (prop) {
-            world.properties[propIdx] = {
-              ...prop,
-              status: 'published',
-              published_at: prop.published_at ?? nowIso,
-              updated_at: nowIso,
-            };
-          }
+          // D57 & DB blueprint: properties.status = 'published' decides whether the public page shows,
+          // and publishing copies logo, tagline and about from draft onto properties.
+          world.properties[propIdx] = {
+            ...prop,
+            logo_file_id: publishedPage.logo,
+            tagline: publishedPage.tagline,
+            description: publishedPage.about ?? prop.description,
+            status: 'published',
+            published_at: prop.published_at ?? nowIso,
+            updated_at: nowIso,
+          };
 
           return ok(updated);
         },

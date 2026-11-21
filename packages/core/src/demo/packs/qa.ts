@@ -206,7 +206,7 @@ export function buildQaPack(clock: Clock): DemoWorld {
     updated_at: createdAt,
   });
 
-  const pausedDraft = {
+  const pausedPublished = {
     logo: null,
     tagline: 'Quiet staycation in Baguio',
     about: 'Paused owner sample page for contact-only verification.',
@@ -236,12 +236,16 @@ export function buildQaPack(clock: Clock): DemoWorld {
     faq: [],
     seo: { title: null, description: null, sharePictureFile: null, hideFromSearch: true },
   };
+  const pausedDraft = {
+    ...pausedPublished,
+    tagline: 'Quiet pine-scented staycation in Baguio',
+  };
   world.property_pages.push({
     property_id: pausedPropertyId,
     account_id: DEMO_IDS.people.extraAccounts.pausedAccount,
     draft: pausedDraft,
-    published: pausedDraft,
-    draft_rev: 1,
+    published: pausedPublished,
+    draft_rev: 2,
     version: 1,
     draft_updated_at: createdAt,
     published_at: createdAt,

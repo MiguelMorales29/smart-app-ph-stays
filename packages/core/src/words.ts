@@ -49,10 +49,15 @@ const bankLabels = {
   other: 'Other bank',
 } as const satisfies Record<Bank, string>;
 
+const editorMessages = {
+  draftConflict: 'Someone saved a newer version. Load the newer one or keep yours.',
+} as const;
+
 export const words = {
   appName: 'Smart App PH',
   productName: 'Stays and Rentals',
   errors: errorMessages,
   errorReasons: errorReasonMessages,
+  editor: editorMessages,
   banks: bankLabels,
 } as const;
