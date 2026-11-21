@@ -113,6 +113,8 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 - D75 **A taken night can be a check-out date** when the nights before it are free; minimum and maximum nights are enforced inside the calendar with the reason shown.
 - D76 **In-app browsers:** Facebook, Messenger, Instagram and TikTok in-app browsers can't install web apps, so Install there explains "Open in Safari or Chrome" with Copy link. `/install` has iOS 26 steps (keep "Open as Web App" on). In wave 1, "Message" and "Ask a question" open a contact sheet with the owner's channels; `/inquire` is wave 2 (BK-10).
 - D77 **The page proves it is official:** the trust panel shows the official web address, says it is the official page, warns never to pay a personal GCash or bank account in chat or by text, and "Verified owner" opens what we checked (PH fake-page and GCash scams).
+- D78 (Lex, 2026-11-22) **Component library expansion:** install the food app's components and a wide catalog from shadcn, ReUI (free, MIT) and Dice UI (MIT), Base UI builds only, into `packages/ui` (docs/component-catalog.md; prompts UI-1 to UI-6 after P5-2). coss ui is excluded because it is AGPL-3.0; ReUI Pro is excluded because it is paid.
+- O15 (open, Lex) Allow the `motion` package only in lazily loaded pieces (owner landing page, celebrations, charts), or keep CSS-only (D62)? Recommended: allow it only in lazy pieces, enforced by the bundle budget.
 
 ## Open (not phase 1)
 
