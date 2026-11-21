@@ -62,7 +62,7 @@ Plan: `docs/prompts/P5-guide.md`. Decisions D65–D70. Claude reviews each PR (c
 - [x] P5-0 Dock with +, Edit unit as Settings-style rows, badges, Preview switch, spacing (closes the accordion jump)
 - [x] P5-0b Units page, unit cards and dock polish (round 2)
 - [x] P5-1 Data contract for the public pages and the page editor
-- [ ] P5-2 Property page
+- [x] P5-2 Property page
 - [ ] P5-3 Unit page
 - [ ] P5-4 Install, splash, share previews, offline, privacy
 - [ ] P5-5 Page editor engine
