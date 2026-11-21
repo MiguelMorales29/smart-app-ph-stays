@@ -23,7 +23,7 @@ import { extractAppError } from '@/data/shared';
 import { useCreateBedSpacesMutation, useSaveUnitMutation } from '@/data/units/writes';
 
 const TYPE_OPTIONS: readonly {
-  value: Exclude<UnitType, 'bed_space'>;
+  value: UnitType;
   label: string;
   description: string;
   icon: React.ReactNode;
@@ -40,11 +40,18 @@ const TYPE_OPTIONS: readonly {
     description: 'A room in a shared place',
     icon: <DoorClosedIcon />,
   },
+  {
+    value: 'bed_space',
+    label: 'Bed space',
+    description: 'A bed in a shared room, like a dorm',
+    icon: <BedDoubleIcon />,
+  },
 ];
 
 /**
- * The short "Add unit" and "Add bed spaces" sheet (P4-5). It lives in the address (`?add=unit`),
- * and saving replaces that history entry with the new unit's page.
+ * The short "Add unit" and "Add bed spaces" sheet (P4-5, D72). It lives in the address
+ * (`?add=unit` or `?add=beds`), asks one question ("What do guests get?") at the top, and saving
+ * replaces that history entry with the new unit's page.
  */
 export function AddUnitSheet({
   open,
@@ -65,7 +72,7 @@ export function AddUnitSheet({
   const { today } = useDashboard();
   const saveUnit = useSaveUnitMutation();
   const createBeds = useCreateBedSpacesMutation();
-  const [type, setType] = useState<Exclude<UnitType, 'bed_space'>>('entire_place');
+  const [unitType, setUnitType] = useState<Exclude<UnitType, 'bed_space'>>('entire_place');
   const [mode, setMode] = useState<UnitMode>('short_stay');
   const [name, setName] = useState('');
   const [guests, setGuests] = useState(2);
@@ -76,6 +83,16 @@ export function AddUnitSheet({
   const [limit, setLimit] = useState<{ limit: number; used: number } | null>(null);
   const busy = saveUnit.isPending || createBeds.isPending;
   const per = mode === 'long_term' ? 'a month' : 'a night';
+  const selectedType: UnitType = kind === 'beds' ? 'bed_space' : unitType;
+
+  function selectType(next: UnitType) {
+    if (next === 'bed_space') {
+      if (kind !== 'beds') onKindChange('beds');
+    } else {
+      setUnitType(next);
+      if (kind !== 'unit') onKindChange('unit');
+    }
+  }
 
   function done(unitId: string) {
     void navigate({
@@ -121,11 +138,11 @@ export function AddUnitSheet({
         name: name.trim(),
         slug: slugifyPropertyName(name) || 'unit',
         mode,
-        unitType: type,
+        unitType,
         groupLabel: null,
         description: null,
         maxGuests: guests,
-        bedrooms: type === 'entire_place' ? 1 : 0,
+        bedrooms: unitType === 'entire_place' ? 1 : 0,
         beds: 1,
         bathrooms: 1,
         floorAreaSqm: null,
@@ -235,15 +252,16 @@ export function AddUnitSheet({
             <AlertDescription>{errors.form}</AlertDescription>
           </Alert>
         ) : null}
-        <SegmentedControl
-          aria-label="What are you adding?"
-          value={kind}
-          onValueChange={onKindChange}
-          options={[
-            { value: 'unit', label: 'Room or place', icon: <HomeIcon /> },
-            { value: 'beds', label: 'Bed spaces', icon: <BedDoubleIcon /> },
-          ]}
-        />
+        <Field>
+          <FieldLabel id="add-type-label">What do guests get?</FieldLabel>
+          <RadioCards
+            aria-labelledby="add-type-label"
+            columns={1}
+            options={TYPE_OPTIONS}
+            value={selectedType}
+            onValueChange={selectType}
+          />
+        </Field>
 
         {kind === 'unit' ? (
           <>
@@ -259,13 +277,6 @@ export function AddUnitSheet({
               />
               <FieldError>{errors.name}</FieldError>
             </Field>
-            <RadioCards
-              aria-label="Type"
-              columns={2}
-              options={TYPE_OPTIONS}
-              value={type}
-              onValueChange={setType}
-            />
             <RowGroup>
               <RowControl label="Guests" hint="The most people who can stay">
                 <InlineStepper

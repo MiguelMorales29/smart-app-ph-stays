@@ -4,7 +4,6 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   ArchiveIcon,
-  BedDoubleIcon,
   CopyIcon,
   EyeIcon,
   EyeOffIcon,
@@ -362,20 +361,14 @@ export function UnitsPage() {
             {selecting ? <XIcon aria-hidden="true" /> : <ListChecksIcon aria-hidden="true" />}
             {selecting ? 'Cancel' : 'Select'}
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button className="hidden min-h-9 lg:inline-flex" disabled={propertyId === null}>
-                  <PlusIcon aria-hidden="true" />
-                  Add
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => openAdd('unit')}>Add a unit</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openAdd('beds')}>Add bed spaces</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            className="hidden min-h-9 lg:inline-flex"
+            disabled={propertyId === null}
+            onClick={() => openAdd('unit')}
+          >
+            <PlusIcon aria-hidden="true" />
+            Add
+          </Button>
         </div>
       ) : null}
     </div>
@@ -401,25 +394,14 @@ export function UnitsPage() {
           title="No units yet"
           description="Add your first room, suite or bed to start taking bookings."
           action={
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                className="min-h-11"
-                disabled={propertyId === null}
-                onClick={() => openAdd('unit')}
-              >
-                <PlusIcon aria-hidden="true" />
-                Add unit
-              </Button>
-              <Button
-                variant="outline"
-                className="min-h-11"
-                disabled={propertyId === null}
-                onClick={() => openAdd('beds')}
-              >
-                <BedDoubleIcon aria-hidden="true" />
-                Add bed spaces
-              </Button>
-            </div>
+            <Button
+              className="min-h-11"
+              disabled={propertyId === null}
+              onClick={() => openAdd('unit')}
+            >
+              <PlusIcon aria-hidden="true" />
+              Add unit
+            </Button>
           }
         />
         {propertyId === null ? (
@@ -671,20 +653,14 @@ export function UnitsPage() {
 
       {!selecting && !reordering && keyboard === 0 ? (
         <div className="dock-pill fixed inset-x-0 z-20 mx-auto flex h-auto! -translate-y-[calc(100%+0.75rem)] justify-center lg:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button className="h-12 rounded-full px-5 shadow-lg" disabled={propertyId === null}>
-                  <PlusIcon aria-hidden="true" />
-                  Add unit
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="center" side="top">
-              <DropdownMenuItem onClick={() => openAdd('unit')}>Add a unit</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openAdd('beds')}>Add bed spaces</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            className="h-12 rounded-full px-5 shadow-lg"
+            disabled={propertyId === null}
+            onClick={() => openAdd('unit')}
+          >
+            <PlusIcon aria-hidden="true" />
+            Add unit
+          </Button>
         </div>
       ) : null}
 

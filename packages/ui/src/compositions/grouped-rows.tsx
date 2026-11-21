@@ -28,14 +28,14 @@ export function RowGroup({
       className={cn('flex flex-col gap-1.5', className)}
     >
       {title ? (
-        <h3 id={titleId} className="px-1 text-sm font-medium text-muted-foreground">
+        <h3 id={titleId} className="text-sm font-medium text-muted-foreground">
           {title}
         </h3>
       ) : null}
       <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         {children}
       </div>
-      {footer ? <p className="px-1 text-sm text-muted-foreground">{footer}</p> : null}
+      {footer ? <p className="text-sm text-muted-foreground">{footer}</p> : null}
     </section>
   );
 }

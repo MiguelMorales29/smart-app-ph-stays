@@ -27,29 +27,33 @@ export interface SettingsListGroup {
  */
 export function SettingsList({
   groups,
+  label = 'Settings',
   className,
 }: {
   readonly groups: readonly SettingsListGroup[];
+  readonly label?: string | undefined;
   readonly className?: string | undefined;
 }) {
   return (
     <nav
       data-slot="settings-list"
-      aria-label="Settings"
+      aria-label={label}
       className={cn('flex flex-col gap-6', className)}
     >
       {groups.map((group) => (
         <section
           key={group.id}
-          aria-labelledby={`settings-group-${group.id}`}
+          aria-labelledby={group.title ? `settings-group-${group.id}` : undefined}
           className="flex flex-col gap-2"
         >
-          <h2
-            id={`settings-group-${group.id}`}
-            className="px-1 text-sm font-medium text-muted-foreground"
-          >
-            {group.title}
-          </h2>
+          {group.title ? (
+            <h2
+              id={`settings-group-${group.id}`}
+              className="text-sm font-medium text-muted-foreground"
+            >
+              {group.title}
+            </h2>
+          ) : null}
           <ul className="overflow-hidden rounded-2xl border border-border bg-card">
             {group.rows.map((row) => (
               <li key={row.id} className="border-b border-border last:border-b-0">
@@ -70,7 +74,7 @@ export function SettingsList({
                         {row.label}
                       </span>
                       {row.unfinished ? (
-                        <span className="flex items-center">
+                        <span className="flex shrink-0 items-center">
                           <span aria-hidden="true" className="size-2 rounded-full bg-primary" />
                           <span className="sr-only">Needs you</span>
                         </span>

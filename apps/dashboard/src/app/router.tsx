@@ -190,6 +190,13 @@ const unitEditRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/units/unit-edit-page'), 'UnitEditPage'),
 });
 
+const unitEditSectionRoute = createRoute({
+  getParentRoute: () => unitEditRoute,
+  path: '$section',
+  staticData: { page: { title: 'Edit unit', parent: { to: '/units', title: 'Units' } } },
+  component: () => null,
+});
+
 const guestsRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/guests',
@@ -396,7 +403,7 @@ const routeTree = rootRoute.addChildren([
     paymentsRoute,
     inboxRoute,
     unitsRoute,
-    unitEditRoute,
+    unitEditRoute.addChildren([unitEditSectionRoute]),
     guestsRoute,
     settingsIndexRoute,
     settingsPaymentsRoute,
