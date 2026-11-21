@@ -12,6 +12,10 @@ A guest opens `/<slug>/units/<unit>`, sees the place, picks dates and guests, an
 
 `ag/p5-3-unit-page` from main. One PR.
 
+## Data first (gap found in the research pass)
+
+P5-1's public views carry `price_from` but not the unit's required fees, so "+ ₱500 cleaning fee" (D74) can't be shown before dates are picked. Add `required_fees: { code, label, amount_centavos }[]` (the unit's active fees from `unit_fees` that every booking pays; not per-extra-guest or optional ones) to the unit cards in `getProperty` and to `getPublicUnit`, in the schema, the memory adapter and the contract tests. P5-2's cards then show the note too (one line in `UnitsSection`).
+
 ## The page
 
 1. **Gallery:** the same component as the property page with the unit's photos; Back to the property in the top bar.
