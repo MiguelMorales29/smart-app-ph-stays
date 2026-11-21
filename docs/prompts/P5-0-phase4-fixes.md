@@ -39,13 +39,20 @@ The problems Lex found on his iPhone and desktop on 22 Nov 2026 are fixed, and t
    - Keep one draft for the whole unit across sections, so saving from any section saves everything changed. The save order stays: saveUnit, then saveUnitPrices, then photos.
    - Keep `?section=` working: it opens that section.
    - Delete `EditorSections` from `packages/ui` only if nothing else uses it; otherwise leave it.
-4. **Preview switch (D68).** On desktop too, open it from the account menu ("Preview · sample data") and hide the floating pill whenever the account menu exists. Sign-in pages keep the pill.
-5. **Settings rows.** Rows for pages not built yet (Notices, Storage, Activity, Plan if still a placeholder) show a small "Soon" label in place of a value.
-6. **Spacing and width.**
+4. **Add unit: one question, not three (D72).** Today "+ Add" opens a dropdown (Add a unit / Add bed spaces), then the dialog asks "Room or place / Bed spaces", then "Whole place / Private room". That is one question asked three times.
+   - "+ Add" on Units becomes a plain button that opens the dialog (no dropdown). `?add=unit` and `?add=beds` keep working and preselect the answer.
+   - At the top of the dialog, one question **"What do guests get?"** as three `RadioCards`: Whole place ("Guests have it to themselves"), Private room ("A room in a shared place"), Bed space ("A bed in a shared room, like a dorm").
+   - Remove the "Room or place / Bed spaces" segmented control.
+   - Picking Bed space swaps the fields only: Room name, Beds in this room (stepper), Price for each bed, button "Create 4 beds". Whole place / Private room show Unit name, Guests, Price, button "Save and add photos". "How guests rent it" (By the night / By the month) stays for all three.
+   - The title follows the answer ("Add a unit" / "Add bed spaces"); keep the typed values when switching between answers.
+   - The dock + sheet's "Add unit" row opens this same dialog.
+5. **Preview switch (D68).** On desktop too, open it from the account menu ("Preview · sample data") and hide the floating pill whenever the account menu exists. Sign-in pages keep the pill.
+6. **Settings rows.** Rows for pages not built yet (Notices, Storage, Activity, Plan if still a placeholder) show a small "Soon" label in place of a value.
+7. **Spacing and width.**
    - Phone: every page scrolls far enough that its last row clears the dock (check Settings, Units, Edit unit, Home).
    - Desktop forms (Settings pages, Edit unit sections): fields at most 560 px wide.
    - Group labels ("The space", "How guests reach you", "Address") line up with the field edges.
-7. **Kit and route catalog:** add the + sheet to `/kit?tab=patterns`; add the new `/units/$unitId/$section` route to the route catalog.
+8. **Kit and route catalog:** add the + sheet to `/kit?tab=patterns`; add the new `/units/$unitId/$section` route to the route catalog.
 
 ## Not in this task
 
@@ -53,7 +60,7 @@ Building manual booking, blocking dates or recording payments (Phase 6/7). Editi
 
 ## Done when
 
-- The pattern guide's definition of done (§6). Screenshots in the PR at 390 px and 1280 px, light and dark: dock, + sheet, Edit unit list and one section page, Settings bottom.
+- The pattern guide's definition of done (§6). Screenshots in the PR at 390 px and 1280 px, light and dark: dock, + sheet, the Add unit dialog with each of the 3 answers, Edit unit list and one section page, Settings bottom.
 - The Edit unit chevrons line up on a 360 px screen, even with the longest demo values.
 - Keyboard: the + is reachable and the sheet traps focus; Back from a section page returns to the list.
 - `pnpm check` green; screenshot baselines regenerated (`gh workflow run update-screenshots.yml --ref <branch>`), then CI green.
