@@ -28,4 +28,4 @@ You are helping build MVP A of a real estate booking and rent app for the Philip
 
 **How to work with me.** Give the answer first. Cite a source for each standard or fact, and say which ones were not opened. If a source cannot be reached, stop and say so, and say how to fix access (for example, a domain or network setting). Mark assumptions. Do not invent a figure. Keep the scope list closed: one item in, one item out.
 
-**Next step to ask for.** The next phase of the Build roadmap, pasted with the template in its section 7. Phase 1, Repository and stack, comes first.
+**Next step to ask for.** Phases 1 to 4 are done. Phase 5 (public pages and the page editor) runs as the prompts in `docs/prompts/P5-guide.md`, P5-0 to P5-7, in order; Claude reviews each pull request before it is merged (D70). The repo's `AGENTS.md` and `docs/PROGRESS.md` always say where the build is.
