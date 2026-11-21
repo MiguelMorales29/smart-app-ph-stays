@@ -103,7 +103,7 @@ These are the families the food app installed. Each one is confirmed again befor
 | Charts | recharts 3.8.0 | Owner reports |
 | Tables | @tanstack/react-table 9.3.1; @tanstack/react-virtual 3.14.22 | Long lists |
 | Motion | motion 14.3.0 | Animation; respect reduced motion |
-| Carousel | embla-carousel-react 8.6.0 | Photo galleries |
+| Carousel | embla-carousel-react 8.6.0; embla-carousel-autoplay 8.6.0 (MIT) | Photo galleries; promo banners that turn by themselves (Phase 5, ported from the food app) |
 | Calendar | react-day-picker 10.0.2 | Date picking for stays |
 | Drag and drop | @dnd-kit/core 6.3.1 | Sorting photos and units |
 | One-time codes | input-otp 1.5.0 | Email code entry |
