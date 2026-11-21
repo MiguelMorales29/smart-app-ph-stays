@@ -14,3 +14,4 @@ Map of the `docs/` folder and what each file or directory is the source of truth
 - `../.agents/skills/`: Skills agents load automatically for UI work: `smartapp-ui` (brand and components), `smartapp-ui-writing` (words on screen), `smartapp-ui-check` (brand guard, screenshots, responsive UI scan). `.claude/skills` points to the same folder.
 - [blueprints/](./blueprints/): Dated Markdown snapshots of the master plan tabs (read only when a prompt names one).
 - [prompts/](./prompts/): Saved task prompts and their index.
+- [rewards-and-promotions.md](./rewards-and-promotions.md): Guest rewards and promotions plan (push campaigns, promo codes, referral, loyalty card).
