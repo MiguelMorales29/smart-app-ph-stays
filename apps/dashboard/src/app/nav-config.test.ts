@@ -3,6 +3,7 @@ import {
   ACTIVE_WAVE,
   ADMIN_NAV_ITEMS,
   DASHBOARD_NAV_ITEMS,
+  QUICK_ADD_ITEMS,
   SETTINGS_NAV_ITEMS,
   resolveNavCount,
 } from './nav-config';
@@ -28,20 +29,26 @@ describe('dashboard navigation & route catalog', () => {
     expect(SETTINGS_NAV_ITEMS.find((item) => item.id === 'team')?.wave).toBe(2);
   });
 
-  it('places Home, Calendar, Bookings, and Inbox on the phone dock and the rest in More', () => {
+  it('places Home, Calendar, and Inbox on the phone dock, Bookings and the rest in More, and defines QUICK_ADD_ITEMS (D65)', () => {
     const visible = DASHBOARD_NAV_ITEMS.filter((item) => item.wave <= ACTIVE_WAVE);
     expect(visible.filter((i) => i.mobileSlot === 'dock').map((i) => i.id)).toEqual([
       'home',
       'calendar',
-      'bookings',
       'inbox',
     ]);
     expect(visible.filter((i) => i.mobileSlot === 'more').map((i) => i.id)).toEqual([
+      'bookings',
       'payments',
       'units',
       'guests',
       'editor',
       'settings',
+    ]);
+    expect(QUICK_ADD_ITEMS.map((item) => item.id)).toEqual([
+      'manual_booking',
+      'block_dates',
+      'add_unit',
+      'record_cash',
     ]);
   });
 
@@ -71,6 +78,10 @@ describe('dashboard navigation & route catalog', () => {
     expect(byPath.get('/calendar')).toMatchObject({ frame: 'AppFrame', phase: 6 });
     expect(byPath.get('/settings/payments')).toMatchObject({ frame: 'AppFrame', phase: 4 });
     expect(byPath.get('/settings/activity')).toMatchObject({ frame: 'AppFrame', phase: 8 });
+    expect(byPath.get('/units/dec0de10-0005-4000-8000-000000000001/basics')).toMatchObject({
+      frame: 'AppFrame',
+      phase: 5,
+    });
     expect(byPath.get('/admin')).toMatchObject({ frame: 'AdminFrame', phase: 9 });
     expect(ADMIN_NAV_ITEMS).toHaveLength(8);
   });

@@ -94,6 +94,7 @@ export function AccountMenu({
             <SidebarMenuButton
               size="lg"
               className="aria-expanded:bg-muted pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-1.5!"
+              data-dev-panel-menu={previewSwitches ? '' : undefined}
             />
           }
         >
@@ -166,10 +167,10 @@ export function AccountMenu({
             ))}
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
-        {previewSwitches && placement === 'top-bar' ? (
+        {previewSwitches ? (
           <>
-            <DropdownMenuSeparator className="md:hidden" />
-            <DropdownMenuItem className="min-h-10 md:hidden" onClick={openDevPanel}>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="min-h-10" onClick={openDevPanel}>
               <FlaskConicalIcon aria-hidden="true" className="text-warning" />
               <span>Preview · sample data</span>
             </DropdownMenuItem>

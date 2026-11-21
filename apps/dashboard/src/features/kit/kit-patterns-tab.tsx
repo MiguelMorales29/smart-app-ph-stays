@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BedDoubleIcon, HomeIcon } from 'lucide-react';
+import { createElement, useState } from 'react';
+import { BedDoubleIcon, HomeIcon, PlusIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
@@ -17,6 +17,7 @@ import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
+import { QUICK_ADD_ITEMS } from '@/app/nav-config';
 
 type Section = 'basics' | 'price' | 'rules';
 
@@ -59,7 +60,7 @@ export function KitPatternsTab() {
   const [instant, setInstant] = useState(true);
   const [days, setDays] = useState<readonly number[]>([5, 6]);
   const [section, setSection] = useState<Section | null>('basics');
-  const [sheet, setSheet] = useState<'none' | 'form' | 'long'>('none');
+  const [sheet, setSheet] = useState<'none' | 'add' | 'form' | 'long'>('none');
   const [name, setName] = useState('Studio Fog');
   const [savedName, setSavedName] = useState('Studio Fog');
   const [saveState, setSaveState] = useState<'idle' | 'busy' | 'done'>('idle');
@@ -182,6 +183,10 @@ export function KitPatternsTab() {
         note="Drawer on phones, dialog on desktop. Grabber, Close top-left, a body that scrolls with edge fades, and a footer above the home indicator."
       >
         <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setSheet('add')}>
+            <PlusIcon aria-hidden="true" />
+            Open the + quick-add sheet
+          </Button>
           <Button variant="outline" onClick={() => setSheet('form')}>
             Open a form sheet
           </Button>
@@ -189,6 +194,25 @@ export function KitPatternsTab() {
             Open a long sheet
           </Button>
         </div>
+        <AppSheet
+          open={sheet === 'add'}
+          onOpenChange={(open) => setSheet(open ? 'add' : 'none')}
+          title="Add"
+          height="half"
+          size="sm"
+        >
+          <RowGroup>
+            {QUICK_ADD_ITEMS.map((item) => (
+              <RowButton
+                key={item.id}
+                label={item.label}
+                hint={item.hint}
+                icon={createElement(item.icon)}
+                onClick={() => setSheet('none')}
+              />
+            ))}
+          </RowGroup>
+        </AppSheet>
         <AppSheet
           open={sheet === 'form'}
           onOpenChange={(open) => setSheet(open ? 'form' : 'none')}

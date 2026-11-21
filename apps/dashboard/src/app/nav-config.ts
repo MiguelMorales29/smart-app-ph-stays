@@ -7,6 +7,8 @@ import {
   BellIcon,
   Building2Icon,
   CalendarDaysIcon,
+  CalendarOffIcon,
+  CalendarPlusIcon,
   ClipboardCheckIcon,
   ClockIcon,
   CreditCardIcon,
@@ -26,6 +28,7 @@ import {
   UserCheckIcon,
   UserIcon,
   UsersIcon,
+  WalletIcon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -83,7 +86,7 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavDef[] = [
     path: '/bookings',
     icon: ClipboardCheckIcon,
     wave: 1,
-    mobileSlot: 'dock',
+    mobileSlot: 'more',
     countKey: 'holds',
   },
   {
@@ -161,6 +164,60 @@ export const DASHBOARD_NAV_ITEMS: readonly DashboardNavDef[] = [
     wave: 1,
     mobileSlot: 'more',
     dotKey: 'setup_incomplete',
+  },
+];
+
+export interface QuickAddItem {
+  readonly id: 'manual_booking' | 'block_dates' | 'add_unit' | 'record_cash';
+  readonly label: string;
+  readonly hint: string;
+  readonly to: '/calendar' | '/units' | '/payments';
+  readonly search: { readonly add: 'booking' | 'block' | 'unit' | 'cash' };
+  readonly icon: LucideIcon;
+  readonly wave: 1 | 2 | 3;
+}
+
+/**
+ * Quick-add actions opened by the phone dock + button and the desktop sidebar "+ New" button (D65).
+ * Kept in one place so Phase 7 (Send notice) and Phase 15 (Add tenant) add rows here without
+ * touching the dock.
+ */
+export const QUICK_ADD_ITEMS: readonly QuickAddItem[] = [
+  {
+    id: 'manual_booking',
+    label: 'Manual booking',
+    hint: 'Walk-in, phone or Messenger guest',
+    to: '/calendar',
+    search: { add: 'booking' },
+    icon: CalendarPlusIcon,
+    wave: 1,
+  },
+  {
+    id: 'block_dates',
+    label: 'Block dates',
+    hint: 'Close nights for family or repairs',
+    to: '/calendar',
+    search: { add: 'block' },
+    icon: CalendarOffIcon,
+    wave: 1,
+  },
+  {
+    id: 'add_unit',
+    label: 'Add unit',
+    hint: 'Room, suite, apartment or bed spaces',
+    to: '/units',
+    search: { add: 'unit' },
+    icon: BedDoubleIcon,
+    wave: 1,
+  },
+  {
+    id: 'record_cash',
+    label: 'Record cash payment',
+    hint: 'Mark cash received for a booking',
+    to: '/payments',
+    search: { add: 'cash' },
+    icon: WalletIcon,
+    wave: 1,
   },
 ];
 

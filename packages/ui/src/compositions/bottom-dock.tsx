@@ -1,14 +1,21 @@
-import { useState, type ReactNode } from 'react';
-import { EllipsisIcon } from 'lucide-react';
+import { Fragment, useState, type ReactNode } from 'react';
+import { EllipsisIcon, PlusIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
 import { useKeyboardOpen } from '../hooks/use-keyboard-open';
 import { countLabel, useNavLink, type NavItem } from '../lib/nav';
 import { NavDrawer } from './nav-drawer';
 
+export interface BottomDockAction {
+  readonly label?: string | undefined;
+  readonly onClick: () => void;
+}
+
 export interface BottomDockProps {
   readonly label: string;
   /** Up to 5 items, or 4 when `more` is set. */
   readonly items: readonly NavItem[];
+  /** Optional centre create button (D65): 44 px Smart Blue circle with a white plus. */
+  readonly action?: BottomDockAction | undefined;
   readonly more?:
     | {
         readonly label: string;
@@ -61,13 +68,31 @@ function DockSlot({ item }: { readonly item: NavItem }) {
   });
 }
 
+function DockActionButton({ action }: { readonly action: BottomDockAction }) {
+  return (
+    <div className="flex h-14 min-w-0 flex-1 items-center justify-center">
+      <button
+        type="button"
+        aria-label={action.label ?? 'Add'}
+        onClick={action.onClick}
+        className="press flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm outline-none hover-hover:hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <PlusIcon aria-hidden="true" className="size-5" />
+      </button>
+    </div>
+  );
+}
+
 /** Floating pill navigation for phones; hidden while the on-screen keyboard is open. */
-export function BottomDock({ label, items, more }: BottomDockProps) {
+export function BottomDock({ label, items, action, more }: BottomDockProps) {
   const keyboardOpen = useKeyboardOpen();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreActive = more?.items.some((item) => item.active) ?? false;
-  const moreCount = more?.items.reduce((sum, item) => sum + (item.count ?? 0), 0) ?? 0;
-  const moreDot = more?.items.some((item) => Boolean(item.dot)) ?? false;
+  // D67: More shows a dot (no number) only when an item inside it needs the owner.
+  const moreDot =
+    more?.items.some((item) => Boolean(item.dot) || (item.count !== undefined && item.count > 0)) ??
+    false;
+  const actionIndex = action ? Math.min(2, items.length) : -1;
 
   return (
     <>
@@ -77,9 +102,13 @@ export function BottomDock({ label, items, more }: BottomDockProps) {
         data-keyboard={keyboardOpen ? 'open' : 'closed'}
         className="fixed inset-x-4 dock-pill z-30 mx-auto flex items-center gap-1 rounded-full border border-border frost px-1 shadow-md keyboard-open:hidden"
       >
-        {items.map((item) => (
-          <DockSlot key={item.id} item={item} />
+        {items.map((item, index) => (
+          <Fragment key={item.id}>
+            {action && index === actionIndex ? <DockActionButton action={action} /> : null}
+            <DockSlot item={item} />
+          </Fragment>
         ))}
+        {action && actionIndex === items.length ? <DockActionButton action={action} /> : null}
         {more ? (
           <button
             type="button"
@@ -89,12 +118,7 @@ export function BottomDock({ label, items, more }: BottomDockProps) {
             aria-expanded={moreOpen}
             onClick={() => setMoreOpen(true)}
           >
-            <SlotContent
-              icon={<EllipsisIcon />}
-              label={more.label}
-              count={moreCount > 0 ? moreCount : undefined}
-              dot={moreDot}
-            />
+            <SlotContent icon={<EllipsisIcon />} label={more.label} dot={moreDot} />
           </button>
         ) : null}
       </nav>

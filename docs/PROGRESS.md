@@ -48,7 +48,7 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 ### Carry-over into Phase 5 (decided by Lex, 2026-11-21)
 
 - [ ] Lex's iPhone check of every Phase 4 screen (Safari bars, light and dark), with a screen recording of anything that feels broken.
-- [ ] Edit unit accordion on iPhone: replaced by Settings-style rows in P5-0 (D66).
+- [x] Edit unit accordion on iPhone: replaced by Settings-style rows in P5-0 (D66).
 - [ ] Re-check every component changed in Phase 4 / 4.5 on a real iPhone, not only in Chrome.
 - [ ] Desktop + mobile UX research pass (desktop patterns were not studied as deeply as mobile), then a combined Smart App pattern set.
 - [ ] Owner journey e2e test and the six component tests (needs Node 24.15 for jsdom 31; the repo pins 24.14): in P5-7.
@@ -59,7 +59,7 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 
 Plan: `docs/prompts/P5-guide.md`. Decisions D65–D70. Claude reviews each PR (code and Vercel preview) before merge.
 
-- [ ] P5-0 Dock with +, Edit unit as Settings-style rows, badges, Preview switch, spacing (closes the accordion jump)
+- [x] P5-0 Dock with +, Edit unit as Settings-style rows, badges, Preview switch, spacing (closes the accordion jump)
 - [ ] P5-1 Data contract for the public pages and the page editor
 - [ ] P5-2 Property page
 - [ ] P5-3 Unit page

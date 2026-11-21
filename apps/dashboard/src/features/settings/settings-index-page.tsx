@@ -15,7 +15,7 @@ export function SettingsIndexPage() {
   }, [navigate, wide]);
 
   return (
-    <section className="mx-auto max-w-xl space-y-6 pb-8">
+    <section className="mx-auto max-w-xl space-y-6 pb-16">
       <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only">
         Settings
       </h1>

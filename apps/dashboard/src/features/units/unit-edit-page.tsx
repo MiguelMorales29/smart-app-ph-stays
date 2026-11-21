@@ -1,5 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useBlocker, useParams, useSearch } from '@tanstack/react-router';
+import {
+  Link,
+  useBlocker,
+  useNavigate,
+  useParams,
+  useRouterState,
+  useSearch,
+} from '@tanstack/react-router';
+import { BedDoubleIcon, CalendarClockIcon, ImageIcon, SparklesIcon, TagIcon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -18,18 +26,17 @@ import { Input } from '@smartapp/ui/components/input';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
-import { EditorSections } from '@smartapp/ui/compositions/editor-sections';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { RowControl, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
 import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
 import {
   PriceEditor,
-  priceSummary,
   type PriceDraft,
   type PriceDraftErrors,
 } from '@smartapp/ui/compositions/price-editor';
 import { LeaveGuardDialog, SaveBar } from '@smartapp/ui/compositions/save-bar';
+import { SettingsList, type SettingsListRow } from '@smartapp/ui/compositions/settings-list';
 import { useFormDraft } from '@smartapp/ui/hooks/use-form-draft';
 import { notify } from '@smartapp/ui/lib/notify';
 import { useDashboard } from '@/app/dashboard-context';
@@ -48,7 +55,6 @@ import {
   leaseDraftFrom,
   priceDraftFrom,
   rulesDraftFrom,
-  rulesSummary,
   sameDraft,
   type LeaseDraft,
   type RulesDraft,
@@ -62,13 +68,34 @@ export interface UnitEditSearch {
   readonly section?: UnitSection;
 }
 
-const SECTIONS: readonly { value: UnitSection; label: string }[] = [
-  { value: 'basics', label: 'Basics' },
-  { value: 'photos', label: 'Photos' },
-  { value: 'price', label: 'Price' },
-  { value: 'amenities', label: 'Amenities' },
-  { value: 'rules', label: 'Booking rules' },
+const SECTIONS: readonly { value: UnitSection; label: string; icon: ReactNode }[] = [
+  { value: 'basics', label: 'Basics', icon: <BedDoubleIcon /> },
+  { value: 'photos', label: 'Photos', icon: <ImageIcon /> },
+  { value: 'price', label: 'Price', icon: <TagIcon /> },
+  { value: 'amenities', label: 'Amenities', icon: <SparklesIcon /> },
+  { value: 'rules', label: 'Booking rules', icon: <CalendarClockIcon /> },
 ];
+
+const WIDE_QUERY = '(min-width: 1024px)';
+
+/** True from 1,024 px, where Edit unit shows the section list and the open section side by side. */
+function useWideEditor(): boolean {
+  const [wide, setWide] = useState(() =>
+    typeof window === 'undefined' ? false : window.matchMedia(WIDE_QUERY).matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia(WIDE_QUERY);
+    const onChange = () => setWide(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  return wide;
+}
+
+function parseUnitSection(raw: string | undefined): UnitSection | null {
+  const match = SECTIONS.find((item) => item.value === raw);
+  return match ? match.value : null;
+}
 
 const basicsSchema = unitFormSchema
   .pick({
@@ -107,10 +134,9 @@ function basicsFrom(detail: OwnerUnitDetailView): BasicsForm {
 
 const emptyToNull = (value: string) => (value.trim() === '' ? null : value);
 
-/** /units/$unitId (OW-08): Basics and Photos now; Price, Amenities and Booking rules in P4-6. */
+/** /units/$unitId and /units/$unitId/$section (OW-08, D66). */
 export function UnitEditPage() {
   const { unitId } = useParams({ from: '/app-frame/units/$unitId' });
-  const search = useSearch({ from: '/app-frame/units/$unitId' });
   const detail = useOwnerUnitQuery(unitId);
   const units = useOwnerUnitsQuery();
 
@@ -143,7 +169,6 @@ export function UnitEditPage() {
       key={detail.data.unit.id}
       detail={detail.data}
       roomBeds={roomBeds.map((item) => ({ unitId: item.unit.id, name: item.unit.name }))}
-      initialSection={search.section ?? 'basics'}
     />
   );
 }
@@ -151,16 +176,14 @@ export function UnitEditPage() {
 function UnitEditor({
   detail,
   roomBeds,
-  initialSection,
 }: {
   readonly detail: OwnerUnitDetailView;
   readonly roomBeds: readonly { readonly unitId: string; readonly name: string }[];
-  readonly initialSection: UnitSection;
 }) {
-  // The open section is local state: writing it to the address re-rendered the page on every tap
-  // and made the accordion jump (Phase 4 audit). `?section=` still opens a section on arrival.
-  const [section, setSection] = useState<UnitSection | null>(initialSection);
-  const onSection = (next: UnitSection) => setSection(next);
+  const wide = useWideEditor();
+  const navigate = useNavigate();
+  const search = useSearch({ from: '/app-frame/units/$unitId' });
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const save = useSaveUnitMutation();
   const savePhotos = useSetUnitPhotosMutation();
   const savePrices = useSaveUnitPricesMutation();
@@ -171,6 +194,31 @@ function UnitEditor({
   const unit = current.unit;
   const isBed = unit.unit_type === 'bed_space';
   const photoLabel = unit.group_label ?? unit.name;
+
+  const prefix = `/units/${unit.id}/`;
+  const pathSection = pathname.startsWith(prefix)
+    ? parseUnitSection(pathname.slice(prefix.length))
+    : null;
+  const activeSection: UnitSection | null =
+    pathSection ?? search.section ?? (wide ? 'basics' : null);
+
+  function onSection(next: UnitSection) {
+    void navigate({
+      to: '/units/$unitId/$section',
+      params: { unitId: unit.id, section: next },
+    });
+  }
+
+  // Keep `?section=` working by opening that section route directly.
+  useEffect(() => {
+    if (search.section && !pathSection) {
+      void navigate({
+        to: '/units/$unitId/$section',
+        params: { unitId: unit.id, section: search.section },
+        replace: true,
+      });
+    }
+  }, [navigate, pathSection, search.section, unit.id]);
 
   const form = useForm<BasicsForm>({
     resolver: zodResolver(basicsSchema),
@@ -449,11 +497,11 @@ function UnitEditor({
   const bedrooms = watched.bedrooms;
   const basicsSummary = [
     `${watched.max_guests} ${watched.max_guests === 1 ? 'guest' : 'guests'}`,
-    ...(isBed
-      ? []
-      : [bedrooms === 0 ? 'Studio' : `${bedrooms} ${bedrooms === 1 ? 'bedroom' : 'bedrooms'}`]),
-    `${watched.beds} ${watched.beds === 1 ? 'bed' : 'beds'}`,
-    `${watched.bathrooms} ${watched.bathrooms === 1 ? 'bath' : 'baths'}`,
+    isBed
+      ? 'Bed space'
+      : bedrooms === 0
+        ? 'Studio'
+        : `${bedrooms} ${bedrooms === 1 ? 'bedroom' : 'bedrooms'}`,
   ].join(' · ');
 
   const basics = (
@@ -670,27 +718,18 @@ function UnitEditor({
   };
 
   const photoCount = photos.tiles.length;
-  const amenityLabels = (amenities.data ?? [])
-    .filter((item) => amenityIds.includes(item.id))
-    .map((item) => item.label);
   const summaries: Record<UnitSection, string> = {
     basics: basicsSummary,
-    photos:
-      photoCount === 0
-        ? 'Add at least 3 photos'
-        : `${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}${photoCount < 3 ? ' · add at least 3' : ''}`,
+    photos: `${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`,
     price: isLong
       ? lease.monthlyRent === null
         ? 'No rent yet'
-        : `${formatPesos(lease.monthlyRent)} a month · ${lease.depositMonths} months deposit`
-      : priceSummary(price),
-    amenities:
-      amenityLabels.length === 0
-        ? 'None picked yet'
-        : amenityLabels.length <= 3
-          ? amenityLabels.join(', ')
-          : `${amenityLabels.slice(0, 2).join(', ')} and ${amenityLabels.length - 2} more`,
-    rules: isLong ? 'Set under Price' : rulesSummary(rules),
+        : `${formatPesos(lease.monthlyRent)} a month`
+      : price.baseNightly === null
+        ? 'No price yet'
+        : `${formatPesos(price.baseNightly)} a night`,
+    amenities: amenityIds.length === 0 ? 'None yet' : `${amenityIds.length} picked`,
+    rules: isLong ? 'Set under Price' : `${rules.minNights}–${rules.maxNights} nights`,
   };
   const needsYou: Record<UnitSection, boolean> = {
     basics: false,
@@ -700,14 +739,38 @@ function UnitEditor({
     rules: false,
   };
 
-  return (
-    <section className="space-y-5 pb-24 lg:pb-20">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h1 className="line-clamp-2 font-heading text-2xl font-semibold">{unit.name}</h1>
-        <UnitStatusBadge status={unit.status} />
-        <p className="w-full text-sm text-muted-foreground">{UNIT_TYPE_LABEL[unit.unit_type]}</p>
-      </div>
+  const rows: SettingsListRow[] = SECTIONS.map((item) => {
+    const active = wide && activeSection === item.value;
+    return {
+      id: item.value,
+      label: item.label,
+      icon: item.icon,
+      value: summaries[item.value],
+      unfinished: needsYou[item.value],
+      active,
+      render: ({ className, children }) => (
+        <Link
+          to="/units/$unitId/$section"
+          params={{ unitId: unit.id, section: item.value }}
+          className={className}
+          aria-current={activeSection === item.value ? 'page' : undefined}
+        >
+          {children}
+        </Link>
+      ),
+    };
+  });
 
+  const unitHeader = (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h1 className="line-clamp-2 font-heading text-2xl font-semibold">{unit.name}</h1>
+      <UnitStatusBadge status={unit.status} />
+      <p className="w-full text-sm text-muted-foreground">{UNIT_TYPE_LABEL[unit.unit_type]}</p>
+    </div>
+  );
+
+  const alerts = (
+    <>
       {stale ? (
         <Alert>
           <AlertTitle>Someone else changed this unit</AlertTitle>
@@ -729,19 +792,34 @@ function UnitEditor({
           <AlertDescription>{topError}</AlertDescription>
         </Alert>
       ) : null}
+    </>
+  );
 
-      <EditorSections
-        label="Unit sections"
-        value={section}
-        onValueChange={setSection}
-        sections={SECTIONS.map((item) => ({
-          value: item.value,
-          label: item.label,
-          summary: summaries[item.value],
-          needsYou: needsYou[item.value],
-          content: content[item.value],
-        }))}
-      />
+  const openSectionMeta = SECTIONS.find((item) => item.value === activeSection);
+
+  return (
+    <div className="pb-24 lg:pb-20">
+      <div className="lg:grid lg:grid-cols-[280px_minmax(0,560px)] lg:items-start lg:gap-8">
+        {wide || activeSection === null ? (
+          <aside className="space-y-5 lg:sticky lg:top-[calc(var(--shell-header-height)+1rem)]">
+            {unitHeader}
+            {!wide ? alerts : null}
+            <SettingsList label="Unit sections" groups={[{ id: 'sections', title: '', rows }]} />
+          </aside>
+        ) : null}
+
+        {activeSection !== null ? (
+          <section className="min-w-0 max-w-[560px] space-y-5">
+            {alerts}
+            {openSectionMeta ? (
+              <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only lg:text-xl">
+                {openSectionMeta.label}
+              </h1>
+            ) : null}
+            {content[activeSection]}
+          </section>
+        ) : null}
+      </div>
 
       <SaveBar
         dirty={dirty}
@@ -756,6 +834,6 @@ function UnitEditor({
         onStay={() => blocker.reset?.()}
         onLeave={() => blocker.proceed?.()}
       />
-    </section>
+    </div>
   );
 }

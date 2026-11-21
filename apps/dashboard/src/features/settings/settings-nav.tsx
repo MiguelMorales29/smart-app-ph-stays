@@ -117,13 +117,7 @@ function useSettingsGroups(): SettingsListGroup[] {
             : undefined,
           payments.data !== undefined && active === 0,
         ),
-        row(
-          'plan',
-          'Plan',
-          '/settings/plan',
-          <ReceiptIcon />,
-          account.data?.plan?.name ?? undefined,
-        ),
+        row('plan', 'Plan', '/settings/plan', <ReceiptIcon />, 'Soon'),
       ],
     },
     {
@@ -137,15 +131,15 @@ function useSettingsGroups(): SettingsListGroup[] {
           <UserIcon />,
           account.data?.profile.full_name ?? undefined,
         ),
-        row('notices', 'Notices', '/settings/notices', <BellIcon />, undefined),
+        row('notices', 'Notices', '/settings/notices', <BellIcon />, 'Soon'),
       ],
     },
     {
       id: 'data',
       title: 'Data',
       rows: [
-        row('storage', 'Storage', '/settings/storage', <HardDriveIcon />, undefined),
-        row('activity', 'Activity', '/settings/activity', <ListChecksIcon />, undefined),
+        row('storage', 'Storage', '/settings/storage', <HardDriveIcon />, 'Soon'),
+        row('activity', 'Activity', '/settings/activity', <ListChecksIcon />, 'Soon'),
       ],
     },
   ];
@@ -158,7 +152,7 @@ export function SettingsHubList({ className }: { readonly className?: string | u
 
 /**
  * Every settings page sits in this pane: on phones and tablets the page alone (the top bar has
- * Back); from 1,024 px the list on the left (280 px) and the page on the right (up to 720 px).
+ * Back); from 1,024 px the list on the left (280 px) and the page on the right (up to 560 px).
  */
 export function SettingsPane({
   title,
@@ -168,11 +162,11 @@ export function SettingsPane({
   readonly children: ReactNode;
 }) {
   return (
-    <div className="lg:grid lg:grid-cols-[280px_minmax(0,720px)] lg:items-start lg:gap-8">
+    <div className="lg:grid lg:grid-cols-[280px_minmax(0,560px)] lg:items-start lg:gap-8">
       <aside className="hidden lg:sticky lg:top-[calc(var(--shell-header-height)+1rem)] lg:block">
         <SettingsHubList />
       </aside>
-      <section className="min-w-0 space-y-6 pb-24 lg:pb-20">
+      <section className="min-w-0 max-w-[560px] space-y-6 pb-24 lg:pb-20">
         <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only">
           {title}
         </h1>

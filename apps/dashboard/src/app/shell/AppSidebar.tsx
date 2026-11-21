@@ -1,7 +1,13 @@
 import { createElement } from 'react';
-import { Link, useRouterState } from '@tanstack/react-router';
-import { Building2Icon, ChevronRightIcon, ShapesIcon } from 'lucide-react';
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import { Building2Icon, ChevronRightIcon, PlusIcon, ShapesIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -18,21 +24,24 @@ import { useDashboard } from '@/app/dashboard-context';
 import {
   ACTIVE_WAVE,
   DASHBOARD_NAV_ITEMS,
+  QUICK_ADD_ITEMS,
   isActiveRoutePath,
   resolveNavCount,
 } from '@/app/nav-config';
 import { AccountMenu } from './AccountMenu';
 
 export function AppSidebar() {
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { client, counts } = useDashboard();
   const visibleItems = DASHBOARD_NAV_ITEMS.filter((item) => item.wave <= ACTIVE_WAVE);
+  const quickAddItems = QUICK_ADD_ITEMS.filter((item) => item.wave <= ACTIVE_WAVE);
   const propertyName = client?.propertyName ?? 'My Property';
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
@@ -54,6 +63,40 @@ export function AppSidebar() {
                 aria-hidden="true"
               />
             </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    tooltip="New"
+                    aria-label="New"
+                    className="h-9 justify-center rounded-lg bg-primary font-medium text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground active:bg-primary-hover active:text-primary-foreground data-open:hover:bg-primary-hover data-open:hover:text-primary-foreground group-data-[collapsible=icon]:rounded-full pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
+                  />
+                }
+              >
+                <PlusIcon aria-hidden="true" />
+                <span className="group-data-[collapsible=icon]:hidden">New</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" sideOffset={6} className="min-w-60">
+                {quickAddItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.id}
+                    className="min-h-10 items-start gap-2.5 py-2"
+                    onClick={() => void navigate({ to: item.to, search: item.search })}
+                  >
+                    {createElement(item.icon, {
+                      'aria-hidden': true,
+                      className: 'mt-0.5 size-4 shrink-0 text-muted-foreground',
+                    })}
+                    <div className="grid min-w-0 flex-1 leading-tight">
+                      <span className="font-medium text-foreground">{item.label}</span>
+                      <span className="text-xs text-muted-foreground">{item.hint}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
