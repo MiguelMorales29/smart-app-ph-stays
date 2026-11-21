@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import { uuidSchema } from '../../ids/index.js';
 import { centavosSchema } from '../../money/index.js';
 import { stayQuoteSchema } from '../../pricing/quoteStay.js';
 import { calendarDateSchema } from '../../time/index.js';
+import { propertyPageDraftSchema } from '../tables/common.js';
 import {
   accountsRow,
   amenitiesRow,
@@ -20,6 +22,7 @@ import {
   rateOverridesRow,
   stayReviewsRow,
   threadsRow,
+  unitLeaseTermsRow,
   unitOccupancyRow,
   unitStayTermsRow,
   unitsRow,
@@ -103,6 +106,49 @@ export const publicUnitStayTermsViewSchema = z.object(unitStayTermsRow.shape).pi
 });
 export type PublicUnitStayTermsView = z.infer<typeof publicUnitStayTermsViewSchema>;
 
+export const publicUnitLeaseTermsViewSchema = z.object(unitLeaseTermsRow.shape).pick({
+  monthly_rent_centavos: true,
+  min_lease_months: true,
+  advance_months: true,
+  deposit_months: true,
+  reservation_fee_centavos: true,
+  available_from: true,
+  inclusions: true,
+});
+export type PublicUnitLeaseTermsView = z.infer<typeof publicUnitLeaseTermsViewSchema>;
+
+export const publicPagePhotoSchema = z.object({
+  file_id: uuidSchema,
+  url: z.string().min(1),
+  alt: z.string().max(200),
+});
+export type PublicPagePhoto = z.infer<typeof publicPagePhotoSchema>;
+
+export const publicHostViewSchema = z.object({
+  display_name: z.string().min(1).max(80),
+  photo: publicPagePhotoSchema.nullable(),
+  languages: z.array(z.string().min(1).max(40)),
+  hosting_since: z.int().min(2000).max(2100),
+  reply_time: z.string().min(1).max(120),
+});
+export type PublicHostView = z.infer<typeof publicHostViewSchema>;
+
+export const publicTrustViewSchema = z.object({
+  is_verified: z.boolean(),
+  payment_accounts_changed_recently: z.boolean(),
+});
+export type PublicTrustView = z.infer<typeof publicTrustViewSchema>;
+
+export const publicPageMediaViewSchema = z.object({
+  logo: publicPagePhotoSchema.nullable(),
+  hero_cover: publicPagePhotoSchema.nullable(),
+  hero_photos: z.array(publicPagePhotoSchema),
+  banners: z.array(publicPagePhotoSchema),
+  host_photo: publicPagePhotoSchema.nullable(),
+  share_picture: publicPagePhotoSchema.nullable(),
+});
+export type PublicPageMediaView = z.infer<typeof publicPageMediaViewSchema>;
+
 export const publicUnitCardViewSchema = unitsRow
   .pick({
     id: true,
@@ -111,6 +157,7 @@ export const publicUnitCardViewSchema = unitsRow
     name: true,
     mode: true,
     unit_type: true,
+    group_label: true,
     description: true,
     max_guests: true,
     bedrooms: true,
@@ -121,6 +168,8 @@ export const publicUnitCardViewSchema = unitsRow
   })
   .extend({
     stay_terms: publicUnitStayTermsViewSchema.nullable(),
+    lease_terms: publicUnitLeaseTermsViewSchema.nullable(),
+    price_from: centavosSchema.nullable(),
     photos: z.array(publicPhotoViewSchema),
     amenity_ids: z.array(amenitiesRow.shape.id),
   });
@@ -147,6 +196,9 @@ export const propertyViewSchema = z.object({
   account: accountsRow
     .pick({ is_demo: true })
     .extend({ is_verified: z.boolean(), is_paused: z.boolean() }),
+  host: publicHostViewSchema,
+  trust: publicTrustViewSchema,
+  page_media: publicPageMediaViewSchema,
   units: z.array(publicUnitCardViewSchema),
   photos: z.array(publicPhotoViewSchema),
   amenities: z.array(publicAmenityViewSchema),
@@ -154,6 +206,59 @@ export const propertyViewSchema = z.object({
   reviews: publicReviewSummarySchema,
 });
 export type PropertyView = z.infer<typeof propertyViewSchema>;
+
+export const publicCancellationCopySchema = z.object({
+  label: z.string().min(1).max(120),
+  summary: z.string().min(1).max(300),
+});
+export type PublicCancellationCopy = z.infer<typeof publicCancellationCopySchema>;
+
+export const publicUnitPropertySummarySchema = z
+  .object(propertiesRow.shape)
+  .pick({
+    id: true,
+    account_id: true,
+    slug: true,
+    name: true,
+    city: true,
+    province: true,
+    checkin_time: true,
+    checkout_time: true,
+    cancellation_preset: true,
+    cancellation_note: true,
+    rebook_min_days: true,
+    rebook_within_months: true,
+    guest_ids_required: true,
+    guest_list_due_hours: true,
+    contact: true,
+  })
+  .extend({
+    cancellation_copy: publicCancellationCopySchema,
+    min_nights: z.int().min(1).nullable(),
+    max_nights: z.int().min(1).nullable(),
+  });
+export type PublicUnitPropertySummary = z.infer<typeof publicUnitPropertySummarySchema>;
+
+export const publicUnitViewSchema = z.object({
+  unit: publicUnitCardViewSchema,
+  price_from: centavosSchema.nullable(),
+  photos: z.array(publicPhotoViewSchema),
+  amenities: z.array(publicAmenityViewSchema),
+  house_rules: z.array(publicHouseRuleViewSchema),
+  stay_terms: publicUnitStayTermsViewSchema.nullable(),
+  lease_terms: publicUnitLeaseTermsViewSchema.nullable(),
+  property: publicUnitPropertySummarySchema,
+  account: accountsRow
+    .pick({ is_demo: true })
+    .extend({ is_verified: z.boolean(), is_paused: z.boolean() }),
+  page: z.object({
+    version: propertyPagesRow.shape.version,
+    published: z.object({
+      look: propertyPageDraftSchema.shape.look,
+    }),
+  }),
+});
+export type PublicUnitView = z.infer<typeof publicUnitViewSchema>;
 
 export const unitCalendarViewSchema = z.object({
   unit_id: unitsRow.shape.id,

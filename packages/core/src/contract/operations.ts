@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { pageChangeItemSchema } from '../editor/changes.js';
 import type { ErrorCode } from '../errors/index.js';
 import {
   ownerPasswordSchema,
@@ -25,6 +26,7 @@ import {
   propertySlugSchema,
   subscriptionPaymentStatusSchema,
   unitCountBandSchema,
+  unitSlugSchema,
   unitStatusSchema,
 } from '../lists/index.js';
 import { centavosSchema } from '../money/index.js';
@@ -52,6 +54,7 @@ import {
   positiveCentavosSchema,
   profilesRow,
   propertiesRow,
+  propertyPageDraftSchema,
   propertyPagesRow,
   rateOverridesRow,
   stayReviewsRow,
@@ -72,6 +75,7 @@ import {
   bookingBoardItemViewSchema,
   bookingDetailViewSchema,
   calendarTimelineViewSchema,
+  discardPageDraftResultViewSchema,
   googleSignInResultViewSchema,
   inboxThreadItemViewSchema,
   ownerAccountViewSchema,
@@ -80,8 +84,11 @@ import {
   ownerPropertyViewSchema,
   ownerUnitDetailViewSchema,
   ownerUnitListItemViewSchema,
+  pageEditorViewSchema,
   paymentReviewItemViewSchema,
   propertyViewSchema,
+  publicUnitViewSchema,
+  savePageDraftResultViewSchema,
   setupChecklistViewSchema,
   slugCheckViewSchema,
   stayQuoteViewSchema,
@@ -200,6 +207,18 @@ export const operations = {
     errors: ['not_found'],
     idempotent: false,
     featureIds: ['PA-01', 'PA-09', 'PA-10'],
+  },
+  getPublicUnit: {
+    name: 'getPublicUnit',
+    access: ['public'],
+    input: z.object({
+      slug: propertySlugSchema,
+      unitSlug: unitSlugSchema,
+    }),
+    output: publicUnitViewSchema,
+    errors: ['not_found'],
+    idempotent: false,
+    featureIds: ['PA-02', 'PA-08'],
   },
   getUnitCalendar: {
     name: 'getUnitCalendar',
@@ -1457,6 +1476,58 @@ export const operations = {
     errors: ['invalid_move', 'not_allowed'],
     idempotent: true,
     featureIds: ['OW-25'],
+  },
+  getPageEditor: {
+    name: 'getPageEditor',
+    access: ['owner'],
+    input: z.object({
+      accountId: accountsRow.shape.id,
+      propertyId: propertiesRow.shape.id.nullable().optional(),
+    }),
+    output: pageEditorViewSchema,
+    errors: ['not_allowed', 'not_found'],
+    idempotent: false,
+    featureIds: ['OW-02', 'OW-11'],
+  },
+  savePageDraft: {
+    name: 'savePageDraft',
+    access: ['owner'],
+    input: z.object({
+      idempotencyKey: idempotencyKeySchema,
+      accountId: accountsRow.shape.id,
+      propertyId: propertiesRow.shape.id,
+      draft: propertyPageDraftSchema,
+      expectedDraftRev: propertyPagesRow.shape.draft_rev,
+    }),
+    output: savePageDraftResultViewSchema,
+    errors: ['invalid_move', 'not_allowed', 'not_found'],
+    idempotent: true,
+    featureIds: ['OW-02', 'OW-11'],
+  },
+  discardPageDraft: {
+    name: 'discardPageDraft',
+    access: ['owner'],
+    input: z.object({
+      idempotencyKey: idempotencyKeySchema,
+      accountId: accountsRow.shape.id,
+      propertyId: propertiesRow.shape.id,
+    }),
+    output: discardPageDraftResultViewSchema,
+    errors: ['not_allowed', 'not_found'],
+    idempotent: true,
+    featureIds: ['OW-02', 'OW-11'],
+  },
+  getPageChanges: {
+    name: 'getPageChanges',
+    access: ['owner'],
+    input: z.object({
+      accountId: accountsRow.shape.id,
+      propertyId: propertiesRow.shape.id.nullable().optional(),
+    }),
+    output: z.array(pageChangeItemSchema),
+    errors: ['not_allowed', 'not_found'],
+    idempotent: false,
+    featureIds: ['OW-02', 'OW-11'],
   },
 } as const satisfies Record<string, OperationSpec>;
 

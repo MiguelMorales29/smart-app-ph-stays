@@ -8,6 +8,7 @@ import {
 } from '../../lists/index.js';
 import { centavosSchema } from '../../money/index.js';
 import { calendarDateSchema } from '../../time/index.js';
+import { propertyPageDraftSchema } from '../tables/common.js';
 import {
   accountMembersRow,
   accountsRow,
@@ -38,6 +39,7 @@ import {
   unitsRow,
   weekdayRatesRow,
 } from '../tables/index.js';
+import { propertyViewSchema } from './public.js';
 
 export const ownerHomeCountsViewSchema = z.object({
   arrivals_today: z.int().min(0),
@@ -305,3 +307,28 @@ export const ownerUnitDetailViewSchema = z.object({
   amenity_ids: z.array(uuidSchema),
 });
 export type OwnerUnitDetailView = z.infer<typeof ownerUnitDetailViewSchema>;
+
+export const pageEditorViewSchema = z.object({
+  property_id: propertyPagesRow.shape.property_id,
+  draft: propertyPageDraftSchema,
+  published: propertyPageDraftSchema.nullable(),
+  draft_rev: propertyPagesRow.shape.draft_rev,
+  version: propertyPagesRow.shape.version,
+  draft_updated_at: propertyPagesRow.shape.draft_updated_at,
+  published_at: propertyPagesRow.shape.published_at,
+  preview: propertyViewSchema,
+});
+export type PageEditorView = z.infer<typeof pageEditorViewSchema>;
+
+export const savePageDraftResultViewSchema = z.object({
+  draft_rev: propertyPagesRow.shape.draft_rev,
+  draft_updated_at: isoTimestampSchema,
+});
+export type SavePageDraftResultView = z.infer<typeof savePageDraftResultViewSchema>;
+
+export const discardPageDraftResultViewSchema = z.object({
+  draft: propertyPageDraftSchema,
+  draft_rev: propertyPagesRow.shape.draft_rev,
+  draft_updated_at: isoTimestampSchema,
+});
+export type DiscardPageDraftResultView = z.infer<typeof discardPageDraftResultViewSchema>;
