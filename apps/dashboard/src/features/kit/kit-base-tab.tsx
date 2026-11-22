@@ -79,6 +79,8 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react';
 
+import { KitBaseUi1Section } from './kit-base-ui1-section';
+
 export function DualSurfaceShowcase({
   title,
   source,
@@ -517,6 +519,8 @@ export function KitBaseTab() {
               </Scrollspy>
             )}
           />
+
+          <KitBaseUi1Section />
         </div>
       </TooltipProvider>
     </Toaster>

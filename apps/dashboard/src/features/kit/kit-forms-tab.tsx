@@ -83,6 +83,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/component
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { Toggle } from '@smartapp/ui/components/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import { ToggleBookmark } from '@smartapp/ui/variants/toggle-group/toggle-bookmark';
+import { ToggleFavorite } from '@smartapp/ui/variants/toggle-group/toggle-favorite';
+import { ToggleGroupSpaced } from '@smartapp/ui/variants/toggle-group/toggle-group-spaced';
+
+import { KitFormsUi1Section } from './kit-forms-ui1-section';
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -206,6 +211,14 @@ function ChoicesDemo() {
         ))}
       </ToggleGroup>
       <Toggle>Listed only</Toggle>
+      <div className="space-y-1.5 border-t border-border pt-3">
+        <p className="text-xs font-medium text-muted-foreground">Variants</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <ToggleGroupSpaced />
+          <ToggleBookmark />
+          <ToggleFavorite />
+        </div>
+      </div>
       <NumberField defaultValue={2} min={1} max={20}>
         <Label>Guests</Label>
         <NumberFieldGroup>
@@ -633,6 +646,7 @@ export function KitFormsTab() {
           </p>
           <CompositionsDemo />
         </section>
+        <KitFormsUi1Section />
       </div>
     </>
   );

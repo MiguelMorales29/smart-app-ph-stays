@@ -28,6 +28,8 @@ import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import { UnitStatusBadge } from '@smartapp/ui/compositions/status-badge';
 import { QUICK_ADD_ITEMS } from '@/app/nav-config';
 
+import { KitPatternsUi1Section } from './kit-patterns-ui1-section';
+
 type Section = 'basics' | 'price' | 'rules';
 
 const HOLD = [
@@ -512,6 +514,8 @@ export function KitPatternsTab() {
           }}
         />
       </Block>
+
+      <KitPatternsUi1Section />
     </div>
   );
 }

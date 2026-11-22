@@ -71,6 +71,17 @@ Plan: `docs/prompts/P5-guide.md`. Decisions D65–D70. Claude reviews each PR (c
 - [ ] P5-7 Tests (Node 24.15, component and journey tests) and close-out
 - [ ] Gate: Lex installs a property on his iPhone, and edits and publishes the page from the phone
 
+### Component library expansion (D78, D83)
+
+Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
+
+- [x] UI-1 Food app components (forms, feedback, navigation) and plan updates
+- [ ] UI-2 Photos, colours and the picture maker (plus screen retrofits)
+- [ ] UI-3 Data and lists
+- [ ] UI-4 Dates, calendars and time
+- [ ] UI-5 Conversation, charts and stats
+- [ ] UI-6 Missing primitives and variants
+
 ## Later phases
 
 - [x] 2 Data shapes, demo data and the mock layer
