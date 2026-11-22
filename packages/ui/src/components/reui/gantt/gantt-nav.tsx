@@ -236,7 +236,7 @@ function GanttScaleSwitcher({
                   variant={nav.variant}
                   size={nav.size}
                   data-slot="gantt-scale-switcher"
-                  aria-label={labels.selectView}
+                  aria-label={`${labels.selectView}: ${labels.scales[scale]}`}
                   className={cn('gap-1', className)}
                 />
               }

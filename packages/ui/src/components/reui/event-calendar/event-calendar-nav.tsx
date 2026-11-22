@@ -282,7 +282,7 @@ function EventCalendarViewSwitcher({
                   variant={nav.variant}
                   size={nav.size}
                   data-slot="event-calendar-view-switcher"
-                  aria-label={labels.selectView}
+                  aria-label={`${labels.selectView}: ${viewLabel(view)}`}
                   className={cn('gap-1', nav.className, className)}
                   render={render}
                 />

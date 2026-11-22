@@ -406,6 +406,10 @@ function EventCalendarEvent<TData = unknown>({
     </>
   );
 
+  const srTimeDetails = `${timeLabel}${
+    segment.continuesBefore || segment.continuesAfter ? `, ${settings.i18n.labels.continues}` : ''
+  }`;
+
   const defaultProps = {
     type: 'button' as const,
     'data-slot': 'event-calendar-event',
@@ -417,17 +421,6 @@ function EventCalendarEvent<TData = unknown>({
     'data-preview': preview || undefined,
     'data-past': occurrence.end.getTime() < mountNow || undefined,
     title: preview || tooltipOn ? undefined : label,
-    'aria-label':
-      settings.i18n.functions.formatEventAriaLabel?.(
-        event.title,
-        timeLabel,
-        segment.continuesBefore || segment.continuesAfter,
-      ) ??
-      `${event.title}, ${timeLabel}${
-        segment.continuesBefore || segment.continuesAfter
-          ? `, ${settings.i18n.labels.continues}`
-          : ''
-      }`,
     // A background tint alone conveys selection, so the chip is a real toggle
     // wherever it is interactive (agenda rows never select, previews are inert).
     'aria-pressed': interactive ? isSelected : undefined,
@@ -484,6 +477,7 @@ function EventCalendarEvent<TData = unknown>({
     children: (
       <>
         {content}
+        {!preview && <span className="sr-only">, {srTimeDetails}</span>}
         {resizeHandles}
       </>
     ),
