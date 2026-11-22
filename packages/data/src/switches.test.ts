@@ -114,6 +114,11 @@ describe('packages/data switches controller', () => {
 
     const fallback = parseSwitchStateFromSearch('?as=bogus&pack=nope&clock=invalid');
     expect(fallback).toEqual(createDefaultSwitchState());
+
+    const planLimitOff = parseSwitchStateFromSearch('?planLimit=off');
+    expect(planLimitOff.planLimit).toBe('off');
+    expect(serializeSwitchStateToSearch(planLimitOff)).toContain('planLimit=off');
+    expect(serializeSwitchStateToSearch(createDefaultSwitchState())).not.toContain('planLimit=');
   });
 
   it('resolves golden clock and relative +1h/+1d offsets', () => {

@@ -5,6 +5,7 @@ import {
   appError,
   centavos,
   checkSlugFormat,
+  countPlanUnits,
   err,
   formatWallTime12h,
   getPageChangesList,
@@ -30,6 +31,7 @@ import {
   type OwnerUnitDetailView,
   type OwnerUnitListItemView,
   type PaymentAccountsRow,
+  type PlanCountableUnit,
   type PropertiesRow,
   type PropertyPageDraft,
   type RateOverridesRow,
@@ -110,6 +112,7 @@ export interface OwnerHandlerContext {
   readonly ids: DemoIdAllocator;
   readonly mediaConfig: MediaConfig;
   readonly auth: MemoryAuthState;
+  readonly enforcePlanLimit?: boolean | undefined;
   readonly beforeCall: <K extends OperationName>(
     opName: K,
     session: Session,
@@ -167,20 +170,27 @@ function hasOverlappingWeeklyHours(hours: WeeklyHours | null): boolean {
 export function checkUnitLimitForAccount(
   world: DemoWorld,
   accountId: string,
-  addingCount: number,
+  addingUnits: readonly PlanCountableUnit[],
+  enforcePlanLimit = true,
 ): Result<void> {
-  // Imitates DB plan unit-limit trigger: active units <= plan.included_units + subscription.extra_units.
+  if (!enforcePlanLimit) {
+    return ok(undefined);
+  }
+  // Imitates DB plan unit-limit trigger (O4): active plan units <= plan.included_units + subscription.extra_units.
+  // Each room of bed spaces counts as Math.ceil(beds / 12) units; standalone units count as 1.
   // Pending accounts without an active subscription fall back to the standard plan's included_units (5).
-  const used = world.units.filter(
+  const activeAccountUnits = world.units.filter(
     (u) => u.account_id === accountId && u.archived_at === null,
-  ).length;
+  );
+  const used = countPlanUnits(activeAccountUnits);
+  const after = countPlanUnits([...activeAccountUnits, ...addingUnits]);
   const sub = world.subscriptions.find((s) => s.account_id === accountId);
   const plan =
     (sub ? world.plans.find((p) => p.id === sub.plan_id) : undefined) ??
     world.plans.find((p) => p.code === 'standard');
   const limit = (plan?.included_units ?? 5) + (sub?.extra_units ?? 0);
 
-  if (used + addingCount > limit) {
+  if (after > limit) {
     return err(reasonError('not_allowed', 'unit_limit', { limit, used }));
   }
   return ok(undefined);
@@ -262,7 +272,7 @@ function toOwnerPhotoView(
   mediaConfig: MediaConfig,
 ): OwnerPhotoView {
   const file = world.files.find((f) => f.id === photo.file_id);
-  const url = file ? mediaUrl(file, mediaConfig) : '/demo-media/missing.webp';
+  const url = file ? mediaUrl(file, mediaConfig) : '/missing.webp';
   return { ...photo, url };
 }
 
@@ -451,6 +461,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
     ids,
     mediaConfig,
     auth,
+    enforcePlanLimit = true,
     beforeCall,
     requireOwnerAccountMatch,
     runIdempotent,
@@ -1320,6 +1331,21 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             const stale = checkNotStale(input.expectedUpdatedAt, existing.updated_at);
             if (!stale.ok) return stale;
 
+            const modeChanged = existing.mode !== input.mode;
+            if (modeChanged) {
+              // Imitates DB rule: units.mode is locked once a unit has any booking or lease.
+              const hasBookingOrLease =
+                world.bookings.some((b) => b.unit_id === existing.id) ||
+                world.unit_occupancy.some(
+                  (o) =>
+                    o.unit_id === existing.id &&
+                    (o.kind === 'booking' || o.kind === 'lease' || o.kind === 'hold'),
+                );
+              if (hasBookingOrLease) {
+                return err(reasonError('invalid_move', 'mode_locked'));
+              }
+            }
+
             savedUnit = {
               ...existing,
               slug: input.slug,
@@ -1337,8 +1363,51 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
               updated_at: nowIso,
             };
             world.units[unitIdx] = savedUnit;
+
+            if (modeChanged) {
+              if (existing.mode === 'short_stay') {
+                for (let i = world.unit_stay_terms.length - 1; i >= 0; i -= 1) {
+                  if (world.unit_stay_terms[i]?.unit_id === existing.id) {
+                    world.unit_stay_terms.splice(i, 1);
+                  }
+                }
+                for (let i = world.weekday_rates.length - 1; i >= 0; i -= 1) {
+                  if (world.weekday_rates[i]?.unit_id === existing.id) {
+                    world.weekday_rates.splice(i, 1);
+                  }
+                }
+                for (let i = world.rate_overrides.length - 1; i >= 0; i -= 1) {
+                  if (world.rate_overrides[i]?.unit_id === existing.id) {
+                    world.rate_overrides.splice(i, 1);
+                  }
+                }
+                for (let i = world.unit_fees.length - 1; i >= 0; i -= 1) {
+                  if (world.unit_fees[i]?.unit_id === existing.id) {
+                    world.unit_fees.splice(i, 1);
+                  }
+                }
+              } else {
+                for (let i = world.unit_lease_terms.length - 1; i >= 0; i -= 1) {
+                  if (world.unit_lease_terms[i]?.unit_id === existing.id) {
+                    world.unit_lease_terms.splice(i, 1);
+                  }
+                }
+              }
+            }
           } else {
-            const limitCheck = checkUnitLimitForAccount(world, acctCheck.data, 1);
+            const limitCheck = checkUnitLimitForAccount(
+              world,
+              acctCheck.data,
+              [
+                {
+                  property_id: property.id,
+                  unit_type: input.unitType,
+                  group_label: input.groupLabel,
+                  archived_at: null,
+                },
+              ],
+              enforcePlanLimit,
+            );
             if (!limitCheck.ok) return limitCheck;
 
             const existingPropUnits = world.units.filter((u) => u.property_id === property.id);
@@ -1440,7 +1509,17 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           if (!property) return err(appError('not_found'));
 
           // Imitates unit limit check across all beds being created in one bulk operation (O4/D24).
-          const limitCheck = checkUnitLimitForAccount(world, acctCheck.data, input.count);
+          const limitCheck = checkUnitLimitForAccount(
+            world,
+            acctCheck.data,
+            Array.from({ length: input.count }, () => ({
+              property_id: property.id,
+              unit_type: 'bed_space' as const,
+              group_label: input.groupLabel,
+              archived_at: null,
+            })),
+            enforcePlanLimit,
+          );
           if (!limitCheck.ok) return limitCheck;
 
           const nowIso = nowIsoFromClock(clock);
@@ -1673,7 +1752,12 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
 
           if (!input.archived && unit.archived_at !== null) {
             // Imitates plan unit-limit check when restoring an archived unit.
-            const limitCheck = checkUnitLimitForAccount(world, acctCheck.data, 1);
+            const limitCheck = checkUnitLimitForAccount(
+              world,
+              acctCheck.data,
+              [{ ...unit, archived_at: null }],
+              enforcePlanLimit,
+            );
             if (!limitCheck.ok) return limitCheck;
           }
 

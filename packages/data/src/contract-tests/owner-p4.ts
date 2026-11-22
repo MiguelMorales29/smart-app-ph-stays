@@ -843,7 +843,8 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       );
       expect(reordered[0]?.id).toBe(createdUnit.unit.id);
 
-      // Ulap Suites currently has 3 active units (limit = 5). Bulk-creating 2 bed spaces reaches 5.
+      // Ulap Suites currently has 3 active standalone units (limit = 5).
+      // O4: a room of 1–12 bed spaces counts as 1 plan unit, so 2 beds in Attic Room = 4/5 plan units.
       const bedsKey = nextKey();
       const beds = assertOk(
         await source.createBedSpaces(
@@ -868,7 +869,53 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       expect(beds).toHaveLength(2);
       expect(beds[0]?.group_label).toBe('Attic Room');
 
-      // Now at 5/5 active units -> creating 1 more returns unit_limit with { limit: 5, used: 5 }
+      // Adding 10 more beds to the same room (12 total) still counts as 1 plan unit (4/5 total).
+      const moreBeds = assertOk(
+        await source.createBedSpaces(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            groupLabel: 'Attic Room',
+            namePrefix: 'Bed',
+            count: 10,
+            startNumber: 3,
+            mode: 'long_term',
+            bathrooms: 1,
+            description: 'Shared attic room.',
+            amenityIds: [DEMO_IDS.amenities.wifi],
+            monthlyRentCentavos: centavos(450_000),
+            baseNightlyCentavos: null,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(moreBeds).toHaveLength(10);
+
+      // Adding a 13th bed to Attic Room turns that room into 2 plan units -> 5/5 total.
+      const thirteenthBed = assertOk(
+        await source.createBedSpaces(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            groupLabel: 'Attic Room',
+            namePrefix: 'Bed',
+            count: 1,
+            startNumber: 13,
+            mode: 'long_term',
+            bathrooms: 1,
+            description: 'Shared attic room.',
+            amenityIds: [DEMO_IDS.amenities.wifi],
+            monthlyRentCentavos: centavos(450_000),
+            baseNightlyCentavos: null,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(thirteenthBed).toHaveLength(1);
+
+      // Now at 5/5 plan units -> creating 1 more standalone unit returns unit_limit with { limit: 5, used: 5 }
       const limitErr = assertErr(
         await source.saveUnit(
           { ...newUnitInput, idempotencyKey: nextKey(), slug: 'sixth-unit', name: 'Sixth Unit' },
@@ -881,6 +928,86 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         limit: 5,
         used: 5,
       });
+
+      // Mode lock (FIX-1 H): a unit with an existing booking cannot change mode.
+      const lockedModeErr = assertErr(
+        await source.saveUnit(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            unitId: DEMO_IDS.ulapSuites.units.studioFog,
+            expectedUpdatedAt: null,
+            name: 'Studio Fog',
+            slug: 'studio-fog',
+            mode: 'long_term',
+            unitType: 'entire_place',
+            groupLabel: null,
+            description: 'Attempted mode switch on a unit with bookings.',
+            maxGuests: 2,
+            bedrooms: 1,
+            beds: 1,
+            bathrooms: 1,
+            floorAreaSqm: 26,
+            arrivalInfo: null,
+            amenityIds: [DEMO_IDS.amenities.wifi],
+            stayTerms: null,
+            leaseTerms: null,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(lockedModeErr.code).toBe('invalid_move');
+      expect(readErrorDetails(lockedModeErr).reason).toBe('mode_locked');
+      expect(lockedModeErr.message).toBe(words.errorReasons.mode_locked);
+
+      // Mode switch on a unit with no bookings or leases succeeds and removes the old stay terms.
+      const switchedToLong = assertOk(
+        await source.saveUnit(
+          {
+            ...newUnitInput,
+            idempotencyKey: nextKey(),
+            unitId: createdUnit.unit.id,
+            expectedUpdatedAt: null,
+            mode: 'long_term',
+            stayTerms: null,
+            leaseTerms: {
+              monthly_rent_centavos: centavos(1_800_000),
+              min_lease_months: 6,
+              advance_months: 1,
+              deposit_months: 1,
+              reservation_fee_centavos: centavos(0),
+              available_from: '2026-12-20',
+              inclusions: 'Water and Wi-Fi',
+            },
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(switchedToLong.unit.mode).toBe('long_term');
+      expect(switchedToLong.stay_terms).toBeNull();
+      expect(switchedToLong.weekday_rates).toEqual([]);
+      expect(switchedToLong.rate_overrides).toEqual([]);
+      expect(switchedToLong.fees).toEqual([]);
+      expect(switchedToLong.lease_terms?.monthly_rent_centavos).toBe(centavos(1_800_000));
+
+      // Switching back from long_term to short_stay removes the old lease terms row.
+      const switchedBackToShort = assertOk(
+        await source.saveUnit(
+          {
+            ...newUnitInput,
+            idempotencyKey: nextKey(),
+            unitId: createdUnit.unit.id,
+            expectedUpdatedAt: switchedToLong.unit.updated_at,
+            mode: 'short_stay',
+            stayTerms: null,
+            leaseTerms: null,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(switchedBackToShort.unit.mode).toBe('short_stay');
+      expect(switchedBackToShort.lease_terms).toBeNull();
 
       // Archive Cloud Loft -> now 4/5 -> restore comes back unlisted
       const archived = assertOk(

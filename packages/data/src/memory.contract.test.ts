@@ -4,14 +4,17 @@
  * Phase 11 runs the exact same `runContractTests(makeSource)` suite against
  * the HTTP adapter and the seeded development database.
  */
-import { describe, expect, it } from 'vitest';
+import { DEMO_IDS, centavos, readErrorDetails } from '@smartapp/core';
+import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { runContractTests } from './contract-tests/index.js';
 import {
+  clearMemoryUploads,
   createValidatedDataSource,
   getDataSource,
   mediaUrl,
+  registerMemoryUploadUrl,
   type ParsedDataSourceHandlers,
 } from './index.js';
 import { createMemorySource } from './mocks/memory.js';
@@ -251,6 +254,243 @@ describe('getDataSource, mediaUrl, and adapter options', () => {
         expect(u.price_from).toBeGreaterThanOrEqual(220_000);
         expect(u.price_from).toBeLessThanOrEqual(480_000);
       }
+    }
+  });
+
+  afterEach(() => {
+    clearMemoryUploads();
+  });
+
+  it('serves uploaded unit photos across owner unit page, units list, and storefront getProperty/getPublicUnit (FIX-1 B)', async () => {
+    const source = createMemorySource({
+      pack: 'qa',
+      clock: { now: () => new Date(GOLDEN_CLOCK_ISO) },
+      storefrontOrigin: 'http://localhost:3100',
+    });
+    const session = {
+      role: 'owner' as const,
+      accountId: DEMO_IDS.ulapSuites.account,
+      profileId: DEMO_IDS.people.owners.ulapSuites,
+    };
+
+    const created = await source.saveUnit(
+      {
+        idempotencyKey: 'fix1-b-unit',
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        unitId: null,
+        expectedUpdatedAt: null,
+        name: 'Garden Studio',
+        slug: 'garden-studio',
+        mode: 'short_stay',
+        unitType: 'entire_place',
+        groupLabel: null,
+        description: 'Bright studio with garden view.',
+        maxGuests: 2,
+        bedrooms: 1,
+        beds: 1,
+        bathrooms: 1,
+        floorAreaSqm: 28,
+        arrivalInfo: null,
+        amenityIds: [DEMO_IDS.amenities.wifi],
+        stayTerms: {
+          base_nightly_centavos: centavos(280_000),
+          base_guests: 2,
+          min_nights: 1,
+          max_nights: 14,
+          prep_nights: 0,
+          weekly_discount_percent: 0,
+          monthly_discount_percent: 0,
+          down_payment_percent: 30,
+          hold_minutes: 60,
+          advance_notice_days: 0,
+          booking_window_days: 365,
+        },
+        leaseTerms: null,
+      },
+      session,
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const uploadedUrls: string[] = [];
+    const fileIds: string[] = [];
+    for (let i = 1; i <= 3; i += 1) {
+      const slot = await source.requestUpload(
+        {
+          idempotencyKey: `fix1-b-req-${i}`,
+          accountId: DEMO_IDS.ulapSuites.account,
+          purpose: 'unit_photo',
+          mime: 'image/webp',
+          sizeBytes: 32_000,
+          width: 1200,
+          height: 900,
+          filename: `garden-${i}.webp`,
+        },
+        session,
+      );
+      expect(slot.ok).toBe(true);
+      if (!slot.ok) return;
+      const dataUrl = `data:image/webp;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==#${i}`;
+      registerMemoryUploadUrl(slot.data.file.id, dataUrl);
+      uploadedUrls.push(dataUrl);
+      const confirmed = await source.confirmUpload(
+        {
+          idempotencyKey: `fix1-b-conf-${i}`,
+          accountId: DEMO_IDS.ulapSuites.account,
+          fileId: slot.data.file.id,
+          width: 1200,
+          height: 900,
+          usedByTable: 'listing_photos',
+          usedById: created.data.unit.id,
+        },
+        session,
+      );
+      expect(confirmed.ok).toBe(true);
+      fileIds.push(slot.data.file.id);
+    }
+
+    const savedPhotos = await source.saveListingPhotos(
+      {
+        idempotencyKey: 'fix1-b-photos',
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        unitId: created.data.unit.id,
+        photos: fileIds.map((fileId, idx) => ({ fileId, altText: `Garden view ${idx + 1}` })),
+      },
+      session,
+    );
+    expect(savedPhotos.ok).toBe(true);
+
+    const listed = await source.setUnitStatus(
+      {
+        idempotencyKey: 'fix1-b-list',
+        accountId: DEMO_IDS.ulapSuites.account,
+        unitId: created.data.unit.id,
+        status: 'listed',
+        expectedUpdatedAt: created.data.unit.updated_at,
+      },
+      session,
+    );
+    expect(listed.ok).toBe(true);
+
+    const ownerDetail = await source.getOwnerUnit(
+      { accountId: DEMO_IDS.ulapSuites.account, unitId: created.data.unit.id },
+      session,
+    );
+    expect(ownerDetail.ok).toBe(true);
+    if (ownerDetail.ok) {
+      expect(ownerDetail.data.photos.map((p) => p.url)).toEqual(uploadedUrls);
+    }
+
+    const ownerList = await source.listOwnerUnits(
+      {
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        includeArchived: false,
+      },
+      session,
+    );
+    expect(ownerList.ok).toBe(true);
+    if (ownerList.ok) {
+      const card = ownerList.data.find((u) => u.unit.id === created.data.unit.id);
+      expect(card?.cover_photo?.url).toBe(uploadedUrls[0]);
+    }
+
+    const storefrontProp = await source.getProperty({ slug: 'ulap-suites' }, { role: 'guest' });
+    expect(storefrontProp.ok).toBe(true);
+    if (storefrontProp.ok) {
+      const publicCard = storefrontProp.data.units.find((u) => u.id === created.data.unit.id);
+      expect(publicCard?.photos.map((p) => p.url)).toEqual(uploadedUrls);
+    }
+
+    const storefrontUnit = await source.getPublicUnit(
+      { slug: 'ulap-suites', unitSlug: 'garden-studio' },
+      { role: 'guest' },
+    );
+    expect(storefrontUnit.ok).toBe(true);
+    if (storefrontUnit.ok) {
+      expect(storefrontUnit.data.photos.map((p) => p.url)).toEqual(uploadedUrls);
+    }
+  });
+
+  it('bypasses plan unit limit when enforcePlanLimit is false (FIX-1 G)', async () => {
+    const source = createMemorySource({
+      pack: 'marketing',
+      clock: { now: () => new Date(GOLDEN_CLOCK_ISO) },
+      enforcePlanLimit: false,
+    });
+    const session = {
+      role: 'owner' as const,
+      accountId: DEMO_IDS.ulapSuites.account,
+      profileId: DEMO_IDS.people.owners.ulapSuites,
+    };
+
+    // Ulap Suites in marketing pack starts at 8 of 8 units.
+    const extra = await source.saveUnit(
+      {
+        idempotencyKey: 'fix1-g-bypass',
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        unitId: null,
+        expectedUpdatedAt: null,
+        name: 'Testing Suite 9',
+        slug: 'testing-suite-9',
+        mode: 'short_stay',
+        unitType: 'entire_place',
+        groupLabel: null,
+        description: 'Added with plan limit switched off for testing.',
+        maxGuests: 2,
+        bedrooms: 1,
+        beds: 1,
+        bathrooms: 1,
+        floorAreaSqm: 30,
+        arrivalInfo: null,
+        amenityIds: [],
+        stayTerms: null,
+        leaseTerms: null,
+      },
+      session,
+    );
+    expect(extra.ok).toBe(true);
+
+    // Confirm default source with enforcePlanLimit=true blocks at 8/8.
+    const enforced = createMemorySource({
+      pack: 'marketing',
+      clock: { now: () => new Date(GOLDEN_CLOCK_ISO) },
+    });
+    const blocked = await enforced.saveUnit(
+      {
+        idempotencyKey: 'fix1-g-blocked',
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        unitId: null,
+        expectedUpdatedAt: null,
+        name: 'Testing Suite 9',
+        slug: 'testing-suite-9',
+        mode: 'short_stay',
+        unitType: 'entire_place',
+        groupLabel: null,
+        description: 'Blocked at 8/8.',
+        maxGuests: 2,
+        bedrooms: 1,
+        beds: 1,
+        bathrooms: 1,
+        floorAreaSqm: 30,
+        arrivalInfo: null,
+        amenityIds: [],
+        stayTerms: null,
+        leaseTerms: null,
+      },
+      session,
+    );
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(readErrorDetails(blocked.error)).toMatchObject({
+        reason: 'unit_limit',
+        limit: 8,
+        used: 8,
+      });
     }
   });
 });

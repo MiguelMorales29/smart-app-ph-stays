@@ -35,7 +35,7 @@ describe('errors', () => {
   });
 
   it('validates all closed error reasons and words', () => {
-    expect(ERROR_REASONS).toHaveLength(15);
+    expect(ERROR_REASONS).toHaveLength(16);
     for (const reason of ERROR_REASONS) {
       expect(errorReasonSchema.parse(reason)).toBe(reason);
       expect(words.errorReasons[reason].trim().length).toBeGreaterThan(0);
