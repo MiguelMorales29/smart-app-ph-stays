@@ -41,7 +41,10 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
       logoShape: 'rounded',
       fontPair: 'bold',
       banners: media.banners,
+      bannerAutoplay: true,
       bannerSeconds: 5,
+      unitCardAutoplay: false,
+      unitCardSeconds: 7,
       announcement: {
         text: '22-hour private resort stay (2:00 pm check-in to 12:00 nn checkout) with fresh hot spring water filled for your group.',
         tone: 'success',

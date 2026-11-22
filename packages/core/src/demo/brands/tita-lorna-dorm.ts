@@ -62,7 +62,10 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       logoShape: 'rounded',
       fontPair: 'homey',
       banners: [],
+      bannerAutoplay: true,
       bannerSeconds: 5,
+      unitCardAutoplay: false,
+      unitCardSeconds: 7,
       announcement: null,
       sections: {
         banners: false,

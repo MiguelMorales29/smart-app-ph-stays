@@ -41,7 +41,10 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
       logoShape: 'rounded',
       fontPair: 'modern',
       banners: media.banners,
+      bannerAutoplay: true,
       bannerSeconds: 5,
+      unitCardAutoplay: false,
+      unitCardSeconds: 7,
       announcement: {
         text: 'Now scheduling viewings for Studio A and 1BR B — small pets welcome.',
         tone: 'info',

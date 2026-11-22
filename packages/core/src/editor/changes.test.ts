@@ -39,7 +39,10 @@ function makeBaseDraft(): PropertyPageDraft {
           link: null,
         },
       ],
+      bannerAutoplay: true,
       bannerSeconds: 5,
+      unitCardAutoplay: false,
+      unitCardSeconds: 7,
       announcement: {
         text: 'Sunrise slots fill fast on weekends.',
         tone: 'info',

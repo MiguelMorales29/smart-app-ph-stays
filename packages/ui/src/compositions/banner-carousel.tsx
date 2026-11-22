@@ -38,6 +38,8 @@ export interface BannerCarouselLabels {
 
 export interface BannerCarouselProps {
   readonly slides: readonly BannerSlide[];
+  /** Whether 2+ slides advance automatically (owner option, default true). */
+  readonly autoplay?: boolean | undefined;
   /** Seconds per slide, set by the owner (3 to 10, default 5). */
   readonly seconds?: number | undefined;
   readonly sizes?: string | undefined;
@@ -97,7 +99,7 @@ export function BannerFrame({
       })}
       {hasCopy ? (
         <div className="absolute inset-0 flex items-end bg-linear-to-t from-scrim via-scrim/45 to-transparent to-70% p-4 text-on-scrim sm:p-5 md:p-6">
-          <div className="banner-copy flex max-w-lg flex-col items-start gap-1">
+          <div className="banner-copy flex max-w-xl flex-col items-start gap-1">
             {title ? (
               <p
                 className={cn(
@@ -111,7 +113,7 @@ export function BannerFrame({
             {description ? (
               <p
                 className={cn(
-                  'text-sm text-on-scrim/90 md:text-base',
+                  'text-sm leading-snug text-on-scrim/90 md:text-base',
                   !slide.descriptionSlot && 'line-clamp-1 md:line-clamp-2',
                 )}
               >

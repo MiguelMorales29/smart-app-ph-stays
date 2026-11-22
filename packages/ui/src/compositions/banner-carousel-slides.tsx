@@ -35,6 +35,7 @@ const ARROW =
  */
 export default function BannerCarouselSlides({
   slides,
+  autoplay = true,
   seconds,
   sizes = '(min-width: 1280px) 1024px, 100vw',
   labels,
@@ -51,11 +52,12 @@ export default function BannerCarouselSlides({
   const [focusPaused, setFocusPaused] = useState(false);
   const reducedMotion = useReducedMotion();
   const delay = clampSeconds(seconds) * 1000;
-  const autoplays = !reducedMotion && !paused && !focusPaused;
+  const autoplayEnabled = autoplay && !reducedMotion;
+  const autoplays = autoplayEnabled && !paused && !focusPaused;
 
   const plugins = useMemo(
     () =>
-      !reducedMotion && !paused
+      autoplayEnabled && !paused
         ? [
             Autoplay({
               delay,
@@ -65,7 +67,7 @@ export default function BannerCarouselSlides({
             }),
           ]
         : [],
-    [reducedMotion, paused, delay],
+    [autoplayEnabled, paused, delay],
   );
 
   const opts = useMemo(
@@ -132,7 +134,7 @@ export default function BannerCarouselSlides({
           (!(nextTarget instanceof Node) || !rootRef.current.contains(nextTarget))
         ) {
           setFocusPaused(false);
-          if (!paused && !reducedMotion) {
+          if (autoplayEnabled && !paused) {
             api?.plugins().autoplay?.play();
           }
         }
@@ -195,7 +197,7 @@ export default function BannerCarouselSlides({
             );
           })}
         </div>
-        {reducedMotion ? null : (
+        {autoplayEnabled ? (
           <button
             type="button"
             aria-label={paused ? labels.play : labels.pause}
@@ -209,7 +211,7 @@ export default function BannerCarouselSlides({
               <PauseIcon aria-hidden="true" className="size-3.5 fill-current" />
             )}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
