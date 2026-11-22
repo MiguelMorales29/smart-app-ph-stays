@@ -14,7 +14,7 @@ Read first: AGENTS.md, docs/component-catalog.md, docs/ui-library.md, the smarta
 3. After each install: replace every raw colour with our tokens (brand guard must pass), keep 16 px inputs and the 44 px control height, use our radius and motion tokens, and keep Base UI (no Radix imports).
 4. No new package without listing its name, version, licence (MIT, Apache-2.0, ISC or CC0 only) and gzipped size in the PR; never the motion package unless O15 is decided as (b).
 5. Add each component to /kit (a new "Library" tab with sections per batch) with a light and a dark sample, and add a row to docs/ui-library.md (name, source, version, licence, edits).
-6. Don't change any screen or existing composition. Don't weaken eslint or tsconfig; fix the installed file instead and log the edit.
+6. Don't change any screen or existing composition, except the retrofit list in UI-2. Don't weaken eslint or tsconfig; fix the installed file instead and log the edit.
 7. Run pnpm install, pnpm format:check and pnpm check only (no local build). Open the PR, wait for green CI (bundle budget included), don't merge.
 ```
 
@@ -25,6 +25,14 @@ Branch `ag/ui-1-food-components`. From catalog section A1: action-bar, aspect-ra
 ## UI-2 · Photos, colours and the picture maker
 
 Branch `ag/ui-2-photos-colours`. Cropper, compare-slider, ReUI color-picker, Dice UI color-swatch, masonry; the compositions avatar-maker, face-picker, face-customiser, person-avatar, avatar-theme with the DiceBear styles adventurer, lorelei, micah, open-peeps, pixel-art and thumbs (credits shown on screen as in the food app). A kit sample of the "Your picture" sheet with Faces / Photo and the circle cropper, like the food app's Settings → Account.
+
+### UI-2 also retrofits the screens that already exist (Lex, 22 Nov)
+
+Unlike the other batches, UI-2 changes existing screens, because these are general pieces where the food app's version is better:
+
+- **Settings → Account → picture:** replace our picker with the food app's "Your picture" sheet: Faces (styles, 12 faces, Customise this face, Surprise me, background colours) and Photo (pick a photo, circle cropper with zoom, "We keep a 256 px copy"), the pencil badge on the avatar, and the DiceBear credits line. Uploading your own photo needs a photo field on the profile: add `profiles.photo_file_id` and a `setProfilePicture` operation to the contract and the memory adapter (this pulls "upload your own profile photo" forward from Phase 8, D70).
+- **Owner avatar everywhere** (sidebar account menu, top bar, Home) uses the same `person-avatar` so a picked face or photo shows the same in every place.
+- **Then the general pieces from UI-1** replace hand-made ones where they exist: `copy-button` (web address, payment accounts), `otp-resend` (sign-up and password codes), `page-header`, `info-list` (Settings summaries). List each replaced spot in the PR.
 
 ## UI-3 · Data and lists
 
