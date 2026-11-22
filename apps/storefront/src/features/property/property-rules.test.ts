@@ -14,6 +14,7 @@ import {
   isAnnouncementActive,
   officialPropertyAddress,
   orderUnitsForProperty,
+  pickNextAutoplayCardId,
   resolveBannerHref,
   resolveContactLinks,
   resolveHeroPhotos,
@@ -186,6 +187,20 @@ describe('property-rules', () => {
     expect(ulapCards[0]?.kind).toBe('unit');
     expect(ulapCards[0]?.factsLine).toContain('Whole place');
     expect(ulapCards[0]?.highlightChip).not.toBeNull();
+    expect(ulapCards[0]?.topAmenities.length).toBeGreaterThan(0);
+    expect(ulapCards[0]?.topAmenities.length).toBeLessThanOrEqual(6);
+
+    // Every Ulap Suites unit's cover photo is a bedroom or living-room photo, never a bathroom.
+    for (const card of ulapCards) {
+      expect(card.coverAlt.toLowerCase()).not.toContain('bathroom');
+    }
+
+    // Staggered autoplay advances one visible card at a time in round-robin order.
+    expect(pickNextAutoplayCardId(['a', 'b', 'c'], null)).toBe('a');
+    expect(pickNextAutoplayCardId(['a', 'b', 'c'], 'a')).toBe('b');
+    expect(pickNextAutoplayCardId(['a', 'b', 'c'], 'c')).toBe('a');
+    expect(pickNextAutoplayCardId(['b', 'c'], 'a')).toBe('b');
+    expect(pickNextAutoplayCardId([], 'a')).toBeNull();
 
     const mixed = groupDisplayCardsByMode([ulapCards[0]!, lornaCards[0]!]);
     expect(mixed.grouped).toBe(true);

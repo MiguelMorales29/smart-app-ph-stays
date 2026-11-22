@@ -6,7 +6,7 @@ import { CalendarIcon, MessageSquareIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { PropertyContactSheet } from './PropertyContactSheet';
+import { LazyPropertyContactSheet } from './LazySheets';
 
 export interface PropertyActionBarProps {
   readonly propertyName: string;
@@ -18,7 +18,7 @@ export interface PropertyActionBarProps {
 /**
  * Sticky action bar on phones & tablets (<1024 px, part 15 & D76):
  * "Check dates" (single unit → unit page, multiple → `#units`) and "Message", which opens
- * `PropertyContactSheet` with the owner's configured channels (no `/inquire` in wave 1).
+ * the lazy-loaded `PropertyContactSheet` with the owner's channels (no `/inquire` in wave 1).
  */
 export function PropertyActionBar({
   propertyName,
@@ -27,6 +27,7 @@ export function PropertyActionBar({
   replyHours,
 }: PropertyActionBarProps) {
   const [contactOpen, setContactOpen] = useState(false);
+  const [contactMounted, setContactMounted] = useState(false);
 
   return (
     <>
@@ -51,7 +52,10 @@ export function PropertyActionBar({
         <Button
           type="button"
           variant={checkDatesHref ? 'outline' : 'default'}
-          onClick={() => setContactOpen(true)}
+          onClick={() => {
+            setContactMounted(true);
+            setContactOpen(true);
+          }}
           className={
             checkDatesHref
               ? 'min-h-12 shrink-0 gap-2 px-4 text-base font-medium'
@@ -63,13 +67,15 @@ export function PropertyActionBar({
         </Button>
       </div>
 
-      <PropertyContactSheet
-        open={contactOpen}
-        onOpenChange={setContactOpen}
-        propertyName={propertyName}
-        contact={contact}
-        replyHours={replyHours}
-      />
+      {contactMounted ? (
+        <LazyPropertyContactSheet
+          open={contactOpen}
+          onOpenChange={setContactOpen}
+          propertyName={propertyName}
+          contact={contact}
+          replyHours={replyHours}
+        />
+      ) : null}
     </>
   );
 }

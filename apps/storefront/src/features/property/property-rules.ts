@@ -83,6 +83,12 @@ export type GroupedUnitsResult =
       readonly units: readonly PublicUnitCardView[];
     };
 
+export interface UnitCardPhoto {
+  readonly fileId: string;
+  readonly url: string;
+  readonly alt: string;
+}
+
 export interface UnitDisplayCard {
   readonly id: string;
   readonly kind: 'unit' | 'room';
@@ -94,10 +100,17 @@ export interface UnitDisplayCard {
   readonly badgeLabel: string | null;
   readonly coverUrl: string | null;
   readonly coverAlt: string;
+  readonly photos: readonly UnitCardPhoto[];
   readonly photoCount: number;
   readonly priceText: string | null;
   readonly highlightChip: string | null;
+  readonly maxGuests: number;
+  readonly bedrooms: number;
   readonly bedCount: number;
+  readonly bathrooms: number;
+  readonly floorAreaSqm: number | null;
+  readonly description: string | null;
+  readonly topAmenities: readonly PublicAmenityView[];
 }
 
 export type GroupedDisplayCardsResult =
@@ -488,6 +501,54 @@ function lowestPriceTextForGroup(units: readonly PublicUnitCardView[]): string |
   return `from ${formatPeso(Math.min(...amounts))} a month`;
 }
 
+/** Resolves up to 6 unit amenities from `amenity_ids` (no extra queries), keeping property highlights first. */
+export function resolveUnitTopAmenities(
+  unitAmenityIds: readonly string[],
+  amenitiesById: ReadonlyMap<string, PublicAmenityView>,
+  propertyHighlightIds: readonly string[] = [],
+  limit = 6,
+): readonly PublicAmenityView[] {
+  if (unitAmenityIds.length === 0 || amenitiesById.size === 0) return [];
+  const highlightRank = new Map<string, number>();
+  propertyHighlightIds.forEach((id, index) => {
+    if (!highlightRank.has(id)) highlightRank.set(id, index);
+  });
+
+  const matched: PublicAmenityView[] = [];
+  const seen = new Set<string>();
+  for (const id of unitAmenityIds) {
+    if (seen.has(id)) continue;
+    const found = amenitiesById.get(id);
+    if (found) {
+      seen.add(id);
+      matched.push(found);
+    }
+  }
+
+  return matched
+    .sort((a, b) => {
+      const aRank = highlightRank.get(a.id);
+      const bRank = highlightRank.get(b.id);
+      if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+      if (aRank !== undefined) return -1;
+      if (bRank !== undefined) return 1;
+      return a.sort_order - b.sort_order;
+    })
+    .slice(0, limit);
+}
+
+/** Round-robin selector for staggered unit-card photo autoplay: advances one visible card per tick. */
+export function pickNextAutoplayCardId(
+  eligibleIds: readonly string[],
+  lastId: string | null,
+): string | null {
+  if (eligibleIds.length === 0) return null;
+  if (!lastId) return eligibleIds[0] ?? null;
+  const currentIdx = eligibleIds.indexOf(lastId);
+  if (currentIdx === -1) return eligibleIds[0] ?? null;
+  return eligibleIds[(currentIdx + 1) % eligibleIds.length] ?? null;
+}
+
 /**
  * Turns ordered units into display cards (D81):
  * - Bed spaces sharing a non-empty `group_label` collapse into one room card
@@ -538,7 +599,12 @@ export function buildUnitDisplayCards(
   return entries.map((entry): UnitDisplayCard => {
     if (entry.kind === 'unit') {
       const { unit } = entry;
-      const cover = unit.photos[0] ?? null;
+      const photos: UnitCardPhoto[] = unit.photos.map((photo) => ({
+        fileId: photo.file_id,
+        url: photo.url,
+        alt: photo.alt_text.trim() || unit.name,
+      }));
+      const cover = photos[0] ?? null;
       return {
         id: unit.id,
         kind: 'unit',
@@ -549,15 +615,26 @@ export function buildUnitDisplayCards(
         factsLine: `${formatUnitType(unit.unit_type)} · ${formatGuestCount(unit.max_guests)} · ${formatBedCount(unit.beds)}`,
         badgeLabel: null,
         coverUrl: cover?.url ?? null,
-        coverAlt: cover?.alt_text.trim() || unit.name,
-        photoCount: unit.photos.length,
+        coverAlt: cover?.alt ?? unit.name,
+        photos,
+        photoCount: photos.length,
         priceText: formatUnitCardPrice(unit),
         highlightChip: resolveUnitHighlightChip(
           unit.amenity_ids,
           amenitiesById,
           propertyHighlightIds,
         ),
+        maxGuests: unit.max_guests,
+        bedrooms: unit.bedrooms,
         bedCount: unit.beds,
+        bathrooms: unit.bathrooms,
+        floorAreaSqm: unit.floor_area_sqm,
+        description: unit.description,
+        topAmenities: resolveUnitTopAmenities(
+          unit.amenity_ids,
+          amenitiesById,
+          propertyHighlightIds,
+        ),
       };
     }
 
@@ -566,19 +643,20 @@ export function buildUnitDisplayCards(
       throw new Error('Room group cannot be empty');
     }
     const uniquePhotoIds = new Set<string>();
-    let coverUrl: string | null = null;
-    let coverAlt = entry.label;
+    const photos: UnitCardPhoto[] = [];
     for (const bed of entry.units) {
       for (const photo of bed.photos) {
         if (!uniquePhotoIds.has(photo.file_id)) {
           uniquePhotoIds.add(photo.file_id);
-          if (coverUrl === null) {
-            coverUrl = photo.url;
-            coverAlt = photo.alt_text.trim() || entry.label;
-          }
+          photos.push({
+            fileId: photo.file_id,
+            url: photo.url,
+            alt: photo.alt_text.trim() || entry.label,
+          });
         }
       }
     }
+    const cover = photos[0] ?? null;
 
     const qualifier = inferRoomQualifier(entry.units);
     const bedCount = entry.units.length;
@@ -595,16 +673,23 @@ export function buildUnitDisplayCards(
       badgeLabel: qualifier
         ? `${qualifier} · ${formatBedCount(bedCount)}`
         : formatBedCount(bedCount),
-      coverUrl,
-      coverAlt,
-      photoCount: uniquePhotoIds.size,
+      coverUrl: cover?.url ?? null,
+      coverAlt: cover?.alt ?? entry.label,
+      photos,
+      photoCount: photos.length,
       priceText: lowestPriceTextForGroup(entry.units),
       highlightChip: resolveUnitHighlightChip(
         first.amenity_ids,
         amenitiesById,
         propertyHighlightIds,
       ),
+      maxGuests: first.max_guests,
+      bedrooms: first.bedrooms,
       bedCount,
+      bathrooms: first.bathrooms,
+      floorAreaSqm: first.floor_area_sqm,
+      description: first.description,
+      topAmenities: resolveUnitTopAmenities(first.amenity_ids, amenitiesById, propertyHighlightIds),
     };
   });
 }

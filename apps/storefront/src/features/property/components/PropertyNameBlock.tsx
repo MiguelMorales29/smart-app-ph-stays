@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import type { StartingPrice } from '../property-rules';
-import { VerifiedOwnerSheet } from './VerifiedOwnerSheet';
+import { LazyVerifiedOwnerSheet } from './LazySheets';
 
 export interface PropertyNameBlockProps {
   readonly name: string;
@@ -25,10 +25,10 @@ export interface PropertyNameBlockProps {
 
 /**
  * Property name block (D77, D79, D80):
- * - Tappable "Verified owner" badge opening `VerifiedOwnerSheet`.
+ * - Tappable "Verified owner" badge opening the lazy-loaded `VerifiedOwnerSheet`.
  * - Town and province only (E7), plus "See reviews on Google" when set.
  * - Share button moved here from the phone top bar (D79).
- * - Starting price shown on phone/tablet and omitted on desktop (where the sticky booking card carries it, D80).
+ * - Starting price ("from ₱X a night" or "a month") sits under the name on every screen size (D80).
  */
 export function PropertyNameBlock({
   name,
@@ -39,6 +39,7 @@ export function PropertyNameBlock({
   googleReviewUrl,
 }: PropertyNameBlockProps) {
   const [verifiedOpen, setVerifiedOpen] = useState(false);
+  const [verifiedMounted, setVerifiedMounted] = useState(false);
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   useEffect(() => {
@@ -82,7 +83,10 @@ export function PropertyNameBlock({
         {isVerified ? (
           <button
             type="button"
-            onClick={() => setVerifiedOpen(true)}
+            onClick={() => {
+              setVerifiedMounted(true);
+              setVerifiedOpen(true);
+            }}
             aria-haspopup="dialog"
             className="press inline-flex min-h-9 items-center gap-1.5 rounded-full border border-success/25 bg-success-tint px-3 py-1 text-xs font-medium text-foreground outline-none transition-colors duration-fast hover-hover:hover:border-success/50 focus-visible:ring-3 focus-visible:ring-ring"
           >
@@ -137,9 +141,8 @@ export function PropertyNameBlock({
         </Button>
       </div>
 
-      {/* Price sits under the name on phones & tablets; desktop moves it to the sticky booking card (D80). */}
       {startingPrice ? (
-        <p className="font-heading text-lg font-semibold text-[var(--page-link,var(--property-10-text))] tabular sm:text-xl lg:hidden">
+        <p className="font-heading text-lg font-semibold text-[var(--page-link,var(--property-10-text))] tabular sm:text-xl">
           {startingPrice.formatted}
         </p>
       ) : null}
@@ -152,7 +155,13 @@ export function PropertyNameBlock({
             : ''}
       </span>
 
-      <VerifiedOwnerSheet open={verifiedOpen} onOpenChange={setVerifiedOpen} propertyName={name} />
+      {verifiedMounted ? (
+        <LazyVerifiedOwnerSheet
+          open={verifiedOpen}
+          onOpenChange={setVerifiedOpen}
+          propertyName={name}
+        />
+      ) : null}
     </section>
   );
 }

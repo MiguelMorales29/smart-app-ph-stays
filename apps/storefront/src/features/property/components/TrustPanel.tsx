@@ -12,8 +12,7 @@ import {
 import { useState } from 'react';
 
 import { officialPropertyAddress } from '../property-rules';
-import { ReportPageSheet } from './ReportPageSheet';
-import { VerifiedOwnerSheet } from './VerifiedOwnerSheet';
+import { LazyReportPageSheet, LazyVerifiedOwnerSheet } from './LazySheets';
 
 export interface TrustPanelProps {
   readonly slug: string;
@@ -26,13 +25,15 @@ export interface TrustPanelProps {
  * Trust panel (PA-10, PA-11, D77):
  * - Official web address (`smartapp.webserbisyo.com/<slug>`) + official page statement.
  * - Safe-payment warning against personal GCash or bank accounts sent in chat or by text.
- * - Tappable "Verified owner" trigger explaining what Smart App PH checked.
+ * - Tappable "Verified owner" trigger opening lazy-loaded `VerifiedOwnerSheet`.
  * - 7-day payment account change warning when active.
- * - "Report this page" opening `ReportPageSheet`.
+ * - "Report this page" opening lazy-loaded `ReportPageSheet`.
  */
 export function TrustPanel({ slug, propertyId, propertyName, trust }: TrustPanelProps) {
   const [reportOpen, setReportOpen] = useState(false);
+  const [reportMounted, setReportMounted] = useState(false);
   const [verifiedOpen, setVerifiedOpen] = useState(false);
+  const [verifiedMounted, setVerifiedMounted] = useState(false);
   const officialUrl = officialPropertyAddress(slug);
 
   return (
@@ -79,7 +80,10 @@ export function TrustPanel({ slug, propertyId, propertyName, trust }: TrustPanel
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setVerifiedOpen(true)}
+            onClick={() => {
+              setVerifiedMounted(true);
+              setVerifiedOpen(true);
+            }}
             className="min-h-11 gap-2 rounded-full border-success/30 bg-success-tint px-3.5 text-foreground hover:bg-success-tint/80"
           >
             <BadgeCheckIcon aria-hidden="true" className="size-4 text-success" />
@@ -91,7 +95,10 @@ export function TrustPanel({ slug, propertyId, propertyName, trust }: TrustPanel
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => setReportOpen(true)}
+          onClick={() => {
+            setReportMounted(true);
+            setReportOpen(true);
+          }}
           className="min-h-11 gap-2 px-2.5 text-muted-foreground hover:text-foreground"
         >
           <FlagIcon aria-hidden="true" className="size-4" />
@@ -99,18 +106,22 @@ export function TrustPanel({ slug, propertyId, propertyName, trust }: TrustPanel
         </Button>
       </div>
 
-      <VerifiedOwnerSheet
-        open={verifiedOpen}
-        onOpenChange={setVerifiedOpen}
-        propertyName={propertyName}
-      />
+      {verifiedMounted ? (
+        <LazyVerifiedOwnerSheet
+          open={verifiedOpen}
+          onOpenChange={setVerifiedOpen}
+          propertyName={propertyName}
+        />
+      ) : null}
 
-      <ReportPageSheet
-        open={reportOpen}
-        onOpenChange={setReportOpen}
-        propertyId={propertyId}
-        propertyName={propertyName}
-      />
+      {reportMounted ? (
+        <LazyReportPageSheet
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          propertyId={propertyId}
+          propertyName={propertyName}
+        />
+      ) : null}
     </section>
   );
 }

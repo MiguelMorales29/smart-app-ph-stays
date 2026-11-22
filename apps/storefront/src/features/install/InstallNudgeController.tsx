@@ -3,7 +3,8 @@
 import { shouldShowInstallNudge } from '@smartapp/core';
 import { useEffect, useState } from 'react';
 
-import { InstallGuideSheet } from './InstallGuideSheet';
+import { LazyInstallGuideSheet } from '@/features/property/components/LazySheets';
+
 import {
   dismissInstallNudge,
   readInstallDismissedAt,
@@ -20,8 +21,8 @@ export interface InstallNudgeControllerProps {
 }
 
 /**
- * Watches `beforeinstallprompt` / `appinstalled` and opens the install nudge sheet only on a
- * second visit or after a confirmed booking — never on the first screen (D82).
+ * Watches `beforeinstallprompt` / `appinstalled` and opens the lazy-loaded install nudge sheet
+ * only on a second visit or after a confirmed booking — never on the first screen (D82).
  */
 export function InstallNudgeController({
   slug,
@@ -31,6 +32,7 @@ export function InstallNudgeController({
 }: InstallNudgeControllerProps) {
   const platform = useInstallPlatform();
   const [nudgeOpen, setNudgeOpen] = useState(false);
+  const [nudgeMounted, setNudgeMounted] = useState(false);
 
   useEffect(() => watchInstall(), []);
 
@@ -47,13 +49,16 @@ export function InstallNudgeController({
     if (!shouldShow) return;
 
     const timer = window.setTimeout(() => {
+      setNudgeMounted(true);
       setNudgeOpen(true);
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [slug, platform, confirmedBooking]);
 
+  if (!nudgeMounted) return null;
+
   return (
-    <InstallGuideSheet
+    <LazyInstallGuideSheet
       open={nudgeOpen}
       onOpenChange={setNudgeOpen}
       slug={slug}

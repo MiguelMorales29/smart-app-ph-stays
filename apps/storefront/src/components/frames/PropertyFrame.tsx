@@ -65,6 +65,8 @@ export function PropertyFrame({
                 slug={property.slug}
                 propertyName={property.name}
                 logoSrc={logoSrc}
+                contact={property.contact}
+                replyHours={property.reply_hours}
                 unitCards={unitCards}
               />
             ) : null}

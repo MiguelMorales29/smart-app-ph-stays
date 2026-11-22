@@ -26,7 +26,7 @@ describe('PropertyPageView', () => {
     process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN = '';
   });
 
-  it('renders all enabled sections, section tabs, booking card and official trust panel on Ulap Suites', async () => {
+  it('renders full-width sections, unit photo carousels, Show all button and official trust panel on Ulap Suites', async () => {
     const { PropertyPageView } = await import('./PropertyPageView');
     const ulap = await loadProperty('ulap-suites');
     const html = renderToStaticMarkup(
@@ -39,11 +39,13 @@ describe('PropertyPageView', () => {
     expect(html).toContain('Ulap Suites');
     expect(html).toContain('Verified owner');
     expect(html).toContain('data-slot="property-section-tabs"');
-    expect(html).toContain('data-slot="property-booking-card"');
+    expect(html).not.toContain('data-slot="property-booking-card"');
     expect(html).toContain('data-slot="property-announcement"');
     expect(html).toContain('data-slot="hero-gallery"');
     expect(html).toContain('data-slot="promo-banners"');
     expect(html).toContain('data-slot="units-section"');
+    expect(html).toContain('data-slot="unit-photo-carousel"');
+    expect(html).toContain('Show all 6 units');
     expect(html).toContain('data-slot="highlights-section"');
     expect(html).toContain('data-slot="about-host-section"');
     expect(html).toContain('Hosting since');
@@ -57,11 +59,42 @@ describe('PropertyPageView', () => {
     expect(html).toContain('personal GCash or bank account in chat or by text');
     expect(html).toContain('Report this page');
     expect(html).not.toContain('/ulap-suites/inquire');
+    // Default unitCardAutoplay is false, so no section Pause button renders in Units.
+    expect(html).not.toContain('>Pause<');
 
     if (ulap.property.address_line) {
       expect(html).not.toContain(ulap.property.address_line);
     }
   }, 15_000);
+
+  it('wires look.unitCardAutoplay to the Units section and keeps autoplay off on SSR under reduced motion', async () => {
+    const { PropertyPageView } = await import('./PropertyPageView');
+    const ulap = await loadProperty('ulap-suites');
+    const published = ulap.page.published;
+    if (!published) throw new Error('Expected published page');
+
+    const html = renderToStaticMarkup(
+      createElement(PropertyPageView, {
+        propertyView: {
+          ...ulap,
+          page: {
+            ...ulap.page,
+            published: {
+              ...published,
+              look: {
+                ...published.look,
+                unitCardAutoplay: true,
+                unitCardSeconds: 5,
+              },
+            },
+          },
+        },
+        today: calendarDate('2026-12-10'),
+      }),
+    );
+
+    expect(html).toContain('data-unit-autoplay="on"');
+  });
 
   it('renders room cards (not individual beds) and honours hidden sections on Tita Lorna Dorm', async () => {
     const { PropertyPageView } = await import('./PropertyPageView');
@@ -79,7 +112,6 @@ describe('PropertyPageView', () => {
     expect(html).toContain('Ladies · 4 beds');
     expect(html).toContain('Room 3B');
     expect(html).toContain('Gents · 6 beds');
-    expect(html).toContain('/tita-lorna-dorm/units/room-2a-bed-1');
     expect(html).toContain('a month');
     expect(html).not.toContain('data-slot="property-announcement"');
     expect(html).not.toContain('data-slot="promo-banners"');

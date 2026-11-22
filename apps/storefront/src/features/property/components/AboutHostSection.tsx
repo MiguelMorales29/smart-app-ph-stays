@@ -44,9 +44,9 @@ export function AboutHostSection({ about, host, isVerified }: AboutHostSectionPr
         About this place
       </h2>
 
-      <div className="grid gap-4 xl:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-5">
         {trimmedAbout ? (
-          <div className="space-y-2 rounded-2xl border border-border bg-card p-5 text-card-foreground xl:col-span-3">
+          <div className="space-y-2 rounded-2xl border border-border bg-card p-5 text-card-foreground lg:col-span-3">
             <p
               className={cn(
                 'text-sm leading-relaxed whitespace-pre-line text-card-foreground sm:text-base',
@@ -73,7 +73,7 @@ export function AboutHostSection({ about, host, isVerified }: AboutHostSectionPr
         <div
           className={cn(
             'flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground',
-            trimmedAbout ? 'xl:col-span-2' : 'xl:col-span-5',
+            trimmedAbout ? 'lg:col-span-2' : 'lg:col-span-5',
           )}
         >
           <div className="flex items-center gap-3.5">
