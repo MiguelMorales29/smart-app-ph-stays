@@ -58,4 +58,19 @@ describe('resolveServerProperty and paused server render', () => {
     const missing = await resolveServerProperty('does-not-exist', null);
     expect(missing).toBeNull();
   });
+
+  it('returns structured error, offline and not_found states from resolveServerPropertyResult', async () => {
+    const { resolveServerPropertyResult } = await import('./property-server');
+
+    const errorRes = await resolveServerPropertyResult('ulap-suites', null, { pack: 'error' });
+    expect(errorRes.kind).toBe('error');
+
+    const offlineRes = await resolveServerPropertyResult('ulap-suites', null, { pack: 'offline' });
+    expect(offlineRes.kind).toBe('offline');
+
+    const unpublishedRes = await resolveServerPropertyResult('patio-verde-unpublished', null, {
+      pack: 'qa',
+    });
+    expect(unpublishedRes.kind).toBe('not_found');
+  });
 });

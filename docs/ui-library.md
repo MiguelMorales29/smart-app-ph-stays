@@ -17,6 +17,8 @@ Live interactive previews and dark/light/brand checks live in the development-on
 | `@base-ui/utils`           | `0.5.0`  | MIT        | Utilities required directly by `@diceui/banner`                                  |
 | `class-variance-authority` | `0.7.1`  | Apache-2.0 | Typed variant class composition (`cva`)                                          |
 | `cn`                       | `0.5.2`  | MIT        | Class merging utility used across shadcn & Dice UI items                         |
+| `embla-carousel-react`     | `8.6.0`  | MIT        | Swipeable listing photo galleries and promo banner carousel                      |
+| `embla-carousel-autoplay`  | `8.6.0`  | MIT        | Promo banner autoplay (pauses on hover/focus/off-screen; off for reduced motion) |
 | `lucide-react`             | `1.71.0` | ISC        | Icon library across dashboard and storefront (`1.74.0` skipped under 7-day rule) |
 | `tw-animate-css`           | `1.4.0`  | MIT        | Enter/exit animation utilities for dialogs, drawers, menus, toasts               |
 
@@ -47,6 +49,7 @@ Installed in P3-A and P4-2 with `pnpm dlx shadcn@4.23.0 add` (`base-nova` preset
 | `AlertDialog`           | `alert-dialog.tsx`               | shadcn `base-nova`                           | Confirmations that need an answer (discard, delete, leave without saving)              | Ask a question the person can't undo without saying what happens            |
 | `Calendar`              | `calendar.tsx`                   | shadcn `base-nova` (react-day-picker 10.0.2) | Special-date ranges for prices, in a popover (desktop) or drawer (phone)               | Use for single dates a native date input handles                            |
 | `Card`                  | `card.tsx`                       | shadcn `base-nova`                           | Unit cards on phones, grouped settings sections                                        | Put every section in an identical card                                      |
+| `Carousel`              | `carousel.tsx`                   | shadcn `base-nova` (`4.23.0`, Embla `8.6.0`) | Swipeable hero/unit photo galleries and `BannerCarousel`                               | Auto-advance listing photo galleries (E4)                                   |
 | `Checkbox`              | `checkbox.tsx`                   | shadcn `base-nova`                           | Terms, multi-select rows, bulk select                                                  | Use for on/off settings that save at once (use `Switch`)                    |
 | `CircularProgress`      | `circular-progress.tsx`          | `@diceui/circular-progress`                  | The setup ring on Home                                                                 | Show progress without the words ("3 of 8 done")                             |
 | `Dialog`                | `dialog.tsx`                     | shadcn `base-nova`                           | Short focused tasks on desktop (Change link)                                           | Long forms (use a page) or confirmations on phones (use `ResponsiveDialog`) |
@@ -88,6 +91,7 @@ Reuse these before reaching for a raw component; they already handle light/dark,
 | `BookingStatusBadge`, `PaymentStatusBadge`                      | Every booking and payment status (icon + word + D35 colour)                                              | Build status pills by hand or use mint for status             |
 | `BottomDock`, `NavDrawer`                                       | Phone navigation and its "More" drawer                                                                   | Use on tablet or desktop                                      |
 | `PropertyTheme`, `PropertyThemeDocument`                        | Applying an owner's palette and font pair to storefront pages                                            | Hard-code a property's colours                                |
+| `BannerCarousel`                                                | Storefront promo banners (2+ slides lazy-load Embla + autoplay; 1 slide stays still; pauses on focus)    | Use for hero photo galleries (hero galleries never auto-move) |
 | `DevSwitchPanel` (D42)                                          | The floating "Preview" pill, loaded lazily by the switch gates on sample data only                       | Render it in production code paths or inside a page layout    |
 | `SettingsList`                                                  | iOS-style grouped settings rows: label, value, chevron, unfinished dot (P4-7)                            | Put actions that change data straight in a row                |
 | `SaveBar` (P4.5-A: floating save pill), `LeaveGuardDialog`      | Sticky "Unsaved changes" bar above the dock and keyboard; the leave question                             | Save automatically without telling the owner                  |
@@ -146,6 +150,7 @@ _(No other installed files were modified.)_
 | `packages/ui/src/components/accordion.tsx` | P4-5 | Installed from the official shadcn base-nova source (local registry, D60). No edits. |
 | `packages/ui/src/components/accordion.tsx` | P4.5-A | The panel animated to `auto` with tw-animate keyframes that only know Radix/Bits/Reka height variables, so Base UI panels snapped. Now the panel itself transitions `height` with `--accordion-panel-height` and `data-starting-style` / `data-ending-style` at `duration-slow`, as Base UI documents. |
 | `packages/ui/src/components/tabs.tsx` | P4.5-A | Inactive tab text was `text-foreground/60`, which measures 4.23:1 on the warm quiet fill `#EFEDE6` (D61). It now uses `text-muted-foreground` (4.70:1); dark mode already did. |
+| `packages/ui/src/components/carousel.tsx` | P5-2 | Added `'use client'` directive for Next.js App Router client boundaries, widened optional props (`opts`, `plugins`, `orientation`, `setApi`) to `\| undefined` for `exactOptionalPropertyTypes`, and deferred the initial `onSelect(api)` sync via `queueMicrotask` (plus `reInit` cleanup) to satisfy `react-hooks/set-state-in-effect`. No runtime behaviour change. |
 
 ## Credits
 

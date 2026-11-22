@@ -13,6 +13,13 @@ import {
 } from '@smartapp/ui/components/breadcrumb';
 import { Button } from '@smartapp/ui/components/button';
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@smartapp/ui/components/carousel';
+import {
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -437,6 +444,32 @@ export function KitBaseTab() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+          />
+
+          <DualSurfaceShowcase
+            title="Carousel"
+            source="shadcn base-nova · embla-carousel-react 8.6.0"
+            useFor="Swipeable property photo galleries (never auto-advancing) and BannerCarousel for 2+ promo banners."
+            dont="Auto-advance listing photo galleries or hide keyboard controls."
+            render={() => (
+              <div className="px-10">
+                <Carousel aria-label="Sample slides">
+                  <CarouselContent>
+                    {['Slide 1 · Cover', 'Slide 2 · Living area', 'Slide 3 · Balcony'].map(
+                      (label) => (
+                        <CarouselItem key={label}>
+                          <div className="flex h-24 items-center justify-center rounded-lg border border-border bg-card text-sm font-medium text-card-foreground">
+                            {label}
+                          </div>
+                        </CarouselItem>
+                      ),
+                    )}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
               </div>
             )}
           />
