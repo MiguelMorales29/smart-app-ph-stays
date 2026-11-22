@@ -3,6 +3,7 @@ import {
   AlertTriangleIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  CropIcon,
   ImagePlusIcon,
   MoreHorizontalIcon,
   RotateCwIcon,
@@ -65,6 +66,7 @@ export function PhotoManager({
   onAdd,
   onReorder,
   onAltChange,
+  onAdjust,
   onRemove,
   onRetry,
   disabled,
@@ -76,6 +78,7 @@ export function PhotoManager({
   readonly onAdd: (files: File[]) => void;
   readonly onReorder: (ids: string[]) => void;
   readonly onAltChange: (id: string, alt: string) => void;
+  readonly onAdjust?: ((id: string) => void) | undefined;
   readonly onRemove: (id: string) => void;
   readonly onRetry: (id: string) => void;
   readonly disabled?: boolean | undefined;
@@ -214,6 +217,12 @@ export function PhotoManager({
                     <MoreHorizontalIcon aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {onAdjust ? (
+                      <DropdownMenuItem disabled={working} onClick={() => onAdjust(tile.id)}>
+                        <CropIcon aria-hidden="true" />
+                        Adjust
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem onClick={() => setDescribing(tile.id)}>
                       <TextIcon aria-hidden="true" />
                       {tile.alt.trim() ? 'Edit description' : 'Describe photo'}

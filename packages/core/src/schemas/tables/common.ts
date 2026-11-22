@@ -151,13 +151,7 @@ export const propertyPageDraftSchema = z.object({
 
 export type PropertyPageDraft = z.infer<typeof propertyPageDraftSchema>;
 
-export const profileAvatarSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('initials'), text: z.string().min(1).max(3) }),
-  z.object({ kind: z.literal('preset'), preset_id: z.string().min(1).max(40) }),
-  z.object({ kind: z.literal('photo'), file_id: uuidSchema }),
-]);
-
-export type ProfileAvatar = z.infer<typeof profileAvatarSchema>;
+export { profileAvatarSchema, type ProfileAvatar } from '../../avatar/index.js';
 
 export const memberNotifyPrefsSchema = z.object({
   new_booking: z.boolean(),

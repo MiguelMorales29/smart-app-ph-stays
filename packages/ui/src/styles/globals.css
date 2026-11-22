@@ -88,6 +88,17 @@
   --color-scrim: var(--scrim);
   --color-on-scrim: var(--on-scrim);
 
+  --color-avatar-sky: var(--avatar-sky);
+  --color-avatar-mint: var(--avatar-mint);
+  --color-avatar-sun: var(--avatar-sun);
+  --color-avatar-blush: var(--avatar-blush);
+  --color-avatar-lilac: var(--avatar-lilac);
+  --color-avatar-sand: var(--avatar-sand);
+  --color-avatar-navy: var(--avatar-navy);
+  --color-avatar-brand: var(--avatar-brand);
+  --color-avatar-ink: var(--avatar-ink);
+  --color-avatar-ink-on-dark: var(--avatar-ink-on-dark);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

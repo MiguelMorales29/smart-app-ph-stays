@@ -21,9 +21,10 @@ import {
   type PaymentAccountMethod,
   type PaymentAccountsRow,
 } from '@smartapp/core';
-import { compressImage } from '@smartapp/data/compress-image';
+import { checkPhotoFile, prepareQrImage } from '@smartapp/data/compress-image';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
+import type { CropperAreaData } from '@smartapp/ui/components/cropper';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,10 +38,12 @@ import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
 import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
+import { PhotoCropSheet } from '@smartapp/ui/compositions/photo-crop-sheet';
 import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import { useLastDefined } from '@smartapp/ui/hooks/use-last-defined';
 import { notify } from '@smartapp/ui/lib/notify';
@@ -155,6 +158,20 @@ export function PaymentsSettingsPage() {
                       {account.is_active ? '' : ' · Off'}
                     </span>
                   </span>
+                  {account.method !== 'qr_ph' && account.account_number ? (
+                    <CopyButton
+                      value={
+                        account.method === 'gcash' || account.method === 'maya'
+                          ? formatPhMobile(account.account_number)
+                          : account.account_number
+                      }
+                      iconOnly
+                      variant="ghost"
+                      className="size-11 pointer-fine:size-9"
+                      label={`Copy ${accountTitle(account)} number`}
+                      copiedLabel="Number copied"
+                    />
+                  ) : null}
                   <Switch
                     aria-label={`Show ${accountTitle(account)} to guests`}
                     checked={account.is_active}
@@ -391,6 +408,11 @@ function AccountForm({
   const [draft, setDraft] = useState(() => draftFrom(account, me.data?.profile.full_name ?? ''));
   const [password, setPassword] = useState('');
   const [qrPreview, setQrPreview] = useState<string | null>(null);
+  const [qrCropTarget, setQrCropTarget] = useState<{
+    readonly file: File;
+    readonly src: string;
+  } | null>(null);
+  const [qrCropping, setQrCropping] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const set = (change: Partial<AccountDraft>) => setDraft((value) => ({ ...value, ...change }));
@@ -398,20 +420,46 @@ function AccountForm({
   const methodWord =
     draft.method === 'bank' ? 'bank' : draft.method === 'qr_ph' ? 'QR' : METHOD_LABEL[draft.method];
 
-  async function onQr(file: File) {
+  function pickQrFile(file: File) {
+    const problem = checkPhotoFile(file);
+    if (problem === 'heic') {
+      setErrors({ qr: "This iPhone photo (HEIC) can't be opened here. Pick a JPEG, PNG or WebP." });
+      return;
+    }
+    if (problem === 'not_image') {
+      setErrors({ qr: 'Use a JPEG, PNG or WebP picture.' });
+      return;
+    }
+    if (problem === 'too_big') {
+      setErrors({ qr: 'This file is over 15 MB. Pick a smaller one.' });
+      return;
+    }
+    setErrors((prev) => ({ ...prev, qr: '' }));
+    setQrCropTarget({ file, src: URL.createObjectURL(file) });
+  }
+
+  async function onConfirmQrCrop(area: CropperAreaData) {
+    if (!qrCropTarget) return;
+    setQrCropping(true);
     try {
-      const shrunk = await compressImage(file, { maxSide: 1200, quality: 0.9 });
-      setQrPreview(URL.createObjectURL(shrunk.blob));
+      // Lossless PNG at >= 800 px — never lossy WebP/JPEG — so guests' cameras always scan cleanly.
+      const sharpQr = await prepareQrImage(qrCropTarget.file, area);
+      URL.revokeObjectURL(qrCropTarget.src);
+      setQrCropTarget(null);
+      setQrPreview(URL.createObjectURL(sharpQr.blob));
+      const baseName = qrCropTarget.file.name.replace(/\.[^.]+$/, '') || 'payment-qr';
       const uploaded = await upload.mutateAsync({
-        file: shrunk.blob,
-        filename: file.name,
+        file: sharpQr.blob,
+        filename: `${baseName}.png`,
         purpose: 'payment_qr',
-        width: shrunk.width,
-        height: shrunk.height,
+        width: sharpQr.width,
+        height: sharpQr.height,
       });
       set({ qrFileId: uploaded.fileId });
     } catch (caught) {
       setErrors({ qr: extractAppError(caught).message });
+    } finally {
+      setQrCropping(false);
     }
   }
 
@@ -570,7 +618,7 @@ function AccountForm({
           onChange={(event) => {
             const file = event.target.files?.[0];
             event.target.value = '';
-            if (file) void onQr(file);
+            if (file) pickQrFile(file);
           }}
         />
         <button
@@ -593,6 +641,24 @@ function AccountForm({
           )}
         </button>
         <FieldError>{errors.qr}</FieldError>
+        <PhotoCropSheet
+          open={qrCropTarget !== null}
+          onOpenChange={(open) => {
+            if (!open && qrCropTarget && !qrCropping) {
+              URL.revokeObjectURL(qrCropTarget.src);
+              setQrCropTarget(null);
+            }
+          }}
+          src={qrCropTarget?.src ?? null}
+          title="Crop QR code"
+          description="Fit the QR code inside the square. Kept as a sharp lossless PNG."
+          aspectRatio={1}
+          shape="rectangle"
+          primaryAction="crop"
+          confirmLabel="Use this QR"
+          busy={qrCropping || upload.isPending}
+          onConfirm={onConfirmQrCrop}
+        />
       </Field>
 
       <Field>

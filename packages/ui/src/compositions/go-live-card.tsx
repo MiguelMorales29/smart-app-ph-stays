@@ -1,6 +1,7 @@
-import { useEffect, useId, useState } from 'react';
-import { CheckIcon, CopyIcon, ExternalLinkIcon } from 'lucide-react';
+import { useEffect, useId } from 'react';
+import { ExternalLinkIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { celebrate } from '@smartapp/ui/lib/celebration';
 import { cn } from '@smartapp/ui/lib/utils';
@@ -17,7 +18,7 @@ export function GoLiveCard({
   className,
 }: {
   readonly propertyName: string;
-  /** The full public address, e.g. https://smartapp.ph/ulap-suites */
+  /** The full public address, e.g. https://smartapp.webserbisyo.com/ulap-suites */
   readonly url: string;
   /** One burst per key per device, e.g. `live:${propertyId}`. Pass null to skip the burst. */
   readonly celebrationKey: string | null;
@@ -25,18 +26,11 @@ export function GoLiveCard({
   readonly className?: string | undefined;
 }) {
   const titleId = useId();
-  const [copied, setCopied] = useState(false);
   const display = url.replace(/^https?:\/\//, '');
 
   useEffect(() => {
     if (celebrationKey) void celebrate(celebrationKey);
   }, [celebrationKey]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 2000);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
 
   return (
     <section
@@ -56,19 +50,7 @@ export function GoLiveCard({
       </div>
       <p className="w-full truncate rounded-lg bg-muted px-3 py-2 text-sm font-medium">{display}</p>
       <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-        <Button
-          variant="outline"
-          className="min-h-11"
-          onClick={() => {
-            void navigator.clipboard
-              ?.writeText(url)
-              .then(() => setCopied(true))
-              .catch(() => undefined);
-          }}
-        >
-          {copied ? <CheckIcon aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
-          {copied ? 'Link copied' : 'Copy link'}
-        </Button>
+        <CopyButton value={url} label="Copy link" copiedLabel="Link copied" className="min-h-11" />
         <Button
           className="min-h-11"
           nativeButton={false}
@@ -78,9 +60,6 @@ export function GoLiveCard({
           Open your page
         </Button>
       </div>
-      <span className="sr-only" aria-live="polite">
-        {copied ? 'Link copied' : ''}
-      </span>
     </section>
   );
 }

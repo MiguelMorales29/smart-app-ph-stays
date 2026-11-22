@@ -23,6 +23,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
+import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
 import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
 import { RadioCards } from '@smartapp/ui/compositions/radio-cards';
@@ -243,7 +244,7 @@ export function SignupPage() {
   const [topError, setTopError] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
-  const [resendIn, setResendIn] = useState(0);
+  const [resendAt, setResendAt] = useState<string | null>(null);
   const startSession = useStartOwnerSession();
   const googleSignIn = useSignInWithGoogleMutation();
   const apply = useApplyAsOwnerMutation();
@@ -299,12 +300,6 @@ export function SignupPage() {
   useEffect(() => {
     headingRef.current?.focus();
   }, [step, sent]);
-
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const timer = window.setTimeout(() => setResendIn((value) => value - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [resendIn]);
 
   // Someone opened ?step=2 or 3 directly without the earlier answers: start from step 1.
   useEffect(() => {
@@ -562,7 +557,7 @@ export function SignupPage() {
               await requestCode
                 .mutateAsync({ email: youForm.getValues('email') })
                 .catch(() => null);
-              setResendIn(30);
+              setResendAt(new Date(Date.now() + 30_000).toISOString());
               goTo(3);
             })}
           >
@@ -720,37 +715,29 @@ export function SignupPage() {
               })();
             }}
           >
-            <p className="text-sm text-muted-foreground">
-              We sent a 6-digit code to{' '}
-              <span className="font-medium text-foreground">{youForm.getValues('email')}</span>.
-            </p>
-            <Field data-invalid={codeError ? true : undefined}>
-              <FieldLabel htmlFor="signup-code">Code</FieldLabel>
-              <Input
-                id="signup-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                className="tabular tracking-[0.3em]"
-                value={code}
-                aria-invalid={codeError ? true : undefined}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              />
-              <FieldError>{codeError}</FieldError>
-            </Field>
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-11 self-start"
-              disabled={resendIn > 0 || requestCode.isPending}
-              onClick={() => {
+            <OtpResend
+              id="signup-code"
+              value={code}
+              onChange={setCode}
+              label="Code"
+              sentLine={
+                <>
+                  We sent a 6-digit code to{' '}
+                  <span className="font-medium text-foreground">{youForm.getValues('email')}</span>.
+                </>
+              }
+              hint="Check your spam folder if you don't see it."
+              resendAt={resendAt}
+              resending={requestCode.isPending}
+              resendLabel="Send a new code"
+              resendInLabel={(seconds) => `Send a new code in ${seconds} s`}
+              onResend={() => {
                 void requestCode
                   .mutateAsync({ email: youForm.getValues('email') })
-                  .then(() => setResendIn(30));
+                  .then(() => setResendAt(new Date(Date.now() + 30_000).toISOString()));
               }}
-            >
-              {resendIn > 0 ? `Send a new code in ${resendIn}s` : 'Send a new code'}
-            </Button>
+              error={codeError}
+            />
             <div className="flex gap-2">
               <Button type="button" variant="outline" className="min-h-11" onClick={() => goTo(2)}>
                 <ArrowLeftIcon aria-hidden="true" />

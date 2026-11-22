@@ -380,6 +380,7 @@ type P4OwnerOperationName =
   | 'savePolicies'
   | 'saveHours'
   | 'updateProfile'
+  | 'setProfilePicture'
   | 'changePassword'
   | 'signOutEverywhere'
   | 'requestAccountDeletion'
@@ -515,7 +516,8 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           const profile = {
             id: profileId,
             full_name: input.fullName.trim(),
-            avatar: { kind: 'initials' as const, text: initials || 'OW' },
+            avatar: { kind: 'initials' as const, text: initials || 'OW', theme: 'sky' as const },
+            photo_file_id: null,
             created_at: nowIso,
             updated_at: nowIso,
           };
@@ -858,9 +860,15 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
         scheduled_for: null,
       };
 
+      const photoFile = profile.photo_file_id
+        ? world.files.find((f) => f.id === profile.photo_file_id && f.deleted_at === null)
+        : undefined;
+      const profilePhotoUrl = photoFile ? mediaUrl(photoFile, mediaConfig) : null;
+
       return ok({
         account,
         profile,
+        profile_photo_url: profilePhotoUrl,
         member,
         application,
         subscription,
@@ -2483,6 +2491,57 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           world.account_members[memberIdx] = member;
 
           return ok({ profile, account, member });
+        },
+      );
+    },
+
+    async setProfilePicture(input, session) {
+      const guard = await beforeCall('setProfilePicture', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+      if (session.role !== 'owner') return err(appError('not_allowed'));
+
+      return runIdempotent(
+        'setProfilePicture',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.setProfilePicture.output,
+        async () => {
+          const profileIdx = world.profiles.findIndex((p) => p.id === session.profileId);
+          if (profileIdx === -1) return err(appError('not_found'));
+          const existingProfile = world.profiles[profileIdx];
+          if (!existingProfile) return err(appError('not_found'));
+
+          const stale = checkNotStale(input.expectedUpdatedAt, existingProfile.updated_at);
+          if (!stale.ok) return stale;
+
+          const resolvedPhotoFileId =
+            input.avatar?.kind === 'photo' ? input.avatar.file_id : input.photoFileId;
+
+          let photoUrl: string | null = null;
+          if (resolvedPhotoFileId !== null) {
+            const file = world.files.find(
+              (f) =>
+                f.id === resolvedPhotoFileId &&
+                f.account_id === acctCheck.data &&
+                f.deleted_at === null,
+            );
+            if (!file) return err(appError('not_found', 'Profile photo file not found.'));
+            photoUrl = mediaUrl(file, mediaConfig);
+          }
+
+          const nowIso = nowIsoFromClock(clock);
+          const profile = {
+            ...existingProfile,
+            avatar: input.avatar,
+            photo_file_id: resolvedPhotoFileId,
+            updated_at: nowIso,
+          };
+          world.profiles[profileIdx] = profile;
+
+          return ok({ profile, photoUrl });
         },
       );
     },

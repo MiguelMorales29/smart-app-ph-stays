@@ -1283,6 +1283,72 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       );
       expect(updatedProfile.profile.full_name).toBe('Mara V. Santos');
 
+      // setProfilePicture: face, custom, and uploaded profile photo
+      const withFace = assertOk(
+        await source.setProfilePicture(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            expectedUpdatedAt: updatedProfile.profile.updated_at,
+            avatar: { kind: 'face', style: 'soft', face: 4, theme: 'mint' },
+            photoFileId: null,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(withFace.profile.avatar).toEqual({
+        kind: 'face',
+        style: 'soft',
+        face: 4,
+        theme: 'mint',
+      });
+      expect(withFace.profile.photo_file_id).toBeNull();
+      expect(withFace.photoUrl).toBeNull();
+
+      const photoSlot = assertOk(
+        await source.requestUpload(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            purpose: 'profile_photo',
+            mime: 'image/webp',
+            sizeBytes: 18_432,
+            width: 256,
+            height: 256,
+            filename: 'profile.webp',
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      assertOk(
+        await source.confirmUpload(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            fileId: photoSlot.file.id,
+            width: 256,
+            height: 256,
+            usedByTable: 'profiles',
+            usedById: withFace.profile.id,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const withPhoto = assertOk(
+        await source.setProfilePicture(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            expectedUpdatedAt: withFace.profile.updated_at,
+            avatar: { kind: 'photo', file_id: photoSlot.file.id },
+            photoFileId: photoSlot.file.id,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(withPhoto.profile.photo_file_id).toBe(photoSlot.file.id);
+      expect(withPhoto.photoUrl).toContain(photoSlot.file.id);
+
       // changePassword: 5 wrong codes expire the code, then fresh code succeeds
       assertOk(
         await source.requestPasswordCode(

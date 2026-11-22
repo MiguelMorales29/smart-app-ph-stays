@@ -179,3 +179,34 @@ export function useRequestAccountDeletionMutation() {
     },
   });
 }
+
+export function useSetProfilePictureMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      input: Omit<OperationInput<'setProfilePicture'>, 'accountId' | 'idempotencyKey'> & {
+        readonly idempotencyKey?: string;
+      },
+    ) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.setProfilePicture(
+          {
+            ...input,
+            accountId,
+            idempotencyKey: input.idempotencyKey ?? createIdempotencyKey('set-profile-picture'),
+          },
+          session,
+        ),
+      );
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: settingsKeys.all }),
+        queryClient.invalidateQueries({ queryKey: authKeys.all }),
+      ]);
+    },
+  });
+}

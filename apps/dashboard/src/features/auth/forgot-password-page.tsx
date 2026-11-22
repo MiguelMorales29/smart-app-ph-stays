@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { accountsRow, resetPasswordFormSchema, type ResetPasswordForm } from '@smartapp/core';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
@@ -10,6 +10,7 @@ import { Field, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
+import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
 import { applyAppErrorToForm } from '@/data/use-form-errors';
 import { useRequestPasswordCodeMutation, useResetPasswordMutation } from '@/data/auth/writes';
@@ -18,10 +19,13 @@ const emailSchema = z.object({ email: accountsRow.shape.contact_email });
 
 type Stage = 'email' | 'code' | 'done';
 
+const nextResendIso = () => new Date(Date.now() + 30_000).toISOString();
+
 /** /forgot-password: email → 6-digit code → new password (F20). Never says whether an email exists. */
 export function ForgotPasswordPage() {
   const [stage, setStage] = useState<Stage>('email');
   const [topError, setTopError] = useState<string | null>(null);
+  const [resendAt, setResendAt] = useState<string | null>(null);
   const requestCode = useRequestPasswordCodeMutation();
   const reset = useResetPasswordMutation();
   const emailForm = useForm<z.infer<typeof emailSchema>>({
@@ -89,19 +93,29 @@ export function ForgotPasswordPage() {
             }
           })}
         >
-          <Field data-invalid={resetForm.formState.errors.code ? true : undefined}>
-            <FieldLabel htmlFor="reset-code">Code</FieldLabel>
-            <Input
-              id="reset-code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              className="tabular tracking-[0.3em]"
-              aria-invalid={resetForm.formState.errors.code ? true : undefined}
-              {...resetForm.register('code')}
-            />
-            <FieldError>{resetForm.formState.errors.code?.message}</FieldError>
-          </Field>
+          <Controller
+            control={resetForm.control}
+            name="code"
+            render={({ field }) => (
+              <OtpResend
+                id="reset-code"
+                value={field.value}
+                onChange={field.onChange}
+                label="Code"
+                sentLine={`If that email has an account, we sent a 6-digit code to ${resetForm.getValues('email')}.`}
+                hint="Check your spam folder if you don't see it."
+                resendAt={resendAt}
+                resending={requestCode.isPending}
+                onResend={() => {
+                  void requestCode
+                    .mutateAsync({ email: resetForm.getValues('email') })
+                    .catch(() => null)
+                    .finally(() => setResendAt(nextResendIso()));
+                }}
+                error={resetForm.formState.errors.code?.message}
+              />
+            )}
+          />
           <Field data-invalid={resetForm.formState.errors.newPassword ? true : undefined}>
             <FieldLabel htmlFor="reset-password">New password</FieldLabel>
             <PasswordInput
@@ -156,6 +170,7 @@ export function ForgotPasswordPage() {
         onSubmit={emailForm.handleSubmit(async (values) => {
           await requestCode.mutateAsync({ email: values.email.trim() }).catch(() => null);
           resetForm.setValue('email', values.email.trim());
+          setResendAt(nextResendIso());
           setStage('code');
         })}
       >

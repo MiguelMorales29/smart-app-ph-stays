@@ -29,6 +29,7 @@ import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { RowControl, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
 import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
+import { PhotoCropSheet } from '@smartapp/ui/compositions/photo-crop-sheet';
 import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
 import {
   PriceEditor,
@@ -675,11 +676,13 @@ function UnitEditor({
         tiles={photos.tiles}
         max={20}
         onAdd={photos.add}
+        onAdjust={photos.adjust}
         onReorder={photos.reorder}
         onAltChange={photos.setAlt}
         onRemove={photos.remove}
         onRetry={photos.retry}
       />
+      <PhotoCropSheet {...photos.cropSheetProps} />
     </div>
   );
 

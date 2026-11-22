@@ -24,6 +24,7 @@ import { PlaceholderPageContent } from '@/components/PlaceholderPageContent';
 import { resolveServerProperty } from '@/lib/property-server';
 
 import { StorefrontKitUi1Section } from './StorefrontKitUi1Section';
+import { StorefrontKitUi2Section } from './StorefrontKitUi2Section';
 
 export const STOREFRONT_KIT_LOOKS = [
   'ulap-suites',
@@ -372,6 +373,14 @@ export async function StorefrontKitView({
                 propertyName={activeLook.propertyView.property.name}
                 logoSrc={activeLook.propertyView.page_media.logo?.url ?? null}
               />
+            </KitSection>
+
+            <KitSection
+              title="Photo grids, comparisons & member pictures (UI-2)"
+              useFor="Masonry variable-height photo galleries, before/after CompareSlider, and PersonAvatar / FacePicker with on-screen DiceBear credit (D84)."
+              dont="Load DiceBear JS on first paint or omit the CC-BY-4.0 credit line where faces are picked."
+            >
+              <StorefrontKitUi2Section />
             </KitSection>
           </div>
         </PropertyFrame>

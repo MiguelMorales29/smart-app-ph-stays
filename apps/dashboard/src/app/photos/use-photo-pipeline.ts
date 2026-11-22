@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OwnerPhotoView } from '@smartapp/core';
 import {
+  autoFitAndCompressPhoto,
   checkPhotoFile,
   checkPhotoSize,
   compressImage,
+  cropImage,
   formatBytes,
+  type PixelArea,
 } from '@smartapp/data/compress-image';
+import type { CropperAreaData } from '@smartapp/ui/components/cropper';
+import type { PhotoCropSheetProps } from '@smartapp/ui/compositions/photo-crop-sheet';
 import type { PhotoTile } from '@smartapp/ui/compositions/photo-manager';
 import { notify } from '@smartapp/ui/lib/notify';
 import { useUploadPhotoMutation, type UploadPhotoInput } from '@/data/photos/upload';
@@ -13,11 +18,30 @@ import { extractAppError } from '@/data/shared';
 
 interface PipelineTile extends PhotoTile {
   readonly fileId: string | null;
-  readonly source?: File | undefined;
+  readonly source?: Blob | undefined;
+  readonly filename?: string | undefined;
+  /** Whether to auto-fit to 4:3 centre crop (multi-photo) or apply an explicit crop. */
+  readonly mode?: 'as-is' | 'auto-fit' | 'cropped' | undefined;
+  readonly crop?: PixelArea | undefined;
   readonly shrunk?: { blob: Blob; width: number; height: number } | undefined;
 }
 
+type CropSession =
+  | {
+      readonly kind: 'new';
+      readonly file: File;
+      readonly src: string;
+    }
+  | {
+      readonly kind: 'adjust';
+      readonly tileId: string;
+      readonly src: string;
+      readonly source?: Blob | undefined;
+      readonly filename: string;
+    };
+
 const MAX_UPLOADS = 2;
+const LISTING_ASPECT = 4 / 3;
 
 const FILE_PROBLEM: Record<'heic' | 'not_image' | 'too_big', string> = {
   heic: "This iPhone photo (HEIC) can't be opened here. Pick it from Photos, or take a screenshot.",
@@ -39,9 +63,11 @@ let counter = 0;
 const localId = () => `new-${Date.now().toString(36)}-${(counter += 1)}`;
 
 /**
- * The photo pipeline behind PhotoManager (P4-5, D49): checks each file, shrinks one at a time,
- * uploads at most 2 at once, and keeps the order and descriptions until the owner saves.
- * Preview links are revoked when a tile is removed or the screen closes.
+ * The photo pipeline behind PhotoManager (P4-5, D49, UI-2):
+ * - Multi-photo selection auto-fits each photo to 4:3 (centre crop) and compresses without
+ *   forcing a crop sheet.
+ * - Single-photo selection opens `PhotoCropSheet` with "Use as is" as the primary action.
+ * - Any tile's "Adjust" action opens `PhotoCropSheet` to crop and re-compress in place.
  */
 export function usePhotoPipeline({
   saved,
@@ -61,6 +87,8 @@ export function usePhotoPipeline({
   });
   const [tiles, setTiles] = useState<PipelineTile[]>([]);
   const [dirty, setDirty] = useState(false);
+  const [cropSession, setCropSession] = useState<CropSession | null>(null);
+  const [cropping, setCropping] = useState(false);
   const loadedRef = useRef(false);
   const urlsRef = useRef(new Set<string>());
   const shrinkQueue = useRef<string[]>([]);
@@ -73,7 +101,6 @@ export function usePhotoPipeline({
     tilesRef.current = tiles;
   }, [tiles]);
 
-  // Load the saved photos once; later refetches don't overwrite unsaved changes.
   useEffect(() => {
     if (saved === undefined || loadedRef.current) return;
     loadedRef.current = true;
@@ -103,7 +130,7 @@ export function usePhotoPipeline({
       void uploadRef
         .current({
           file: shrunk.blob,
-          filename: tile.source?.name ?? 'photo',
+          filename: tile.filename ?? 'photo.webp',
           purpose,
           width: shrunk.width || undefined,
           height: shrunk.height || undefined,
@@ -132,7 +159,13 @@ export function usePhotoPipeline({
       const tile = tilesRef.current.find((item) => item.id === id);
       if (!id || !tile?.source) continue;
       try {
-        const result = await compressImage(tile.source);
+        const result =
+          tile.mode === 'auto-fit'
+            ? await autoFitAndCompressPhoto(tile.source, LISTING_ASPECT)
+            : tile.mode === 'cropped' && tile.crop
+              ? await compressImage(tile.source, { crop: tile.crop })
+              : await compressImage(tile.source);
+
         const check = checkPhotoSize(result.original);
         if (check === 'too_small') {
           patch(id, {
@@ -143,11 +176,14 @@ export function usePhotoPipeline({
           continue;
         }
         const shrunk = { blob: result.blob, width: result.width, height: result.height };
+        const previewUrl = URL.createObjectURL(result.blob);
+        urlsRef.current.add(previewUrl);
         tilesRef.current = tilesRef.current.map((item) =>
-          item.id === id ? { ...item, shrunk } : item,
+          item.id === id ? { ...item, shrunk, src: previewUrl } : item,
         );
         patch(id, {
           shrunk,
+          src: previewUrl,
           status: 'uploading',
           progress: 0,
           sizeNote: `${formatBytes(tile.source.size)} → ${formatBytes(result.blob.size)}`,
@@ -167,27 +203,68 @@ export function usePhotoPipeline({
     shrinking.current = false;
   }, [patch, pumpUploads]);
 
+  const enqueueFile = useCallback(
+    (file: Blob, filename: string, mode: 'as-is' | 'auto-fit' | 'cropped', crop?: PixelArea) => {
+      const src = URL.createObjectURL(file);
+      urlsRef.current.add(src);
+      const tile: PipelineTile = {
+        id: localId(),
+        fileId: null,
+        src,
+        alt: '',
+        status: 'shrinking',
+        source: file,
+        filename,
+        mode,
+        crop,
+      };
+      setDirty(true);
+      tilesRef.current = [...tilesRef.current, tile];
+      setTiles((list) => [...list, tile]);
+      shrinkQueue.current.push(tile.id);
+      void pumpShrink();
+    },
+    [pumpShrink],
+  );
+
   const add = useCallback(
     (files: File[]) => {
-      const added: PipelineTile[] = [];
+      const valid: File[] = [];
       for (const file of files) {
         const problem = checkPhotoFile(file);
         if (problem) {
           notify.error(FILE_PROBLEM[problem]);
           continue;
         }
+        valid.push(file);
+      }
+      if (valid.length === 0) return;
+
+      // Single photo opens the crop sheet with "Use as is" as the primary action.
+      if (valid.length === 1) {
+        const single = valid[0];
+        if (!single) return;
+        const src = URL.createObjectURL(single);
+        urlsRef.current.add(src);
+        setCropSession({ kind: 'new', file: single, src });
+        return;
+      }
+
+      // Multi-photo selection auto-fits each photo to 4:3 centre crop and compresses immediately.
+      const added: PipelineTile[] = valid.map((file) => {
         const src = URL.createObjectURL(file);
         urlsRef.current.add(src);
-        added.push({
+        return {
           id: localId(),
           fileId: null,
           src,
           alt: '',
           status: 'shrinking',
           source: file,
-        });
-      }
-      if (added.length === 0) return;
+          filename: file.name,
+          mode: 'auto-fit',
+        };
+      });
       setDirty(true);
       tilesRef.current = [...tilesRef.current, ...added];
       setTiles((list) => [...list, ...added]);
@@ -196,6 +273,89 @@ export function usePhotoPipeline({
     },
     [pumpShrink],
   );
+
+  const adjust = useCallback((id: string) => {
+    const tile = tilesRef.current.find((item) => item.id === id);
+    if (!tile) return;
+    let src = tile.src;
+    if (tile.source) {
+      src = URL.createObjectURL(tile.source);
+      urlsRef.current.add(src);
+    }
+    setCropSession({
+      kind: 'adjust',
+      tileId: id,
+      src,
+      source: tile.source,
+      filename: tile.filename ?? 'photo.webp',
+    });
+  }, []);
+
+  const confirmCrop = useCallback(
+    async (area: CropperAreaData) => {
+      if (!cropSession) return;
+      if (cropSession.kind === 'new') {
+        const file = cropSession.file;
+        setCropSession(null);
+        enqueueFile(file, file.name, 'cropped', area);
+        return;
+      }
+      setCropping(true);
+      try {
+        const croppedBlob = cropSession.source
+          ? (await compressImage(cropSession.source, { crop: area })).blob
+          : (await compressImage(await cropImage(cropSession.src, area))).blob;
+        const previewUrl = URL.createObjectURL(croppedBlob);
+        urlsRef.current.add(previewUrl);
+        const targetId = cropSession.tileId;
+        const filename = cropSession.filename;
+        setCropSession(null);
+        setDirty(true);
+        const shrunk = {
+          blob: croppedBlob,
+          width: Math.round(area.width),
+          height: Math.round(area.height),
+        };
+        tilesRef.current = tilesRef.current.map((item) =>
+          item.id === targetId
+            ? {
+                ...item,
+                src: previewUrl,
+                shrunk,
+                filename,
+                status: 'uploading',
+                progress: 0,
+                error: undefined,
+                warning: undefined,
+              }
+            : item,
+        );
+        patch(targetId, {
+          src: previewUrl,
+          shrunk,
+          filename,
+          status: 'uploading',
+          progress: 0,
+          error: undefined,
+          warning: undefined,
+        });
+        uploadQueue.current.push(targetId);
+        pumpUploads();
+      } catch {
+        notify.error("Couldn't crop this photo. Try another one.");
+      } finally {
+        setCropping(false);
+      }
+    },
+    [cropSession, enqueueFile, patch, pumpUploads],
+  );
+
+  const useCropAsIs = useCallback(() => {
+    if (!cropSession || cropSession.kind !== 'new') return;
+    const file = cropSession.file;
+    setCropSession(null);
+    enqueueFile(file, file.name, 'as-is');
+  }, [cropSession, enqueueFile]);
 
   const reorder = useCallback((ids: string[]) => {
     setDirty(true);
@@ -240,22 +400,39 @@ export function usePhotoPipeline({
     [patch, pumpShrink, pumpUploads],
   );
 
-  /** Forget unsaved changes and show the saved photos again. */
   const reset = useCallback((next: readonly OwnerPhotoView[]) => {
     setTiles(next.map(fromSaved));
     setDirty(false);
   }, []);
 
   const busy = tiles.some((tile) => tile.status === 'shrinking' || tile.status === 'uploading');
-  // Descriptions are filled in for the owner where empty ("Ulap Suite A, photo 3").
   const display = tiles.map((tile, index) =>
     tile.alt.trim() ? tile : { ...tile, alt: `${altPrefix}, photo ${index + 1}`.slice(0, 160) },
   );
   const ready = display.filter((tile) => tile.status === 'saved' && tile.fileId !== null);
 
+  const cropSheetProps: PhotoCropSheetProps = {
+    open: cropSession !== null,
+    onOpenChange: (next) => {
+      if (!next && !cropping) setCropSession(null);
+    },
+    src: cropSession?.src ?? null,
+    title: cropSession?.kind === 'adjust' ? 'Adjust photo' : 'Fit photo',
+    description: 'Drag to move. Pinch or use the buttons to zoom.',
+    aspectRatio: LISTING_ASPECT,
+    shape: 'rectangle',
+    primaryAction: cropSession?.kind === 'new' ? 'use-as-is' : 'crop',
+    confirmLabel: 'Apply crop',
+    useAsIsLabel: 'Use as is',
+    busy: cropping,
+    onConfirm: confirmCrop,
+    onUseAsIs: cropSession?.kind === 'new' ? useCropAsIs : undefined,
+  };
+
   return {
     tiles: display,
     add,
+    adjust,
     reorder,
     setAlt,
     remove,
@@ -264,8 +441,8 @@ export function usePhotoPipeline({
     busy,
     dirty,
     markSaved: () => setDirty(false),
-    /** What to save: the uploaded photos in order. Failed or unfinished ones are left out. */
     photosToSave: ready.map((tile) => ({ fileId: tile.fileId ?? '', altText: tile.alt })),
     failedCount: tiles.filter((tile) => tile.status === 'error').length,
+    cropSheetProps,
   };
 }

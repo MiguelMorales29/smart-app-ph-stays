@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@smartapp/ui/components/button';
+import { copyText } from '@smartapp/ui/lib/copy-text';
 import {
   BadgeCheckIcon,
   CheckIcon,
@@ -65,16 +66,8 @@ export function PropertyNameBlock({
       }
     }
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(url);
-        setShareState('copied');
-        return;
-      } catch {
-        // Fall through to failure notice.
-      }
-    }
-    setShareState('failed');
+    const copied = await copyText(url);
+    setShareState(copied ? 'copied' : 'failed');
   }
 
   return (

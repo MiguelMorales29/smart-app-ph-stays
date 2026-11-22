@@ -12,11 +12,10 @@ import {
   StepperTitle,
 } from '@smartapp/ui/components/stepper';
 import { Switch } from '@smartapp/ui/components/switch';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import {
   CheckCircle2Icon,
-  CheckIcon,
-  CopyIcon,
   DownloadIcon,
   EllipsisIcon,
   ExternalLinkIcon,
@@ -25,7 +24,7 @@ import {
   SmartphoneIcon,
   SquarePlusIcon,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { promptInstall, useInstallDetection } from './install-store';
 import {
@@ -75,31 +74,12 @@ export function InstallGuideContent({
 
   const [addressBarAtTop, setAddressBarAtTop] = useState(false);
   const [fallbackTab, setFallbackTab] = useState<FallbackGuideTab>('ios_26');
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [installing, setInstalling] = useState(false);
 
-  useEffect(() => {
-    if (copyState === 'idle') return;
-    const timer = window.setTimeout(() => setCopyState('idle'), 2400);
-    return () => window.clearTimeout(timer);
-  }, [copyState]);
-
-  async function handleCopyLink() {
-    const url =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}/${slug}`
-        : `https://smartapp.webserbisyo.com/${slug}`;
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(url);
-        setCopyState('copied');
-        return;
-      } catch {
-        // Fall through to failed state.
-      }
-    }
-    setCopyState('failed');
-  }
+  const shareUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/${slug}`
+      : `https://smartapp.webserbisyo.com/${slug}`;
 
   async function handleNativeInstall() {
     setInstalling(true);
@@ -188,26 +168,14 @@ export function InstallGuideContent({
           </StepperNav>
         </Stepper>
 
-        <Button
-          type="button"
-          onClick={() => void handleCopyLink()}
+        <CopyButton
+          value={shareUrl}
+          variant="default"
+          size="default"
+          label="Copy link"
+          copiedLabel="Link copied"
           className="min-h-12 w-full gap-2 text-base font-semibold"
-        >
-          {copyState === 'copied' ? (
-            <CheckIcon aria-hidden="true" className="size-4" />
-          ) : (
-            <CopyIcon aria-hidden="true" className="size-4" />
-          )}
-          {copyState === 'copied' ? 'Link copied' : 'Copy link'}
-        </Button>
-
-        <span role="status" aria-live="polite" className="sr-only">
-          {copyState === 'copied'
-            ? 'Link copied. Paste it in Safari or Chrome.'
-            : copyState === 'failed'
-              ? 'Could not copy automatically. Copy the link from the address bar.'
-              : ''}
-        </span>
+        />
       </div>
     );
   }
