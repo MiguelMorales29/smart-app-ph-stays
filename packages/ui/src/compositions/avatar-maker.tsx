@@ -111,7 +111,7 @@ export function AvatarMaker({
           <ToggleGroupItem
             key={p}
             value={p}
-            className="h-11 shrink-0 rounded-full px-3 aria-pressed:border-primary aria-pressed:text-primary md:h-9"
+            className="h-11 shrink-0 rounded-full px-3 aria-pressed:border-primary aria-pressed:bg-primary-tint aria-pressed:text-primary-hover md:h-9"
           >
             {W.parts[p]}
           </ToggleGroupItem>

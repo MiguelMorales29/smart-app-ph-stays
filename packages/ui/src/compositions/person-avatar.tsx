@@ -48,7 +48,7 @@ export function PersonAvatar({
   return (
     <Avatar
       data-slot="person-avatar"
-      size={size ?? 'default'}
+      size={size === 'sm' ? 'sm' : 'default'}
       className={cn(theme, size === 'lg' && 'size-16', className)}
     >
       {src ? <AvatarImage src={src} alt="" className="object-cover" /> : null}

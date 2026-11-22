@@ -122,7 +122,6 @@ export function KitBaseUi2Section() {
                   <img
                     src={photo.src}
                     alt={photo.alt}
-                    loading="lazy"
                     className={`w-full object-cover ${photo.aspect}`}
                   />
                   <figcaption className="px-2.5 py-1.5 text-xs text-muted-foreground">
