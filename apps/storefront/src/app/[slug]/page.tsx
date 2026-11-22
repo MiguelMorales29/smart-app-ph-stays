@@ -9,7 +9,14 @@ import {
   PropertyErrorView,
   PropertyLoadingSkeleton,
 } from '@/features/property/components/PropertyStateView';
-import { orderUnitsForProperty, resolvePrimaryCtaTarget } from '@/features/property/property-rules';
+import {
+  buildUnitDisplayCards,
+  orderUnitsForProperty,
+  resolvePrimaryCtaTarget,
+  resolvePropertyNavItems,
+  resolvePropertySections,
+  toUnitChooserOptions,
+} from '@/features/property/property-rules';
 import { getServerPropertyResult, type RawSearchParams } from '@/lib/property-server';
 
 interface PropertyHomePageProps {
@@ -42,15 +49,30 @@ async function PropertyHomeInner({ params, searchParams }: PropertyHomePageProps
     notFound();
   }
 
+  const visibility = resolvePropertySections(propertyView, today);
+  const navItems = resolvePropertyNavItems(visibility);
   const orderedUnits = orderUnitsForProperty(propertyView.units, published.units);
+  const unitCards = buildUnitDisplayCards(
+    orderedUnits,
+    propertyView.amenities,
+    published.highlights,
+  );
+  const unitOptions = toUnitChooserOptions(unitCards);
   const checkDatesHref = resolvePrimaryCtaTarget(propertyView.property.slug, orderedUnits);
 
   const frame = (
     <PropertyFrame
       propertyView={propertyView}
-      actionBarClassName="md:hidden"
+      navItems={navItems}
+      unitOptions={unitOptions}
+      actionBarClassName="lg:hidden"
       actionBar={
-        <PropertyActionBar slug={propertyView.property.slug} checkDatesHref={checkDatesHref} />
+        <PropertyActionBar
+          propertyName={propertyView.property.name}
+          checkDatesHref={checkDatesHref}
+          contact={propertyView.property.contact}
+          replyHours={propertyView.property.reply_hours}
+        />
       }
     >
       <PropertyPageView propertyView={propertyView} today={today} />

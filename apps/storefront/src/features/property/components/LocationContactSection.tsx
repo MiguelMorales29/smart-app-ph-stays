@@ -32,9 +32,10 @@ export function LocationContactSection({ property }: LocationContactSectionProps
 
   return (
     <section
+      id="location"
       aria-labelledby="location-heading"
       data-slot="location-contact-section"
-      className="space-y-4"
+      className="scroll-mt-32 space-y-4 lg:scroll-mt-24"
     >
       <h2 id="location-heading" className="font-heading text-xl font-semibold tracking-tight">
         Location and contact

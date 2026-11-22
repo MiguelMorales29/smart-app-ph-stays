@@ -412,7 +412,8 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
       description:
         'Corner studio with wrap-around ridge windows, 100-inch projector, induction kitchenette, and board games.',
       arrival_info: 'Tower 2, Unit 1510. Keyless door code #1510.',
-      sourcePhotos: rotatePhotos(studioFogPhotos, 4, 6),
+      // Starts on studio-fog-7 (queen bed) -> studio-fog-1 (studio) -> coffee bar -> breakfast bed -> games -> bathroom.
+      sourcePhotos: rotatePhotos(studioFogPhotos, 6, 6),
       amenityIds: [
         DEMO_IDS.amenities.wifi,
         DEMO_IDS.amenities.aircon,
@@ -467,7 +468,8 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
       description:
         'East-facing private room with sunrise balcony chairs, drip coffee bar, rain shower, and fast Wi-Fi.',
       arrival_info: 'Tower 2, Unit 1603. Keyless door code #1603.',
-      sourcePhotos: rotatePhotos(taalViewPhotos, 5, 5),
+      // Starts on taal-view-1br-2 (living/dining from balcony door) -> bedroom -> dining -> kitchen -> bathroom.
+      sourcePhotos: rotatePhotos(taalViewPhotos, 1, 5),
       amenityIds: [
         DEMO_IDS.amenities.wifi,
         DEMO_IDS.amenities.aircon,
@@ -493,7 +495,8 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
       description:
         'Top-floor 2-bedroom family loft with panoramic Taal ridge terrace, karaoke set, full kitchen, and dining for six.',
       arrival_info: 'Tower 2, Penthouse 2101. Keyless door code #2101.',
-      sourcePhotos: rotatePhotos(taalViewPhotos, 3, 6),
+      // Starts on taal-view-1br-1 (living room with Taal view) -> balcony door -> bedroom -> dining -> kitchen -> balcony.
+      sourcePhotos: rotatePhotos(taalViewPhotos, 0, 6),
       amenityIds: [
         DEMO_IDS.amenities.wifi,
         DEMO_IDS.amenities.aircon,
@@ -521,7 +524,8 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
       description:
         'Ground-level studio opening onto the pine courtyard patio with coffee bar and reading nook.',
       arrival_info: 'Tower 2, Unit 104. Keyless door code #0104.',
-      sourcePhotos: rotatePhotos(studioFogPhotos, 5, 4),
+      // Starts on studio-fog-1 (studio bedroom/living) -> coffee bar -> breakfast bed -> games.
+      sourcePhotos: rotatePhotos(studioFogPhotos, 0, 4),
       amenityIds: [
         DEMO_IDS.amenities.wifi,
         DEMO_IDS.amenities.aircon,

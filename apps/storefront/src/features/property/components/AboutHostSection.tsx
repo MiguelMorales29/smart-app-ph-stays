@@ -34,7 +34,12 @@ export function AboutHostSection({ about, host, isVerified }: AboutHostSectionPr
   const hostPhotoUrl = host.photo ? normalizeMediaSrc(host.photo.url) : null;
 
   return (
-    <section aria-labelledby="about-heading" data-slot="about-host-section" className="space-y-4">
+    <section
+      id="about"
+      aria-labelledby="about-heading"
+      data-slot="about-host-section"
+      className="scroll-mt-32 space-y-4 lg:scroll-mt-24"
+    >
       <h2 id="about-heading" className="font-heading text-xl font-semibold tracking-tight">
         About this place
       </h2>

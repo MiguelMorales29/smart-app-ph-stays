@@ -2,12 +2,14 @@ import type { CalendarDate, EditorPart, PropertyView } from '@smartapp/core';
 import type { ReactNode } from 'react';
 
 import {
+  buildUnitDisplayCards,
   computeStartingPrice,
   formatAreaLabel,
   orderUnitsForProperty,
   resolveBannerItems,
   resolveHeroPhotos,
   resolveHighlightAmenities,
+  resolvePropertyNavItems,
   resolvePropertySections,
 } from '../property-rules';
 import { AboutHostSection } from './AboutHostSection';
@@ -18,6 +20,7 @@ import { HighlightsSection } from './HighlightsSection';
 import { LocationContactSection } from './LocationContactSection';
 import { PromoBanners } from './PromoBanners';
 import { PropertyNameBlock } from './PropertyNameBlock';
+import { PropertySectionTabs } from './PropertySectionTabs';
 import { RulesSection } from './RulesSection';
 import { TimesSection } from './TimesSection';
 import { TrustPanel } from './TrustPanel';
@@ -34,8 +37,10 @@ export interface PropertyPageViewProps {
 const passthrough = (_part: EditorPart, node: ReactNode) => node;
 
 /**
- * Full public property page body (parts 2 through 13, top to bottom).
- * Built only from `getProperty` (`PropertyView`), honouring every show/hide switch in `look.sections`.
+ * Full public property page body (parts 2 through 13, top to bottom, D79–D82):
+ * - Sticky section tabs under the top bar on phones & tablets once the hero leaves view.
+ * - Full-width single column across phone, tablet and desktop (D80).
+ * - Built only from `getProperty` (`PropertyView`), honouring every show/hide switch in `look.sections`.
  */
 export function PropertyPageView({
   propertyView,
@@ -43,21 +48,26 @@ export function PropertyPageView({
   wrap = passthrough,
   showBanner,
 }: PropertyPageViewProps) {
-  const { property, page, host, trust, units, house_rules } = propertyView;
+  const { property, page, host, trust, units, amenities, house_rules } = propertyView;
   const published = page.published;
   if (!published) return null;
 
   const visibility = resolvePropertySections(propertyView, today);
+  const navItems = resolvePropertyNavItems(visibility);
   const hero = resolveHeroPhotos(propertyView);
   const banners = resolveBannerItems(propertyView);
   const orderedUnits = orderUnitsForProperty(units, published.units);
+  const displayCards = buildUnitDisplayCards(orderedUnits, amenities, published.highlights);
   const highlights = resolveHighlightAmenities(propertyView);
   const startingPrice = computeStartingPrice(orderedUnits);
   const areaLabel = formatAreaLabel(property);
   const aboutText = published.about ?? property.description;
+  const googleReviewUrl = property.contact.google_review_url?.trim() || null;
 
   return (
     <div data-slot="property-page" className="flex flex-col gap-8 pb-4">
+      <PropertySectionTabs items={navItems} hasHero={hero.allPhotos.length > 0} />
+
       {visibility.announcement && published.look.announcement
         ? wrap('announcement', <AnnouncementStrip announcement={published.look.announcement} />)
         : null}
@@ -81,6 +91,7 @@ export function PropertyPageView({
           areaLabel={areaLabel}
           isVerified={trust.is_verified}
           startingPrice={startingPrice}
+          googleReviewUrl={googleReviewUrl}
         />,
       )}
 
@@ -90,6 +101,7 @@ export function PropertyPageView({
             <PromoBanners
               slug={property.slug}
               banners={banners}
+              autoplay={published.look.bannerAutoplay}
               seconds={published.look.bannerSeconds}
               show={showBanner}
             />,
@@ -97,7 +109,18 @@ export function PropertyPageView({
         : null}
 
       {visibility.units
-        ? wrap('units', <UnitsSection slug={property.slug} units={orderedUnits} />)
+        ? wrap(
+            'units',
+            <UnitsSection
+              slug={property.slug}
+              propertyName={property.name}
+              contact={property.contact}
+              replyHours={property.reply_hours}
+              cards={displayCards}
+              unitCardAutoplay={published.look.unitCardAutoplay}
+              unitCardSeconds={published.look.unitCardSeconds}
+            />,
+          )
         : null}
 
       {visibility.highlights
@@ -123,7 +146,12 @@ export function PropertyPageView({
 
       {visibility.faq ? wrap('faq', <FaqSection items={published.faq} />) : null}
 
-      <TrustPanel propertyId={property.id} propertyName={property.name} trust={trust} />
+      <TrustPanel
+        slug={property.slug}
+        propertyId={property.id}
+        propertyName={property.name}
+        trust={trust}
+      />
     </div>
   );
 }

@@ -18,19 +18,20 @@ The food app's shop has several pages (Home, Menu, Rewards), so its top bar show
 - **Desktop (from 1024 px):** the same section links sit in the middle of the top bar (like the food app's centre pill group); on the right: Install, Your booking, and a filled **Check dates** button.
 - **The menu (sheet):** Share, Install, Find my booking, Privacy, Report this page, and the Preview switch on demo builds. The floating Preview pill is hidden when the menu exists (same rule as D68 in the dashboard; it covered unit photos in the P5-2 screenshots).
 
-### 2. Desktop: content plus a sticky booking card (D80)
+### 2. Desktop: full-width layout with top-bar actions (D80)
 
-On desktop there was no booking action once the page scrolled. From 1024 px the page becomes two columns:
+From 1024 px the property page stays full width (no sticky right-hand booking card):
 
-- **Left (about two thirds):** gallery, name block, units, highlights, about and host, rules, location, times, FAQ, trust panel.
-- **Right (sticky):** a booking card with "from ₱X a night" plus the required fee note (D74), Check dates (opens the date picker for a single unit, or a unit chooser), Message (contact sheet), "See reviews on Google", and one trust line ("Pay only to the accounts in your booking conversation").
-- The price leaves the name block on desktop (it floated far right); phones keep it under the name.
+- **Full-width content:** gallery, name block (keeping `"from ₱X a night"` / `"a month"` under the name on all screen sizes), promo banners, units (3 columns), highlights, about and host, rules, location, times, FAQ, trust panel.
+- **Top bar actions:** from 1024 px the top bar holds the centre section-link pill group and, on the right, Install, Your booking, **Message** (opens the contact sheet), filled **Check dates** (single unit: its page; several: the unit chooser sheet), and Menu.
 
-### 3. Units section (D81)
+### 3. Units section & quick look (D81)
 
-- **Bed spaces grouped by room.** Tita Lorna's Dorm showed one card per bed, with the same photo repeated. Show one card per room: "Room 2A · Ladies · 6 beds · 2 free", "from ₱4,200 a month", one tap to the room, where the guest picks a bed.
+- **Bed spaces grouped by room.** Tita Lorna's Dorm showed one card per bed, with the same photo repeated. Show one card per room: `"Room 2A · Ladies · 4 beds"`, `"from ₱4,800 a month"`, linking to the room's first bed.
 - **Stays and Monthly rentals** as two tabs when a property has both (a segmented control), not one long mixed list.
-- **Cards:** photo with a "+5" photo count, name, "Whole place · 2 guests · 1 bed", price with the fee note, one highlight chip (for example "Taal view"). Phone: one column of full-width cards; tablet: 2; desktop left column: 2.
+- **Cards:** photo area uses the installed `Carousel` (swipe on phones, small hover arrows on desktop, dots, `+N` photo count; only the first photo loads with the page and the rest load on swipe), name, `"Whole place · 2 guests · 1 bed"`, price, one highlight chip. Optional owner-controlled autoplay (`look.unitCardAutoplay` default `false`, `look.unitCardSeconds` `5 | 7 | 10` default `7`): only cards in view play, staggered one card at a time, paused on hover/touch/focus and under reduced motion, with one Pause control for the Units section and next-photo-only preloading. Grid: phone 1 column (first 4 cards, then `"Show all N units"` revealing the rest in place), tablet 2 columns, desktop 3 columns.
+- **Quick look:** tapping a unit card opens a lazy-loaded sheet on phones / dialog on desktop with a photo carousel showing each photo's description, facts (guests, beds, bathrooms, floor area), top 6 amenities, clamped description with `"Read more"`, price, and `"Check dates"` + `"See full details"` buttons (both going to the unit page).
+- **Promo banners:** `look.bannerAutoplay` (default `true`) lets owners turn banner autoplay off while keeping manual arrows and dots; desktop subtitles clamp cleanly with an ellipsis.
 - **"Show all photos"** on phones too (a button under the gallery), opening the full viewer grouped by unit.
 
 ### 4. Installing on iPhone: a guide that looks like Safari (D82)

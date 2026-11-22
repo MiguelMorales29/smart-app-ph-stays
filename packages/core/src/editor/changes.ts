@@ -329,8 +329,23 @@ export function getPageChangesList(
       }
     }
   }
-  if (a.bannerSeconds !== b.bannerSeconds && b.banners.length > 1) {
+  if (a.bannerAutoplay !== b.bannerAutoplay && b.banners.length > 1) {
+    out.push({
+      part: 'banners',
+      words: b.bannerAutoplay ? 'Banner autoplay on' : 'Banner autoplay off',
+    });
+  }
+  if (a.bannerSeconds !== b.bannerSeconds && b.banners.length > 1 && b.bannerAutoplay) {
     out.push({ part: 'banners', words: `Each banner shows ${b.bannerSeconds} seconds` });
+  }
+  if (a.unitCardAutoplay !== b.unitCardAutoplay) {
+    out.push({
+      part: 'units',
+      words: b.unitCardAutoplay ? 'Unit photo autoplay on' : 'Unit photo autoplay off',
+    });
+  }
+  if (a.unitCardSeconds !== b.unitCardSeconds && b.unitCardAutoplay) {
+    out.push({ part: 'units', words: `Unit photos change every ${b.unitCardSeconds} seconds` });
   }
 
   // 6. Announcement

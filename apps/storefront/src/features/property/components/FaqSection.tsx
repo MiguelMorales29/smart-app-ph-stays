@@ -17,7 +17,12 @@ export function FaqSection({ items }: FaqSectionProps) {
   if (items.length === 0) return null;
 
   return (
-    <section aria-labelledby="faq-heading" data-slot="faq-section" className="space-y-4">
+    <section
+      id="faq"
+      aria-labelledby="faq-heading"
+      data-slot="faq-section"
+      className="scroll-mt-32 space-y-4 lg:scroll-mt-24"
+    >
       <h2 id="faq-heading" className="font-heading text-xl font-semibold tracking-tight">
         Questions and answers
       </h2>

@@ -53,7 +53,10 @@ export function buildUlapSuitesBrand(
       logoShape: 'rounded',
       fontPair: 'cafe',
       banners: media.banners,
+      bannerAutoplay: true,
       bannerSeconds: 5,
+      unitCardAutoplay: false,
+      unitCardSeconds: 7,
       announcement: {
         text: 'Sunrise slots fill fast on weekends — book directly for instant confirmation.',
         tone: 'info',

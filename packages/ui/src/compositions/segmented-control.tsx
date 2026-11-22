@@ -1,7 +1,11 @@
-import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+'use client';
+
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ToggleGroup as ToggleGroupPrimitive } from '@base-ui/react/toggle-group';
 import { Toggle as TogglePrimitive } from '@base-ui/react/toggle';
 import { cn } from '@smartapp/ui/lib/utils';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export interface SegmentedOption<T extends string> {
   readonly value: T;
@@ -39,7 +43,7 @@ export function SegmentedControl<T extends string>({
     setThumb({ x: active.offsetLeft, w: active.offsetWidth });
   }, [value]);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     place();
     const root = rootRef.current;
     if (!root) return;

@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles/*": "./src/styles/*",
+    "./components/reui/*": "./src/components/reui/*.tsx",
     "./components/*": "./src/components/*.tsx",
     "./compositions/*": "./src/compositions/*.tsx",
     "./lib/*": "./src/lib/*.ts",

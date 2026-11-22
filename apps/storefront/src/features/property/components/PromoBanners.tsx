@@ -24,12 +24,13 @@ const BANNER_LABELS: BannerCarouselLabels = {
 export interface PromoBannersProps {
   readonly slug: string;
   readonly banners: readonly ResolvedBannerItem[];
+  readonly autoplay: boolean;
   readonly seconds: number;
   readonly show?: { readonly index: number; readonly at: number } | undefined;
 }
 
 /** Promo banners (part 5): uses the ported BannerCarousel (2+ slides) or a still card (1 slide). */
-export function PromoBanners({ slug, banners, seconds, show }: PromoBannersProps) {
+export function PromoBanners({ slug, banners, autoplay, seconds, show }: PromoBannersProps) {
   if (banners.length === 0) return null;
 
   const slides: BannerSlide[] = banners.map((banner) => {
@@ -60,12 +61,21 @@ export function PromoBanners({ slug, banners, seconds, show }: PromoBannersProps
     <section aria-label="Promos" data-slot="promo-banners">
       <BannerCarousel
         slides={slides}
+        autoplay={autoplay}
         seconds={seconds}
         sizes="(min-width: 1280px) 1024px, 100vw"
         labels={BANNER_LABELS}
         show={show}
         renderImage={({ src, alt, sizes, className }) => (
-          <Image src={src} alt={alt} fill sizes={sizes} loading="lazy" className={className} />
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            loading="lazy"
+            fetchPriority="low"
+            className={className}
+          />
         )}
       />
     </section>

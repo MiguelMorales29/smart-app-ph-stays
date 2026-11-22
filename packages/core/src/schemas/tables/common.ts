@@ -92,6 +92,10 @@ export const propertyPageAnnouncementSchema = z.object({
   endDate: calendarDateSchema.nullable(),
 });
 
+export const UNIT_CARD_SECONDS = [5, 7, 10] as const;
+export const unitCardSecondsSchema = z.union([z.literal(5), z.literal(7), z.literal(10)]);
+export type UnitCardSeconds = z.infer<typeof unitCardSecondsSchema>;
+
 export const propertyPageDraftSchema = z.object({
   logo: uuidSchema.nullable(),
   tagline: z.string().max(80).nullable(),
@@ -104,7 +108,10 @@ export const propertyPageDraftSchema = z.object({
     logoShape: z.enum(['circle', 'rounded']),
     fontPair: fontPairSchema,
     banners: z.array(propertyPageBannerSchema).max(3),
+    bannerAutoplay: z.boolean().default(true),
     bannerSeconds: z.int().min(3).max(10),
+    unitCardAutoplay: z.boolean().default(false),
+    unitCardSeconds: unitCardSecondsSchema.default(7),
     announcement: propertyPageAnnouncementSchema.nullable(),
     sections: z.record(z.string(), z.boolean()),
   }),

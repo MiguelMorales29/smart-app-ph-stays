@@ -38,6 +38,8 @@ export interface BannerCarouselLabels {
 
 export interface BannerCarouselProps {
   readonly slides: readonly BannerSlide[];
+  /** Whether 2+ slides advance automatically (owner option, default true). */
+  readonly autoplay?: boolean | undefined;
   /** Seconds per slide, set by the owner (3 to 10, default 5). */
   readonly seconds?: number | undefined;
   readonly sizes?: string | undefined;
@@ -97,7 +99,7 @@ export function BannerFrame({
       })}
       {hasCopy ? (
         <div className="absolute inset-0 flex items-end bg-linear-to-t from-scrim via-scrim/45 to-transparent to-70% p-4 text-on-scrim sm:p-5 md:p-6">
-          <div className="banner-copy flex max-w-lg flex-col items-start gap-1">
+          <div className="banner-copy flex max-w-xl flex-col items-start gap-1">
             {title ? (
               <p
                 className={cn(
@@ -111,8 +113,8 @@ export function BannerFrame({
             {description ? (
               <p
                 className={cn(
-                  'text-sm text-on-scrim/90 md:text-base',
-                  !slide.descriptionSlot && 'line-clamp-1 md:line-clamp-2',
+                  'text-sm leading-snug text-on-scrim/90 md:text-base',
+                  !slide.descriptionSlot && 'line-clamp-1',
                 )}
               >
                 {description}
@@ -146,7 +148,11 @@ export function BannerCarousel(props: BannerCarouselProps) {
 
   useEffect(() => {
     if (!many) return;
-    const id = window.setTimeout(() => setReady(true), 0);
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(() => setReady(true), { timeout: 3500 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const id = window.setTimeout(() => setReady(true), 2500);
     return () => window.clearTimeout(id);
   }, [many]);
 
@@ -165,21 +171,21 @@ export function BannerCarousel(props: BannerCarouselProps) {
     );
   }
 
-  // Height-matched static placeholder while the lazy carousel chunk loads, preventing CLS.
+  // Height-matched static placeholder (slide 0 only) while the lazy carousel chunk loads,
+  // preventing CLS and avoiding fetching slide 2 before hydration.
   const still = (
-    <div data-slot="banner-carousel-loading" className={cn('flex flex-col gap-3', props.className)}>
+    <div
+      data-slot="banner-carousel-loading"
+      className={cn('flex flex-col gap-3', props.className)}
+      onPointerEnter={() => setReady(true)}
+      onTouchStart={() => setReady(true)}
+      onFocusCapture={() => setReady(true)}
+    >
       <div className="overflow-hidden">
         <div className={BANNER_TRACK}>
-          {slides.slice(0, 2).map((slide, index) => (
-            <div
-              key={slide.id ?? `${index}-${slide.alt}`}
-              data-banner-slide=""
-              data-active={index === 0 ? '' : undefined}
-              className={BANNER_SLIDE}
-            >
-              {renderFrame(slide, index)}
-            </div>
-          ))}
+          <div data-banner-slide="" data-active="" className={BANNER_SLIDE}>
+            {renderFrame(first, 0)}
+          </div>
         </div>
       </div>
       <div aria-hidden="true" className="min-h-7" />

@@ -102,6 +102,22 @@ export function resolveNextHolidayWindows(today: CalendarDate): {
   return { christmas, holyWeek };
 }
 
+function trimAtWordBoundary(text: string, maxLength: number): string {
+  const cleaned = text.trim().replace(/\s+/g, ' ');
+  if (cleaned.length <= maxLength) return cleaned;
+  const limit = Math.max(1, maxLength - 1);
+  const slice = cleaned.slice(0, limit);
+  const lastSpace = slice.lastIndexOf(' ');
+  const rawCut = lastSpace >= Math.floor(limit * 0.6) ? slice.slice(0, lastSpace) : slice;
+  const trimmed = rawCut
+    .replace(/[,;:\-–—]+$/, '')
+    .trimEnd()
+    .replace(/\s+(?:a|an|the|and|or|of|in|on|at|to|for|with|under)$/i, '')
+    .replace(/[,;:\-–—]+$/, '')
+    .trimEnd();
+  return `${trimmed || slice.trimEnd()}…`;
+}
+
 export function buildBrandMediaFromManifest(params: {
   readonly brandSlug: string;
   readonly groupHex: string;
@@ -224,8 +240,8 @@ export function buildBrandMediaFromManifest(params: {
       banners.push({
         photo: fileId,
         alt: entry.altText,
-        title: entry.heroDescription.slice(0, 40) || null,
-        line: entry.altText.slice(0, 90),
+        title: trimAtWordBoundary(entry.heroDescription, 40) || null,
+        line: trimAtWordBoundary(entry.altText, 90),
         link: null,
       });
     } else if (entry.folder === 'photos' && entry.name.startsWith('property-')) {

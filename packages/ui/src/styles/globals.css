@@ -370,3 +370,23 @@ body:has([data-slot='dev-switch-panel']):not(:has([data-dev-panel-menu])) {
     transition: none;
   }
 }
+
+/* CSS-only pulsing arrow for the iPhone Safari install guide (D82); still under reduced motion. */
+@keyframes install-arrow-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+@utility install-arrow-pulse {
+  animation: install-arrow-bob 1.2s var(--ease-enter) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
