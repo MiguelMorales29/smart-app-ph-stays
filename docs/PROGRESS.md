@@ -80,6 +80,7 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [x] UI-2 Photos, colours and the picture maker (plus screen retrofits)
 - [x] UI-3 Data and lists
 - [x] UI-4 Dates, calendars and time
+- [x] FIX-1 Urgent audit fixes (custom style variants, Your picture sheet, memory uploads, bed spaces, mode defaults & lock, unit readiness card, house rules wrap, O4 plan limit, mobile calendar prices, Playwright journeys)
 - [ ] UI-5 Conversation, charts and stats
 - [ ] UI-6 Missing primitives and variants
 
