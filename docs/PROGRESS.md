@@ -63,7 +63,6 @@ Plan: `docs/prompts/P5-guide.md`. Decisions D65–D70. Claude reviews each PR (c
 - [x] P5-0b Units page, unit cards and dock polish (round 2)
 - [x] P5-1 Data contract for the public pages and the page editor
 - [x] P5-2 Property page
-- [ ] P5-2 Property page
 - [ ] P5-2b Property page structure, round 2 (section tabs, desktop booking card, rooms, iPhone install guide)
 - [ ] P5-3 Unit page
 - [ ] P5-4 Install, splash, share previews, offline, privacy
