@@ -8,7 +8,7 @@ Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `g
 
 - Panels: `apps/dashboard/src/features/editor/panels/brand-panel.tsx`, `banners-panel.tsx`, `announcement-panel.tsx`, `opening-panel.tsx`, `about-panel.tsx`, `owned-panel.tsx`, `field-count.tsx`
 - Style: `style-card.tsx`, `palette-check.tsx`, `any-colour-picker.tsx`, `use-logo-colours.ts`, `logo-loupe.tsx`, `logo-tools.ts`, `logo-places.tsx`, `font-picker.tsx`, `banner-text.ts`, `picture.ts`
-- Rules: `packages/core/src/rules/palette.ts` and `style-designer.ts` (merge with our `packages/core/src/theme/palette.ts`; keep one source and every test)
+- Rules: `packages/core/src/rules/palette.ts` and `style-designer.ts` (using `@material/material-color-utilities` as the colour library; merge with our `packages/core/src/theme/palette.ts`; keep one source and every test)
 
 ## Goal
 
