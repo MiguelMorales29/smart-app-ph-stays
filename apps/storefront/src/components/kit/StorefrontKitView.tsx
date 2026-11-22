@@ -25,6 +25,7 @@ import { resolveServerProperty } from '@/lib/property-server';
 
 import { StorefrontKitUi1Section } from './StorefrontKitUi1Section';
 import { StorefrontKitUi2Section } from './StorefrontKitUi2Section';
+import { StorefrontKitUi3Section } from './StorefrontKitUi3Section';
 
 export const STOREFRONT_KIT_LOOKS = [
   'ulap-suites',
@@ -381,6 +382,14 @@ export async function StorefrontKitView({
               dont="Load DiceBear JS on first paint or omit the CC-BY-4.0 credit line where faces are picked."
             >
               <StorefrontKitUi2Section />
+            </KitSection>
+
+            <KitSection
+              title="Receipts, timelines, files & guest faces (UI-3)"
+              useFor="ThermalReceiptCard for booking/payment slips, Timeline for stay milestones, Frame/IconTile/FileType for attachments, RelativeTimeCard (Manila time), Stack, and Toon Head / Big Smile guest face sets (D84)."
+              dont="Show raw receipt colours outside our paper tokens or omit CC-BY-4.0 artist credit."
+            >
+              <StorefrontKitUi3Section propertyName={activeLook.propertyView.property.name} />
             </KitSection>
           </div>
         </PropertyFrame>

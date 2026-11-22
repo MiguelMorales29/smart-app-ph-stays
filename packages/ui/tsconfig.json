@@ -10,6 +10,7 @@
     "paths": {
       "@smartapp/ui/components/*": ["./src/components/*"],
       "@smartapp/ui/compositions/*": ["./src/compositions/*"],
+      "@smartapp/ui/vendor/*": ["./src/vendor/*"],
       "@smartapp/ui/lib/*": ["./src/lib/*"],
       "@smartapp/ui/hooks/*": ["./src/hooks/*"]
     }
@@ -20,6 +21,8 @@
     "src/hooks/**/*.ts",
     "src/compositions/**/*.ts",
     "src/compositions/**/*.tsx",
+    "src/vendor/**/*.ts",
+    "src/vendor/**/*.tsx",
     "test/**/*.ts"
   ]
 }

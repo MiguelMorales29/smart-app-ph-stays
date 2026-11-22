@@ -73,8 +73,12 @@
   --color-info-tint: var(--info-tint);
 
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
 
   --color-property-60: var(--property-60);
   --color-property-30: var(--property-30);
@@ -537,4 +541,15 @@ body:has([data-slot='dev-switch-panel']):not(:has([data-dev-panel-menu])) {
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
+}
+
+/* Thermal receipt torn paper edges (ported from food app / Opensource UI, MIT). */
+@utility receipt-edge-top {
+  background: radial-gradient(circle at 8px 0, transparent 6px, var(--paper) 6px);
+  background-size: 16px 8px;
+}
+
+@utility receipt-edge-bottom {
+  background: radial-gradient(circle at 8px 8px, transparent 6px, var(--paper) 6px);
+  background-size: 16px 8px;
 }

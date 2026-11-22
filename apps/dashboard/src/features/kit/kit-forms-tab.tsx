@@ -89,6 +89,7 @@ import { ToggleGroupSpaced } from '@smartapp/ui/variants/toggle-group/toggle-gro
 
 import { KitFormsUi1Section } from './kit-forms-ui1-section';
 import { KitFormsUi2Section } from './kit-forms-ui2-section';
+import { KitFormsUi3Section } from './kit-forms-ui3-section';
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -655,6 +656,7 @@ export function KitFormsTab() {
         </section>
         <KitFormsUi1Section />
         <KitFormsUi2Section />
+        <KitFormsUi3Section />
       </div>
     </>
   );

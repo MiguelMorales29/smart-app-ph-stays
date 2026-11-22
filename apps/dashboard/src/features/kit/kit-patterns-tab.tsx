@@ -30,6 +30,7 @@ import { QUICK_ADD_ITEMS } from '@/app/nav-config';
 
 import { KitPatternsUi1Section } from './kit-patterns-ui1-section';
 import { KitPatternsUi2Section } from './kit-patterns-ui2-section';
+import { KitPatternsUi3Section } from './kit-patterns-ui3-section';
 
 type Section = 'basics' | 'price' | 'rules';
 
@@ -518,6 +519,7 @@ export function KitPatternsTab() {
 
       <KitPatternsUi1Section />
       <KitPatternsUi2Section />
+      <KitPatternsUi3Section />
     </div>
   );
 }

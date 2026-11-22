@@ -81,6 +81,7 @@ import {
 
 import { KitBaseUi1Section } from './kit-base-ui1-section';
 import { KitBaseUi2Section } from './kit-base-ui2-section';
+import { KitBaseUi3Section } from './kit-base-ui3-section';
 
 export function DualSurfaceShowcase({
   title,
@@ -523,6 +524,7 @@ export function KitBaseTab() {
 
           <KitBaseUi1Section />
           <KitBaseUi2Section />
+          <KitBaseUi3Section />
         </div>
       </TooltipProvider>
     </Toaster>
