@@ -79,7 +79,6 @@ export function PropertyPageView({
               propertyName={property.name}
               mosaicPhotos={hero.mosaicPhotos}
               allPhotos={hero.allPhotos}
-              photoGroups={hero.photoGroups}
             />,
           )
         : null}

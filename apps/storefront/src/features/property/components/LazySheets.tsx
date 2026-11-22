@@ -57,3 +57,13 @@ export const LazyHeroPhotoViewerModal = dynamic(
   () => import('./HeroPhotoViewerModal').then((m) => m.HeroPhotoViewerModal),
   { ssr: false, loading: () => <SheetLoadingPill /> },
 );
+
+export const LazyHeroPhoneCarousel = dynamic(
+  () => import('./HeroPhoneCarousel').then((m) => m.HeroPhoneCarousel),
+  { ssr: false },
+);
+
+export const LazyUnitPhotoCarouselInteractive = dynamic(
+  () => import('./UnitPhotoCarouselInteractive').then((m) => m.UnitPhotoCarouselInteractive),
+  { ssr: false },
+);

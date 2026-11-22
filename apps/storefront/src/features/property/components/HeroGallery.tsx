@@ -1,46 +1,30 @@
 'use client';
 
 import { Button } from '@smartapp/ui/components/button';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  type CarouselApi,
-} from '@smartapp/ui/components/carousel';
 import { cn } from '@smartapp/ui/lib/utils';
 import { ImagesIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
 import { normalizeMediaSrc } from '../media-src';
-import type { ResolvedPhotoGroup, ResolvedPropertyPhoto } from '../property-rules';
-import { LazyHeroPhotoViewerModal } from './LazySheets';
+import type { ResolvedPropertyPhoto } from '../property-rules';
+import { LazyHeroPhoneCarousel, LazyHeroPhotoViewerModal } from './LazySheets';
 
 export interface HeroGalleryProps {
   readonly propertyName: string;
   readonly mosaicPhotos: readonly ResolvedPropertyPhoto[];
   readonly allPhotos: readonly ResolvedPropertyPhoto[];
-  readonly photoGroups: readonly ResolvedPhotoGroup[];
 }
 
 /**
  * Property hero gallery (part 4, D81, D74–D77):
- * - Phone: full-width Embla swipe gallery with "1 / N" counter (never auto-advances, E4) plus a
- *   "Show all photos" button under the gallery; only slide 0 loads eagerly, rest load when swiped.
+ * - Phone: static LCP cover + "1 / N" counter on SSR/first paint; upgrades to the lazy-loaded Embla
+ *   swipe gallery on touch/pointer or after browser idle (never auto-advances, E4).
  * - From 768 px: 1 large cover + up to 4 small photos mosaic with "Show all photos".
- * - Full-screen viewer modal is lazy-loaded only when opened.
+ * - Full-screen grouped viewer modal is lazy-loaded only when opened.
  */
-export function HeroGallery({
-  propertyName,
-  mosaicPhotos,
-  allPhotos,
-  photoGroups,
-}: HeroGalleryProps) {
-  const [phoneApi, setPhoneApi] = useState<CarouselApi>();
-  const [phoneIndex, setPhoneIndex] = useState(0);
-  const [loadedPhoneIndices, setLoadedPhoneIndices] = useState<ReadonlySet<number>>(
-    () => new Set([0]),
-  );
+export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalleryProps) {
+  const [phoneCarouselActive, setPhoneCarouselActive] = useState(false);
 
   const [viewerMounted, setViewerMounted] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -50,28 +34,30 @@ export function HeroGallery({
 
   const totalCount = allPhotos.length;
 
-  useEffect(() => {
-    if (!phoneApi) return;
-    const onSelect = () => {
-      const idx = phoneApi.selectedScrollSnap();
-      setPhoneIndex(idx);
-      setLoadedPhoneIndices((prev) => {
-        if (prev.has(idx) && (idx + 1 >= totalCount || prev.has(idx + 1))) return prev;
-        const next = new Set(prev);
-        next.add(idx);
-        if (idx + 1 < totalCount) next.add(idx + 1);
-        return next;
-      });
-    };
-    phoneApi.on('reInit', onSelect);
-    phoneApi.on('select', onSelect);
-    return () => {
-      phoneApi.off('reInit', onSelect);
-      phoneApi.off('select', onSelect);
-    };
-  }, [phoneApi, totalCount]);
+  const hasMultipleGroups = useMemo(() => {
+    const groupIds = new Set<string>();
+    for (const photo of allPhotos) {
+      groupIds.add(photo.groupId);
+      if (groupIds.size > 1) return true;
+    }
+    return false;
+  }, [allPhotos]);
 
-  const phoneOpts = useMemo(() => ({ loop: false, align: 'start' as const }), []);
+  // Upgrade the phone hero to the swipeable Embla carousel after idle on phone viewports only.
+  useEffect(() => {
+    if (totalCount <= 1 || phoneCarouselActive) return;
+    if (typeof window === 'undefined') return;
+    if (!window.matchMedia('(max-width: 767px)').matches) return;
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(() => setPhoneCarouselActive(true), {
+        timeout: 1800,
+      });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timer = window.setTimeout(() => setPhoneCarouselActive(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, [totalCount, phoneCarouselActive]);
 
   if (totalCount === 0) {
     return null;
@@ -87,7 +73,7 @@ export function HeroGallery({
   }
 
   function openGroupedOverview() {
-    setViewerMode(photoGroups.length > 1 ? 'grid' : 'carousel');
+    setViewerMode(hasMultipleGroups ? 'grid' : 'carousel');
     setViewerSession((n) => n + 1);
     setViewerMounted(true);
     setViewerOpen(true);
@@ -103,75 +89,66 @@ export function HeroGallery({
       data-slot="hero-gallery"
       className="relative"
     >
-      {/* Phone swipe gallery: never auto-advances (decision E4); only cover downloads upfront */}
-      <div
-        className="space-y-2.5 md:hidden"
-        onTouchStart={() => {
-          if (totalCount > 1) {
-            setLoadedPhoneIndices((prev) => {
-              if (prev.has(1)) return prev;
-              const next = new Set(prev);
-              next.add(1);
-              return next;
-            });
-          }
-        }}
-      >
-        <div className="relative">
-          <Carousel
-            setApi={setPhoneApi}
-            opts={phoneOpts}
-            aria-label={`${propertyName} photo gallery`}
-          >
-            <CarouselContent className="-ml-0">
-              {allPhotos.map((photo, index) => (
-                <CarouselItem key={photo.fileId} className="pl-0">
-                  <button
-                    type="button"
-                    onClick={() => openCarouselAt(index)}
-                    aria-label={`View photo ${index + 1} of ${totalCount}: ${photo.alt}`}
-                    className="relative block aspect-4/3 w-full overflow-hidden rounded-2xl bg-muted text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
-                  >
-                    {loadedPhoneIndices.has(index) ? (
-                      <Image
-                        src={normalizeMediaSrc(photo.url)}
-                        alt={photo.alt}
-                        fill
-                        {...(index === 0
-                          ? { priority: true, fetchPriority: 'high' as const }
-                          : { loading: 'lazy' as const })}
-                        sizes="(min-width: 1280px) 560px, (min-width: 768px) 50vw, 100vw"
-                        className="object-cover"
-                      />
-                    ) : null}
-                  </button>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
+      {/* Phone swipe gallery: never auto-advances (decision E4); static LCP frame upgrades lazily */}
+      {coverPhoto ? (
+        <div
+          className="space-y-2.5 md:hidden"
+          onTouchStart={() => {
+            if (totalCount > 1) setPhoneCarouselActive(true);
+          }}
+          onPointerDown={() => {
+            if (totalCount > 1) setPhoneCarouselActive(true);
+          }}
+        >
+          {phoneCarouselActive && totalCount > 1 ? (
+            <LazyHeroPhoneCarousel
+              propertyName={propertyName}
+              allPhotos={allPhotos}
+              onOpenCarouselAt={openCarouselAt}
+            />
+          ) : (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => openCarouselAt(0)}
+                aria-label={`View photo 1 of ${totalCount}: ${coverPhoto.alt}`}
+                className="relative block aspect-4/3 w-full overflow-hidden rounded-2xl bg-muted text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
+              >
+                <Image
+                  src={normalizeMediaSrc(coverPhoto.url)}
+                  alt={coverPhoto.alt}
+                  fill
+                  priority
+                  fetchPriority="high"
+                  sizes="(min-width: 1280px) 560px, (min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              </button>
+
+              {totalCount > 1 ? (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-3 bottom-3 rounded-full bg-scrim px-3 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
+                >
+                  1 / {totalCount}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {totalCount > 1 ? (
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute right-3 bottom-3 rounded-full bg-scrim px-3 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
+            <Button
+              type="button"
+              variant="outline"
+              onClick={openGroupedOverview}
+              className="min-h-11 w-full gap-2 rounded-xl bg-card text-sm font-medium text-foreground"
             >
-              {phoneIndex + 1} / {totalCount}
-            </div>
+              <ImagesIcon aria-hidden="true" className="size-4" />
+              Show all {totalCount} photos
+            </Button>
           ) : null}
         </div>
-
-        {totalCount > 1 ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={openGroupedOverview}
-            className="min-h-11 w-full gap-2 rounded-xl bg-card text-sm font-medium text-foreground"
-          >
-            <ImagesIcon aria-hidden="true" className="size-4" />
-            Show all {totalCount} photos
-          </Button>
-        ) : null}
-      </div>
+      ) : null}
 
       {/* Tablet & desktop mosaic: 1 large cover + up to 4 small photos */}
       {coverPhoto ? (
@@ -260,7 +237,6 @@ export function HeroGallery({
           startIndex={viewerStartIndex}
           propertyName={propertyName}
           allPhotos={allPhotos}
-          photoGroups={photoGroups}
         />
       ) : null}
     </section>

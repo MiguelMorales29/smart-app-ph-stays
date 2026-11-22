@@ -113,6 +113,31 @@ export interface UnitDisplayCard {
   readonly topAmenities: readonly PublicAmenityView[];
 }
 
+/** Slim unit summary passed to `PropertyFrame` / `UnitChooserSheet` to avoid duplicating full card data in RSC props. */
+export interface UnitChooserOption {
+  readonly id: string;
+  readonly title: string;
+  readonly targetUnitSlug: string;
+  readonly coverUrl: string | null;
+  readonly coverAlt: string;
+  readonly factsLine: string;
+  readonly priceText: string | null;
+}
+
+export function toUnitChooserOptions(
+  cards: readonly UnitDisplayCard[],
+): readonly UnitChooserOption[] {
+  return cards.map((card) => ({
+    id: card.id,
+    title: card.title,
+    targetUnitSlug: card.targetUnitSlug,
+    coverUrl: card.coverUrl,
+    coverAlt: card.coverAlt,
+    factsLine: card.factsLine,
+    priceText: card.priceText,
+  }));
+}
+
 export type GroupedDisplayCardsResult =
   | {
       readonly grouped: true;

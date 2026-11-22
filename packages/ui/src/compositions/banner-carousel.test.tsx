@@ -49,12 +49,12 @@ describe('BannerCarousel', () => {
     expect(html).not.toContain('data-slot="banner-carousel-loading"');
   });
 
-  it('renders a height-matched static track on SSR for 2+ slides before lazy hydration', () => {
+  it('renders a height-matched static track with slide 0 only on SSR for 2+ slides before lazy hydration', () => {
     const html = renderToStaticMarkup(
       createElement(BannerCarousel, { slides: [SLIDE_A, SLIDE_B], labels: LABELS }),
     );
     expect(html).toContain('data-slot="banner-carousel-loading"');
     expect(html).toContain('Weekday getaway');
-    expect(html).toContain('Movie night ready');
+    expect(html).not.toContain('Movie night ready');
   });
 });

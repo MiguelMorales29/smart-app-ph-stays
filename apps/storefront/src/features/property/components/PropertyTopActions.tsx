@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 import { useInstallPlatform } from '@/features/install/install-store';
 
-import type { UnitDisplayCard } from '../property-rules';
+import type { UnitChooserOption } from '../property-rules';
 import {
   LazyInstallGuideSheet,
   LazyPropertyContactSheet,
@@ -21,7 +21,7 @@ export interface PropertyTopActionsProps {
   readonly logoSrc: string | null;
   readonly contact: PropertyContact;
   readonly replyHours: WeeklyHours | null;
-  readonly unitCards?: readonly UnitDisplayCard[] | undefined;
+  readonly unitOptions?: readonly UnitChooserOption[] | undefined;
 }
 
 /**
@@ -37,7 +37,7 @@ export function PropertyTopActions({
   logoSrc,
   contact,
   replyHours,
-  unitCards = [],
+  unitOptions = [],
 }: PropertyTopActionsProps) {
   const installPlatform = useInstallPlatform();
   const [installOpen, setInstallOpen] = useState(false);
@@ -47,8 +47,8 @@ export function PropertyTopActions({
   const [contactOpen, setContactOpen] = useState(false);
   const [contactMounted, setContactMounted] = useState(false);
 
-  const singleCard = unitCards.length === 1 ? unitCards[0] : null;
-  const hasMultipleCards = unitCards.length > 1;
+  const singleCard = unitOptions.length === 1 ? unitOptions[0] : null;
+  const hasMultipleCards = unitOptions.length > 1;
 
   return (
     <>
@@ -147,7 +147,7 @@ export function PropertyTopActions({
           onOpenChange={setChooserOpen}
           slug={slug}
           propertyName={propertyName}
-          cards={unitCards}
+          cards={unitOptions}
         />
       ) : null}
     </>

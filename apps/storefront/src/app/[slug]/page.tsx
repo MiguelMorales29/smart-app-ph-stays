@@ -15,6 +15,7 @@ import {
   resolvePrimaryCtaTarget,
   resolvePropertyNavItems,
   resolvePropertySections,
+  toUnitChooserOptions,
 } from '@/features/property/property-rules';
 import { getServerPropertyResult, type RawSearchParams } from '@/lib/property-server';
 
@@ -56,13 +57,14 @@ async function PropertyHomeInner({ params, searchParams }: PropertyHomePageProps
     propertyView.amenities,
     published.highlights,
   );
+  const unitOptions = toUnitChooserOptions(unitCards);
   const checkDatesHref = resolvePrimaryCtaTarget(propertyView.property.slug, orderedUnits);
 
   const frame = (
     <PropertyFrame
       propertyView={propertyView}
       navItems={navItems}
-      unitCards={unitCards}
+      unitOptions={unitOptions}
       actionBarClassName="lg:hidden"
       actionBar={
         <PropertyActionBar

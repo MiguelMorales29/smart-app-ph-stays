@@ -105,10 +105,17 @@ export function resolveNextHolidayWindows(today: CalendarDate): {
 function trimAtWordBoundary(text: string, maxLength: number): string {
   const cleaned = text.trim().replace(/\s+/g, ' ');
   if (cleaned.length <= maxLength) return cleaned;
-  const slice = cleaned.slice(0, maxLength);
+  const limit = Math.max(1, maxLength - 1);
+  const slice = cleaned.slice(0, limit);
   const lastSpace = slice.lastIndexOf(' ');
-  const cut = lastSpace >= Math.floor(maxLength * 0.6) ? slice.slice(0, lastSpace) : slice;
-  return cut.replace(/[,;:\-–—]+$/, '').trimEnd();
+  const rawCut = lastSpace >= Math.floor(limit * 0.6) ? slice.slice(0, lastSpace) : slice;
+  const trimmed = rawCut
+    .replace(/[,;:\-–—]+$/, '')
+    .trimEnd()
+    .replace(/\s+(?:a|an|the|and|or|of|in|on|at|to|for|with|under)$/i, '')
+    .replace(/[,;:\-–—]+$/, '')
+    .trimEnd();
+  return `${trimmed || slice.trimEnd()}…`;
 }
 
 export function buildBrandMediaFromManifest(params: {

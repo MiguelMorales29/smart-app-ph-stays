@@ -11,7 +11,7 @@ import { PropertyDesktopNav } from '@/features/property/components/PropertyDeskt
 import { PropertyMenuSheet } from '@/features/property/components/PropertyMenuSheet';
 import { PropertyTopActions } from '@/features/property/components/PropertyTopActions';
 import { normalizeMediaSrc } from '@/features/property/media-src';
-import type { PropertySectionNavItem, UnitDisplayCard } from '@/features/property/property-rules';
+import type { PropertySectionNavItem, UnitChooserOption } from '@/features/property/property-rules';
 
 import { DemoBanner } from '../DemoBanner';
 import { PausedPropertyContent } from './PausedPropertyContent';
@@ -20,7 +20,7 @@ export interface PropertyFrameProps {
   readonly propertyView: PropertyView;
   readonly children: ReactNode;
   readonly navItems?: readonly PropertySectionNavItem[] | undefined;
-  readonly unitCards?: readonly UnitDisplayCard[] | undefined;
+  readonly unitOptions?: readonly UnitChooserOption[] | undefined;
   readonly actionBar?: ReactNode;
   readonly actionBarClassName?: string | undefined;
 }
@@ -29,7 +29,7 @@ export function PropertyFrame({
   propertyView,
   children,
   navItems,
-  unitCards,
+  unitOptions,
   actionBar,
   actionBarClassName,
 }: PropertyFrameProps) {
@@ -67,7 +67,7 @@ export function PropertyFrame({
                 logoSrc={logoSrc}
                 contact={property.contact}
                 replyHours={property.reply_hours}
-                unitCards={unitCards}
+                unitOptions={unitOptions}
               />
             ) : null}
 

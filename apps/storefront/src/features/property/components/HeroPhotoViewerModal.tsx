@@ -29,7 +29,36 @@ export interface HeroPhotoViewerModalProps {
   readonly startIndex: number;
   readonly propertyName: string;
   readonly allPhotos: readonly ResolvedPropertyPhoto[];
-  readonly photoGroups: readonly ResolvedPhotoGroup[];
+}
+
+function buildPhotoGroups(
+  allPhotos: readonly ResolvedPropertyPhoto[],
+): readonly ResolvedPhotoGroup[] {
+  const groups: {
+    id: string;
+    label: string;
+    startIndex: number;
+    photos: ResolvedPropertyPhoto[];
+  }[] = [];
+  const byId = new Map<string, (typeof groups)[number]>();
+
+  allPhotos.forEach((photo, index) => {
+    const existing = byId.get(photo.groupId);
+    if (existing) {
+      existing.photos.push(photo);
+    } else {
+      const created = {
+        id: photo.groupId,
+        label: photo.groupLabel,
+        startIndex: index,
+        photos: [photo],
+      };
+      byId.set(photo.groupId, created);
+      groups.push(created);
+    }
+  });
+
+  return groups;
 }
 
 /** Lazy-loaded full-screen photo viewer (grouped-by-unit overview + swipe carousel). */
@@ -40,8 +69,8 @@ export function HeroPhotoViewerModal({
   startIndex,
   propertyName,
   allPhotos,
-  photoGroups,
 }: HeroPhotoViewerModalProps) {
+  const photoGroups = useMemo(() => buildPhotoGroups(allPhotos), [allPhotos]);
   const [viewerMode, setViewerMode] = useState<'carousel' | 'grid'>(initialMode);
   const [viewerStartIndex, setViewerStartIndex] = useState(startIndex);
   const [viewerIndex, setViewerIndex] = useState(startIndex);

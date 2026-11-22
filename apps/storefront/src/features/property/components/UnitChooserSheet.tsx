@@ -7,14 +7,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { normalizeMediaSrc } from '../media-src';
-import type { UnitDisplayCard } from '../property-rules';
+import type { UnitChooserOption } from '../property-rules';
 
 export interface UnitChooserSheetProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly slug: string;
   readonly propertyName: string;
-  readonly cards: readonly UnitDisplayCard[];
+  readonly cards: readonly UnitChooserOption[];
 }
 
 /**
