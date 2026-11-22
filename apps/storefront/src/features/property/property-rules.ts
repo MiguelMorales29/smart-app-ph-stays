@@ -9,6 +9,7 @@ import {
   type PublicAmenityView,
   type PublicPagePhoto,
   type PublicUnitCardView,
+  type UnitMode,
   type UnitType,
   type WeeklyHours,
 } from '@smartapp/core';
@@ -25,10 +26,24 @@ export interface PropertySectionVisibility {
   readonly faq: boolean;
 }
 
+export interface PropertySectionNavItem {
+  readonly id: 'units' | 'about' | 'rules' | 'location' | 'faq';
+  readonly label: string;
+}
+
 export interface ResolvedPropertyPhoto {
   readonly fileId: string;
   readonly url: string;
   readonly alt: string;
+  readonly groupId: string;
+  readonly groupLabel: string;
+}
+
+export interface ResolvedPhotoGroup {
+  readonly id: string;
+  readonly label: string;
+  readonly startIndex: number;
+  readonly photos: readonly ResolvedPropertyPhoto[];
 }
 
 export interface ResolvedHeroPhotos {
@@ -38,6 +53,8 @@ export interface ResolvedHeroPhotos {
   readonly mosaicPhotos: readonly ResolvedPropertyPhoto[];
   /** Full deduplicated gallery list (cover, hero photos, property photos, unit photos). */
   readonly allPhotos: readonly ResolvedPropertyPhoto[];
+  /** Photos grouped by property and unit/room name for the "Show all photos" viewer. */
+  readonly photoGroups: readonly ResolvedPhotoGroup[];
 }
 
 export interface ResolvedBannerItem {
@@ -66,11 +83,46 @@ export type GroupedUnitsResult =
       readonly units: readonly PublicUnitCardView[];
     };
 
+export interface UnitDisplayCard {
+  readonly id: string;
+  readonly kind: 'unit' | 'room';
+  readonly mode: UnitMode;
+  readonly unitType: UnitType;
+  readonly title: string;
+  readonly targetUnitSlug: string;
+  readonly factsLine: string;
+  readonly badgeLabel: string | null;
+  readonly coverUrl: string | null;
+  readonly coverAlt: string;
+  readonly photoCount: number;
+  readonly priceText: string | null;
+  readonly highlightChip: string | null;
+  readonly bedCount: number;
+}
+
+export type GroupedDisplayCardsResult =
+  | {
+      readonly grouped: true;
+      readonly stays: readonly UnitDisplayCard[];
+      readonly rentals: readonly UnitDisplayCard[];
+    }
+  | {
+      readonly grouped: false;
+      readonly cards: readonly UnitDisplayCard[];
+    };
+
 export interface PropertyContactLink {
-  readonly kind: 'phone' | 'messenger' | 'facebook' | 'instagram' | 'tiktok' | 'viber' | 'whatsapp';
+  readonly kind:
+    'phone' | 'sms' | 'messenger' | 'facebook' | 'instagram' | 'tiktok' | 'viber' | 'whatsapp';
   readonly label: string;
+  readonly detail?: string | undefined;
   readonly href: string;
   readonly external: boolean;
+}
+
+/** Official public web address shown in the trust panel (D71, D77). */
+export function officialPropertyAddress(slug: string): string {
+  return `smartapp.webserbisyo.com/${slug}`;
 }
 
 function sectionSwitchOn(draft: PropertyPageDraft, key: string): boolean {
@@ -129,61 +181,133 @@ export function resolvePropertySections(
   };
 }
 
-function toResolvedPhoto(photo: PublicPagePhoto): ResolvedPropertyPhoto {
+/** Visible section jump tabs (D79): Units · About · Rules · Location · FAQ. */
+export function resolvePropertyNavItems(
+  visibility: PropertySectionVisibility,
+): readonly PropertySectionNavItem[] {
+  const items: PropertySectionNavItem[] = [];
+  if (visibility.units) items.push({ id: 'units', label: 'Units' });
+  if (visibility.about) items.push({ id: 'about', label: 'About' });
+  if (visibility.rules) items.push({ id: 'rules', label: 'Rules' });
+  if (visibility.location) items.push({ id: 'location', label: 'Location' });
+  if (visibility.faq) items.push({ id: 'faq', label: 'FAQ' });
+  return items;
+}
+
+function toResolvedPhoto(
+  photo: PublicPagePhoto,
+  groupId: string,
+  groupLabel: string,
+): ResolvedPropertyPhoto {
   return {
     fileId: photo.file_id,
     url: photo.url,
     alt: photo.alt,
+    groupId,
+    groupLabel,
+  };
+}
+
+function unitPhotoGroupKey(unit: PublicUnitCardView): { id: string; label: string } {
+  const trimmedGroup = unit.unit_type === 'bed_space' ? unit.group_label?.trim() : null;
+  if (trimmedGroup) {
+    return {
+      id: `room-${trimmedGroup.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      label: trimmedGroup,
+    };
+  }
+  return {
+    id: `unit-${unit.id}`,
+    label: unit.name,
   };
 }
 
 /**
- * Builds the hero mosaic and full-screen gallery photo lists.
+ * Builds the hero mosaic, deduplicated viewer list, and unit-grouped photo buckets.
  * Cover always comes straight from `page_media.hero_cover` (already resolved with fallback by P5-1).
  */
 export function resolveHeroPhotos(propertyView: PropertyView): ResolvedHeroPhotos {
+  const propertyGroupId = 'property';
+  const propertyGroupLabel = propertyView.property.name;
   const cover = propertyView.page_media.hero_cover
-    ? toResolvedPhoto(propertyView.page_media.hero_cover)
+    ? toResolvedPhoto(propertyView.page_media.hero_cover, propertyGroupId, propertyGroupLabel)
     : null;
 
   const seen = new Set<string>();
+  const mosaicSource: ResolvedPropertyPhoto[] = [];
   const allPhotos: ResolvedPropertyPhoto[] = [];
+  const groupBuckets = new Map<
+    string,
+    { readonly id: string; readonly label: string; readonly photos: ResolvedPropertyPhoto[] }
+  >();
 
-  const pushUnique = (photo: ResolvedPropertyPhoto | null) => {
+  const pushUnique = (photo: ResolvedPropertyPhoto | null, intoMosaic = false) => {
     if (!photo || seen.has(photo.fileId)) return;
     seen.add(photo.fileId);
     allPhotos.push(photo);
+    if (intoMosaic && mosaicSource.length < 5) {
+      mosaicSource.push(photo);
+    }
+    const existing = groupBuckets.get(photo.groupId);
+    if (existing) {
+      existing.photos.push(photo);
+    } else {
+      groupBuckets.set(photo.groupId, {
+        id: photo.groupId,
+        label: photo.groupLabel,
+        photos: [photo],
+      });
+    }
   };
 
-  pushUnique(cover);
+  pushUnique(cover, true);
   for (const photo of propertyView.page_media.hero_photos) {
-    pushUnique(toResolvedPhoto(photo));
+    pushUnique(toResolvedPhoto(photo, propertyGroupId, propertyGroupLabel), true);
   }
-
-  const mosaicPhotos = allPhotos.slice(0, 5);
 
   for (const photo of propertyView.photos) {
     pushUnique({
       fileId: photo.file_id,
       url: photo.url,
       alt: photo.alt_text.trim() || propertyView.property.name,
+      groupId: propertyGroupId,
+      groupLabel: propertyGroupLabel,
     });
   }
 
   for (const unit of propertyView.units) {
+    const group = unitPhotoGroupKey(unit);
     for (const photo of unit.photos) {
       pushUnique({
         fileId: photo.file_id,
         url: photo.url,
-        alt: photo.alt_text.trim() || `${unit.name} photo`,
+        alt: photo.alt_text.trim() || `${group.label} photo`,
+        groupId: group.id,
+        groupLabel: group.label,
       });
     }
   }
 
+  // Re-order `allPhotos` to match the contiguous groups so swiping moves cleanly group by group
+  // while keeping the cover first in group 0.
+  const orderedAll: ResolvedPropertyPhoto[] = [];
+  const photoGroups: ResolvedPhotoGroup[] = [];
+  for (const bucket of groupBuckets.values()) {
+    if (bucket.photos.length === 0) continue;
+    photoGroups.push({
+      id: bucket.id,
+      label: bucket.label,
+      startIndex: orderedAll.length,
+      photos: bucket.photos,
+    });
+    orderedAll.push(...bucket.photos);
+  }
+
   return {
     cover,
-    mosaicPhotos,
-    allPhotos,
+    mosaicPhotos: mosaicSource,
+    allPhotos: orderedAll,
+    photoGroups,
   };
 }
 
@@ -306,6 +430,195 @@ export function formatGuestCount(count: number): string {
 
 export function formatBedCount(count: number): string {
   return count === 1 ? '1 bed' : `${count} beds`;
+}
+
+const BASIC_AMENITY_CODES = new Set(['wifi', 'aircon', 'water_heater', 'towels']);
+
+/** Picks one concise highlight amenity chip from a unit's own `amenity_ids` (no extra queries). */
+export function resolveUnitHighlightChip(
+  unitAmenityIds: readonly string[],
+  amenitiesById: ReadonlyMap<string, PublicAmenityView>,
+  propertyHighlightIds: readonly string[] = [],
+): string | null {
+  if (unitAmenityIds.length === 0 || amenitiesById.size === 0) return null;
+
+  const matched: PublicAmenityView[] = [];
+  for (const id of unitAmenityIds) {
+    const found = amenitiesById.get(id);
+    if (found) matched.push(found);
+  }
+  if (matched.length === 0) return null;
+
+  const highlightSet = new Set(propertyHighlightIds);
+  const standoutHighlight = matched.find(
+    (amenity) => highlightSet.has(amenity.id) && !BASIC_AMENITY_CODES.has(amenity.code),
+  );
+  if (standoutHighlight) return standoutHighlight.label;
+
+  const standout = matched.find((amenity) => !BASIC_AMENITY_CODES.has(amenity.code));
+  if (standout) return standout.label;
+
+  return matched[0]?.label ?? null;
+}
+
+function inferRoomQualifier(units: readonly PublicUnitCardView[]): string | null {
+  for (const unit of units) {
+    const desc = unit.description?.trim() ?? '';
+    if (/\bladies\b|\bfemale\b|\bwomen\b/i.test(desc)) return 'Ladies';
+    if (/\bgents\b|\bmale\b|\bmen\b/i.test(desc)) return 'Gents';
+    if (/\bco-?ed\b|\bmixed\b/i.test(desc)) return 'Co-ed';
+  }
+  return null;
+}
+
+function lowestPriceTextForGroup(units: readonly PublicUnitCardView[]): string | null {
+  const first = units[0];
+  if (!first) return null;
+  if (first.mode === 'short_stay') {
+    const amounts = units
+      .map((u) => u.price_from ?? u.stay_terms?.base_nightly_centavos ?? null)
+      .filter((v): v is Centavos => v !== null && v > 0);
+    if (amounts.length === 0) return null;
+    return `from ${formatPeso(Math.min(...amounts))} a night`;
+  }
+  const amounts = units
+    .map((u) => u.lease_terms?.monthly_rent_centavos ?? null)
+    .filter((v): v is Centavos => v !== null && v > 0);
+  if (amounts.length === 0) return null;
+  return `from ${formatPeso(Math.min(...amounts))} a month`;
+}
+
+/**
+ * Turns ordered units into display cards (D81):
+ * - Bed spaces sharing a non-empty `group_label` collapse into one room card
+ *   (e.g. "Room 2A · Ladies · 4 beds", no unbacked "free" count), linking to the room's first bed.
+ * - Other units stay one card each ("Whole place · 2 guests · 1 bed").
+ */
+export function buildUnitDisplayCards(
+  orderedUnits: readonly PublicUnitCardView[],
+  amenities: readonly PublicAmenityView[] = [],
+  propertyHighlightIds: readonly string[] = [],
+): readonly UnitDisplayCard[] {
+  const amenitiesById = new Map(amenities.map((amenity) => [amenity.id, amenity]));
+
+  type PendingEntry =
+    | { readonly kind: 'unit'; readonly unit: PublicUnitCardView }
+    | {
+        readonly kind: 'room';
+        readonly key: string;
+        readonly label: string;
+        readonly units: PublicUnitCardView[];
+      };
+
+  const entries: PendingEntry[] = [];
+  const roomIndex = new Map<string, Extract<PendingEntry, { readonly kind: 'room' }>>();
+
+  for (const unit of orderedUnits) {
+    const trimmedGroup = unit.unit_type === 'bed_space' ? unit.group_label?.trim() : null;
+    if (trimmedGroup) {
+      const key = `${unit.mode}::${trimmedGroup.toLowerCase()}`;
+      const existing = roomIndex.get(key);
+      if (existing) {
+        existing.units.push(unit);
+      } else {
+        const created: Extract<PendingEntry, { readonly kind: 'room' }> = {
+          kind: 'room',
+          key,
+          label: trimmedGroup,
+          units: [unit],
+        };
+        roomIndex.set(key, created);
+        entries.push(created);
+      }
+    } else {
+      entries.push({ kind: 'unit', unit });
+    }
+  }
+
+  return entries.map((entry): UnitDisplayCard => {
+    if (entry.kind === 'unit') {
+      const { unit } = entry;
+      const cover = unit.photos[0] ?? null;
+      return {
+        id: unit.id,
+        kind: 'unit',
+        mode: unit.mode,
+        unitType: unit.unit_type,
+        title: unit.name,
+        targetUnitSlug: unit.slug,
+        factsLine: `${formatUnitType(unit.unit_type)} · ${formatGuestCount(unit.max_guests)} · ${formatBedCount(unit.beds)}`,
+        badgeLabel: null,
+        coverUrl: cover?.url ?? null,
+        coverAlt: cover?.alt_text.trim() || unit.name,
+        photoCount: unit.photos.length,
+        priceText: formatUnitCardPrice(unit),
+        highlightChip: resolveUnitHighlightChip(
+          unit.amenity_ids,
+          amenitiesById,
+          propertyHighlightIds,
+        ),
+        bedCount: unit.beds,
+      };
+    }
+
+    const first = entry.units[0];
+    if (!first) {
+      throw new Error('Room group cannot be empty');
+    }
+    const uniquePhotoIds = new Set<string>();
+    let coverUrl: string | null = null;
+    let coverAlt = entry.label;
+    for (const bed of entry.units) {
+      for (const photo of bed.photos) {
+        if (!uniquePhotoIds.has(photo.file_id)) {
+          uniquePhotoIds.add(photo.file_id);
+          if (coverUrl === null) {
+            coverUrl = photo.url;
+            coverAlt = photo.alt_text.trim() || entry.label;
+          }
+        }
+      }
+    }
+
+    const qualifier = inferRoomQualifier(entry.units);
+    const bedCount = entry.units.length;
+    const factParts = [...(qualifier ? [qualifier] : ['Shared room']), formatBedCount(bedCount)];
+
+    return {
+      id: `room-${entry.key}`,
+      kind: 'room',
+      mode: first.mode,
+      unitType: 'bed_space',
+      title: entry.label,
+      targetUnitSlug: first.slug,
+      factsLine: factParts.join(' · '),
+      badgeLabel: qualifier
+        ? `${qualifier} · ${formatBedCount(bedCount)}`
+        : formatBedCount(bedCount),
+      coverUrl,
+      coverAlt,
+      photoCount: uniquePhotoIds.size,
+      priceText: lowestPriceTextForGroup(entry.units),
+      highlightChip: resolveUnitHighlightChip(
+        first.amenity_ids,
+        amenitiesById,
+        propertyHighlightIds,
+      ),
+      bedCount,
+    };
+  });
+}
+
+/** Splits display cards into Stays and Monthly rentals tabs only when both modes exist (D81). */
+export function groupDisplayCardsByMode(
+  cards: readonly UnitDisplayCard[],
+): GroupedDisplayCardsResult {
+  const stays = cards.filter((card) => card.mode === 'short_stay');
+  const rentals = cards.filter((card) => card.mode === 'long_term');
+  if (stays.length > 0 && rentals.length > 0) {
+    return { grouped: true, stays, rentals };
+  }
+  return { grouped: false, cards };
 }
 
 /** Up to 6 highlight amenities chosen on the published page, preserving the owner's order. */
@@ -484,22 +797,38 @@ function normalizePhoneDigits(raw: string): string {
   return raw.replace(/[^\d+]/g, '');
 }
 
-/** Builds only the contact links the owner has configured. */
-export function resolveContactLinks(contact: PropertyContact): readonly PropertyContactLink[] {
+/** Builds only the contact links the owner has configured (including Call & Text when phone is set). */
+export function resolveContactLinks(
+  contact: PropertyContact,
+  options?: { readonly includeSms?: boolean },
+): readonly PropertyContactLink[] {
   const links: PropertyContactLink[] = [];
 
   if (contact.phone?.trim()) {
+    const cleaned = contact.phone.trim();
+    const digits = normalizePhoneDigits(cleaned);
     links.push({
       kind: 'phone',
       label: 'Call',
-      href: `tel:${normalizePhoneDigits(contact.phone)}`,
+      detail: cleaned,
+      href: `tel:${digits}`,
       external: false,
     });
+    if (options?.includeSms) {
+      links.push({
+        kind: 'sms',
+        label: 'Text (SMS)',
+        detail: cleaned,
+        href: `sms:${digits}`,
+        external: false,
+      });
+    }
   }
   if (contact.messenger?.trim()) {
     links.push({
       kind: 'messenger',
       label: 'Messenger',
+      detail: 'Fastest way to chat',
       href: normalizeHttpUrl(contact.messenger),
       external: true,
     });
@@ -508,6 +837,7 @@ export function resolveContactLinks(contact: PropertyContact): readonly Property
     links.push({
       kind: 'facebook',
       label: 'Facebook',
+      detail: 'View Facebook page',
       href: normalizeHttpUrl(contact.facebook),
       external: true,
     });

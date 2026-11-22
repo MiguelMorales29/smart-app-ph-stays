@@ -16,7 +16,12 @@ export function RulesSection({ property, houseRules }: RulesSectionProps) {
   const cancellation = guestCancellationCopy(property);
 
   return (
-    <section aria-labelledby="rules-heading" data-slot="rules-section" className="space-y-4">
+    <section
+      id="rules"
+      aria-labelledby="rules-heading"
+      data-slot="rules-section"
+      className="scroll-mt-32 space-y-4 lg:scroll-mt-24"
+    >
       <h2 id="rules-heading" className="font-heading text-xl font-semibold tracking-tight">
         Rules and policies
       </h2>

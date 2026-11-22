@@ -34,14 +34,19 @@ export function AboutHostSection({ about, host, isVerified }: AboutHostSectionPr
   const hostPhotoUrl = host.photo ? normalizeMediaSrc(host.photo.url) : null;
 
   return (
-    <section aria-labelledby="about-heading" data-slot="about-host-section" className="space-y-4">
+    <section
+      id="about"
+      aria-labelledby="about-heading"
+      data-slot="about-host-section"
+      className="scroll-mt-32 space-y-4 lg:scroll-mt-24"
+    >
       <h2 id="about-heading" className="font-heading text-xl font-semibold tracking-tight">
         About this place
       </h2>
 
-      <div className="grid gap-4 lg:grid-cols-5">
+      <div className="grid gap-4 xl:grid-cols-5">
         {trimmedAbout ? (
-          <div className="space-y-2 rounded-2xl border border-border bg-card p-5 text-card-foreground lg:col-span-3">
+          <div className="space-y-2 rounded-2xl border border-border bg-card p-5 text-card-foreground xl:col-span-3">
             <p
               className={cn(
                 'text-sm leading-relaxed whitespace-pre-line text-card-foreground sm:text-base',
@@ -68,7 +73,7 @@ export function AboutHostSection({ about, host, isVerified }: AboutHostSectionPr
         <div
           className={cn(
             'flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground',
-            trimmedAbout ? 'lg:col-span-2' : 'lg:col-span-5',
+            trimmedAbout ? 'xl:col-span-2' : 'xl:col-span-5',
           )}
         >
           <div className="flex items-center gap-3.5">

@@ -2,23 +2,38 @@
 
 import type { PublicTrustView } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
-import { AlertTriangleIcon, FlagIcon, ShieldCheckIcon } from 'lucide-react';
+import {
+  AlertTriangleIcon,
+  BadgeCheckIcon,
+  FlagIcon,
+  GlobeIcon,
+  ShieldCheckIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 
+import { officialPropertyAddress } from '../property-rules';
 import { ReportPageSheet } from './ReportPageSheet';
+import { VerifiedOwnerSheet } from './VerifiedOwnerSheet';
 
 export interface TrustPanelProps {
+  readonly slug: string;
   readonly propertyId: string;
   readonly propertyName: string;
   readonly trust: PublicTrustView;
 }
 
 /**
- * Trust panel (PA-10 & PA-11): safe-payment guidance, 7-day payment account change warning, and
- * "Report this page" trigger opening `ReportPageSheet`.
+ * Trust panel (PA-10, PA-11, D77):
+ * - Official web address (`smartapp.webserbisyo.com/<slug>`) + official page statement.
+ * - Safe-payment warning against personal GCash or bank accounts sent in chat or by text.
+ * - Tappable "Verified owner" trigger explaining what Smart App PH checked.
+ * - 7-day payment account change warning when active.
+ * - "Report this page" opening `ReportPageSheet`.
  */
-export function TrustPanel({ propertyId, propertyName, trust }: TrustPanelProps) {
+export function TrustPanel({ slug, propertyId, propertyName, trust }: TrustPanelProps) {
   const [reportOpen, setReportOpen] = useState(false);
+  const [verifiedOpen, setVerifiedOpen] = useState(false);
+  const officialUrl = officialPropertyAddress(slug);
 
   return (
     <section
@@ -30,13 +45,17 @@ export function TrustPanel({ propertyId, propertyName, trust }: TrustPanelProps)
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-info-tint text-info">
           <ShieldCheckIcon aria-hidden="true" className="size-5" />
         </span>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1.5">
           <h2 id="trust-heading" className="font-heading text-base font-semibold">
-            Pay safely
+            This is the official page for {propertyName}
           </h2>
+          <p className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+            <GlobeIcon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{officialUrl}</span>
+          </p>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Pay only to the accounts shown in your booking conversation. We never ask you to pay
-            anywhere else.
+            Pay only to the accounts shown in your booking conversation. We never ask you to pay a
+            personal GCash or bank account in chat or by text.
           </p>
         </div>
       </div>
@@ -54,18 +73,37 @@ export function TrustPanel({ propertyId, propertyName, trust }: TrustPanelProps)
         </div>
       ) : null}
 
-      <div className="border-t border-border pt-3">
+      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+        {trust.is_verified ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setVerifiedOpen(true)}
+            className="min-h-11 gap-2 rounded-full border-success/30 bg-success-tint px-3.5 text-foreground hover:bg-success-tint/80"
+          >
+            <BadgeCheckIcon aria-hidden="true" className="size-4 text-success" />
+            Verified owner · What we checked
+          </Button>
+        ) : null}
+
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => setReportOpen(true)}
-          className="min-h-11 gap-2 px-2 text-muted-foreground hover:text-foreground"
+          className="min-h-11 gap-2 px-2.5 text-muted-foreground hover:text-foreground"
         >
           <FlagIcon aria-hidden="true" className="size-4" />
           Report this page
         </Button>
       </div>
+
+      <VerifiedOwnerSheet
+        open={verifiedOpen}
+        onOpenChange={setVerifiedOpen}
+        propertyName={propertyName}
+      />
 
       <ReportPageSheet
         open={reportOpen}
