@@ -88,6 +88,7 @@ import { ToggleFavorite } from '@smartapp/ui/variants/toggle-group/toggle-favori
 import { ToggleGroupSpaced } from '@smartapp/ui/variants/toggle-group/toggle-group-spaced';
 
 import { KitFormsUi1Section } from './kit-forms-ui1-section';
+import { KitFormsUi2Section } from './kit-forms-ui2-section';
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -97,8 +98,8 @@ import { GoLiveCard } from '@smartapp/ui/compositions/go-live-card';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { notify } from '@smartapp/ui/lib/notify';
-import { AvatarSeedPicker, OwnerAvatar } from '@smartapp/ui/compositions/owner-avatar';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
+import { PersonAvatar } from '@smartapp/ui/compositions/person-avatar';
 import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
 import { SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { SettingsList } from '@smartapp/ui/compositions/settings-list';
@@ -407,7 +408,6 @@ function CompositionsDemo() {
   const [amenities, setAmenities] = useState<string[]>(['wifi', 'aircon']);
   const [saveState, setSaveState] = useState<AsyncButtonState>('idle');
   const [dirty, setDirty] = useState(true);
-  const [avatarPreset, setAvatarPreset] = useState<string | null>('notionists-Mabuhay');
 
   function fakeSave() {
     setSaveState('busy');
@@ -507,15 +507,22 @@ function CompositionsDemo() {
         ]}
       />
       <div className="flex flex-wrap items-center gap-3">
-        <OwnerAvatar name="Lorna Reyes" avatar={null} fallbackSeed="lorna" size="lg" />
-        <OwnerAvatar name="Ramon Dela Cruz" avatar={{ kind: 'initials', text: 'RD' }} size="lg" />
-        <OwnerAvatar
+        <PersonAvatar
+          name="Lorna Reyes"
+          avatar={{ kind: 'face', style: 'soft', face: 3, theme: 'sky' }}
+          size="lg"
+        />
+        <PersonAvatar
+          name="Ramon Dela Cruz"
+          avatar={{ kind: 'initials', text: 'RD', theme: 'navy' }}
+          size="lg"
+        />
+        <PersonAvatar
           name="Ana"
-          avatar={avatarPreset ? { kind: 'preset', preset_id: avatarPreset } : null}
+          avatar={{ kind: 'preset', preset_id: 'notionists-Mabuhay' }}
           size="lg"
         />
       </div>
-      <AvatarSeedPicker value={avatarPreset} onValueChange={setAvatarPreset} />
       <div className="flex flex-wrap gap-4">
         {MILESTONE_ART_KEYS.map((key) => (
           <figure
@@ -640,13 +647,14 @@ export function KitFormsTab() {
           <h2 className="font-heading text-lg font-semibold">Phase 4 compositions</h2>
           <p className="text-xs text-muted-foreground">
             PhoneInput, MoneyInput, PasswordInput, TimeSelect, SlugField, GoogleButton, AsyncButton,
-            AmenityChips, SettingsList, OwnerAvatar (DiceBear Notionists, CC0), MilestonePicture
+            AmenityChips, SettingsList, PersonAvatar (with legacy preset fallback), MilestonePicture
             (Fluent Emoji 3D, MIT), notify(), celebrate(), DraftNotice and SaveBar. Switch the theme
             above to see dark mode.
           </p>
           <CompositionsDemo />
         </section>
         <KitFormsUi1Section />
+        <KitFormsUi2Section />
       </div>
     </>
   );

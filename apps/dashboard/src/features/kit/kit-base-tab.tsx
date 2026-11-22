@@ -80,6 +80,7 @@ import {
 } from 'lucide-react';
 
 import { KitBaseUi1Section } from './kit-base-ui1-section';
+import { KitBaseUi2Section } from './kit-base-ui2-section';
 
 export function DualSurfaceShowcase({
   title,
@@ -521,6 +522,7 @@ export function KitBaseTab() {
           />
 
           <KitBaseUi1Section />
+          <KitBaseUi2Section />
         </div>
       </TooltipProvider>
     </Toaster>

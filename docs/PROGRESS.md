@@ -54,6 +54,7 @@ Plan: the "Phase 4 plan" tab in the Claude Doc. Decisions D45–D60.
 - [ ] Owner journey e2e test and the six component tests (needs Node 24.15 for jsdom 31; the repo pins 24.14): in P5-7.
 - [ ] Property switcher, saved replies and uploading your own profile photo: moved to Phase 8 (D70).
 - [ ] (Phase 7) Guest rewards and promotions (`docs/rewards-and-promotions.md`): push campaigns (O11), referral (O12), discount engine and promo codes (O13); confirm the five O14 settings before the Phase 7 screens.
+- [ ] (Phase 7) Guest payment-proof uploads: optional crop, never forced, keep text readable.
 
 ## Phase 5. Public pages and the page editor (screens)
 
@@ -76,7 +77,7 @@ Plan: `docs/prompts/P5-guide.md`. Decisions D65–D70. Claude reviews each PR (c
 Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 
 - [x] UI-1 Food app components (forms, feedback, navigation) and plan updates
-- [ ] UI-2 Photos, colours and the picture maker (plus screen retrofits)
+- [x] UI-2 Photos, colours and the picture maker (plus screen retrofits)
 - [ ] UI-3 Data and lists
 - [ ] UI-4 Dates, calendars and time
 - [ ] UI-5 Conversation, charts and stats

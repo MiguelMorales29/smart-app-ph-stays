@@ -29,6 +29,7 @@ import { UnitStatusBadge } from '@smartapp/ui/compositions/status-badge';
 import { QUICK_ADD_ITEMS } from '@/app/nav-config';
 
 import { KitPatternsUi1Section } from './kit-patterns-ui1-section';
+import { KitPatternsUi2Section } from './kit-patterns-ui2-section';
 
 type Section = 'basics' | 'price' | 'rules';
 
@@ -516,6 +517,7 @@ export function KitPatternsTab() {
       </Block>
 
       <KitPatternsUi1Section />
+      <KitPatternsUi2Section />
     </div>
   );
 }
