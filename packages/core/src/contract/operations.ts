@@ -1437,6 +1437,24 @@ export const operations = {
     idempotent: true,
     featureIds: ['OW-25'],
   },
+  setProfilePicture: {
+    name: 'setProfilePicture',
+    access: ['owner'],
+    input: z.object({
+      idempotencyKey: idempotencyKeySchema,
+      accountId: accountsRow.shape.id,
+      expectedUpdatedAt: isoTimestampSchema.nullable(),
+      avatar: profilesRow.shape.avatar,
+      photoFileId: profilesRow.shape.photo_file_id,
+    }),
+    output: z.object({
+      profile: profilesRow,
+      photoUrl: z.string().nullable(),
+    }),
+    errors: ['not_allowed', 'not_found'],
+    idempotent: true,
+    featureIds: ['OW-25'],
+  },
   changePassword: {
     name: 'changePassword',
     access: ['owner'],

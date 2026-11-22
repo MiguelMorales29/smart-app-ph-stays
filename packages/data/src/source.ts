@@ -457,6 +457,11 @@ export function createValidatedDataSource(
       operations.updateProfile.output,
       handlers.updateProfile,
     ),
+    setProfilePicture: wrapOp(
+      operations.setProfilePicture.input,
+      operations.setProfilePicture.output,
+      handlers.setProfilePicture,
+    ),
     changePassword: wrapOp(
       operations.changePassword.input,
       operations.changePassword.output,

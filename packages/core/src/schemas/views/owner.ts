@@ -245,6 +245,7 @@ export type OwnerPropertySummaryView = z.infer<typeof ownerPropertySummaryViewSc
 export const ownerAccountViewSchema = z.object({
   account: accountsRow,
   profile: profilesRow,
+  profile_photo_url: z.string().nullable(),
   member: accountMembersRow,
   application: ownerApplicationsRow.nullable(),
   subscription: subscriptionsRow.nullable(),

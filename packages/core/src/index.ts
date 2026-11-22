@@ -1,3 +1,4 @@
+export * from './avatar/index.js';
 export * from './contract/index.js';
 export * from './demo/index.js';
 export * from './editor/index.js';

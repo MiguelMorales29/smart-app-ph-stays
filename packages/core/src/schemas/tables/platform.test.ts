@@ -30,10 +30,30 @@ describe('platform table schemas', () => {
       id: id1,
       full_name: 'Maria Santos',
       avatar: { kind: 'initials', text: 'MS' },
+      photo_file_id: null,
       created_at: ts,
       updated_at: ts,
     };
     expect(profilesRow.safeParse(valid).success).toBe(true);
+    expect(
+      profilesRow.safeParse({
+        ...valid,
+        avatar: { kind: 'face', style: 'soft', face: 3, theme: 'sky' },
+      }).success,
+    ).toBe(true);
+    expect(
+      profilesRow.safeParse({
+        ...valid,
+        avatar: { kind: 'preset', preset_id: 'notionists-Mabuhay' },
+      }).success,
+    ).toBe(true);
+    expect(
+      profilesRow.safeParse({
+        ...valid,
+        avatar: { kind: 'photo', file_id: id2 },
+        photo_file_id: id2,
+      }).success,
+    ).toBe(true);
     expect(profilesRow.safeParse({ ...valid, full_name: '' }).success).toBe(false);
     expect(
       profilesRow.safeParse({ ...valid, avatar: { kind: 'initials', text: 'ABCD' } }).success,

@@ -2581,6 +2581,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
               id: profileId,
               full_name: customer.full_name,
               avatar: null,
+              photo_file_id: null,
               created_at: nowIso,
               updated_at: nowIso,
             });

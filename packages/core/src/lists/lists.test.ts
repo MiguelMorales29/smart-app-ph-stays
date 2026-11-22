@@ -242,10 +242,11 @@ describe('closed lists', () => {
     expect(subscriptionPaymentMethodSchema.safeParse('cash').success).toBe(false);
   });
 
-  it('includes D27 file purposes guest_id and data_export (10 total)', () => {
-    expect(FILE_PURPOSES).toHaveLength(10);
+  it('includes D27 and UI-2 file purposes guest_id, data_export and profile_photo (11 total)', () => {
+    expect(FILE_PURPOSES).toHaveLength(11);
     expect(filePurposeSchema.safeParse('guest_id').success).toBe(true);
     expect(filePurposeSchema.safeParse('data_export').success).toBe(true);
+    expect(filePurposeSchema.safeParse('profile_photo').success).toBe(true);
   });
 
   it('includes all 13 Philippine bank codes', () => {

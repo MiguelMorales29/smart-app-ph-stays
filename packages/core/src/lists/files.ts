@@ -8,6 +8,7 @@ export const FILE_PURPOSES = [
   'unit_photo',
   'property_photo',
   'logo',
+  'profile_photo',
   'payment_qr',
   'proof',
   'subscription_proof',

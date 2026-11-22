@@ -35,6 +35,7 @@ export const profilesRow = z.object({
   id: uuidSchema,
   full_name: z.string().min(1).max(80),
   avatar: profileAvatarSchema.nullable(),
+  photo_file_id: uuidSchema.nullable(),
   created_at: isoTimestampSchema,
   updated_at: isoTimestampSchema,
 });
