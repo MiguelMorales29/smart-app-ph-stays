@@ -47,6 +47,8 @@ import {
 } from '@smartapp/ui/components/empty';
 import { Input } from '@smartapp/ui/components/input';
 import { ScrollArea } from '@smartapp/ui/components/scroll-area';
+import { Scroller } from '@smartapp/ui/components/scroller';
+import { Scrollspy } from '@smartapp/ui/components/reui/scrollspy';
 import { Separator } from '@smartapp/ui/components/separator';
 import {
   Sheet,
@@ -471,6 +473,48 @@ export function KitBaseTab() {
                   <CarouselNext />
                 </Carousel>
               </div>
+            )}
+          />
+
+          <DualSurfaceShowcase
+            title="Scroller"
+            source="@diceui/scroller · Base UI"
+            useFor="Horizontal section tabs and chip rows with edge fades that appear only when more items sit off-screen."
+            dont="Wrap full-page documents or hide keyboard focus rings."
+            render={() => (
+              <Scroller orientation="horizontal" hideScrollbar className="w-full">
+                <div className="flex w-max items-center gap-2 py-1">
+                  {['Units', 'About', 'Rules', 'Location', 'Hours', 'FAQ', 'Trust'].map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-card-foreground"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </Scroller>
+            )}
+          />
+
+          <DualSurfaceShowcase
+            title="Scrollspy"
+            source="@reui/scrollspy · Base UI"
+            useFor="Highlighting the active section tab as a guest or owner scrolls down a long page."
+            dont="Rewrite browser history on every scroll tick unless deep-linking is intended."
+            render={() => (
+              <Scrollspy history={false} className="flex flex-wrap gap-1.5">
+                {['Units', 'About', 'Rules'].map((label, idx) => (
+                  <span
+                    key={label}
+                    data-scrollspy-anchor={`kit-demo-${label.toLowerCase()}`}
+                    data-active={idx === 0 ? 'true' : undefined}
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </Scrollspy>
             )}
           />
         </div>
