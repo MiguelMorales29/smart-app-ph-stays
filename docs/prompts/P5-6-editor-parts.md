@@ -30,10 +30,10 @@ Every wave 1 part of the page can be set from a phone in a few taps, and the pag
 2. **Fonts:** the 10 pairs (D32) as cards showing the pair's own letters; self-hosted.
 3. **Install look:** home-screen name (12, with a live home-screen mock), splash colour (default the 60, with a contrast check for logo and name), animation None or Fade (wave 1), show name or tagline. Note that phones that installed earlier may keep the old icon.
 4. **Hero photos:** pick the cover and order the first 5 from the property and unit photos (`PhotoManager` grid, keyboard reorder).
-5. **Promo banners:** up to 3; 16:9 crop (1600 × 900); title 40, line 90, photo description 120 (required); one button to a unit, a promo or Rewards; move up or down; 3/5/7/10 s. The title and line can be typed on the preview (ported `banner-text.ts`).
+5. **Promo banners:** up to 3; 16:9 crop (1600 × 900); title 40, line 90, photo description 120 (required); one button to a unit, a promo or Rewards; move up or down; `"Play banners automatically"` switch (`look.bannerAutoplay`); 3/5/7/10 s. The title and line can be typed on the preview (ported `banner-text.ts`).
 6. **Announcement:** text 200, tone, optional end date; writing a message turns the part on.
 7. **About and host:** about 600; host display name, photo, languages (chips). Worked-out facts are shown, not editable.
-8. **Units:** up to 4 featured, in order, from the unit list (sortable); "Change prices in Units" link.
+8. **Units:** up to 4 featured, in order, from the unit list (sortable); `"Play unit photos automatically"` switch (`look.unitCardAutoplay`) and `"Seconds per photo"` picker (`look.unitCardSeconds`: 5, 7 or 10 seconds); "Change prices in Units" link.
 9. **Highlights:** up to 6 from the amenities (chips with the selected look).
 10. **Rules and policies**, 11. **Location and contact**, 12. **Times:** owned parts. Show or hide, a summary of what guests see, and a "Change in Settings" link to the right Settings page (E5).
 11. **FAQ:** up to 10, question 200, answer 300; add, edit, reorder, delete with Undo.

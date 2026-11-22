@@ -376,16 +376,153 @@ body:has([data-slot='dev-switch-panel']):not(:has([data-dev-panel-menu])) {
   0%,
   100% {
     transform: translateY(0);
-    opacity: 0.9;
   }
   50% {
     transform: translateY(4px);
-    opacity: 1;
   }
 }
 
 @utility install-arrow-pulse {
   animation: install-arrow-bob 1.2s var(--ease-enter) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility drawer-snap-lift {
+  translate: 0 calc(-1 * var(--sheet-lift, 0px));
+  transition: translate var(--dur-slow) var(--ease-enter);
+}
+
+@utility drawer-snap-room {
+  padding-bottom: var(--sheet-lift, 0px);
+}
+
+@keyframes draw-check {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@utility draw-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: draw-check 360ms var(--ease-enter) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility like-particle {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  transition:
+    transform 360ms var(--ease-enter),
+    opacity 360ms var(--ease-enter);
+  &[data-out] {
+    transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(0.2);
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+@utility heart-glow {
+  filter: drop-shadow(
+      0 1px 2px color-mix(in srgb, var(--property-10, var(--primary)) 35%, transparent)
+    )
+    drop-shadow(0 2px 4px color-mix(in srgb, var(--property-10, var(--primary)) 20%, transparent));
+}
+
+@utility heart-shadow {
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--scrim) 22%, transparent));
+}
+
+@keyframes status-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility animate-spin-slow {
+  animation: status-ring-spin 6s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility drawer-snap-lift {
+  translate: 0 calc(-1 * var(--sheet-lift, 0px));
+  transition: translate var(--dur-slow) var(--ease-enter);
+}
+
+@utility drawer-snap-room {
+  padding-bottom: var(--sheet-lift, 0px);
+}
+
+@keyframes draw-check {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@utility draw-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: draw-check 360ms var(--ease-enter) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility like-particle {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  transition:
+    transform 360ms var(--ease-enter),
+    opacity 360ms var(--ease-enter);
+  &[data-out] {
+    transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(0.2);
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+@utility heart-glow {
+  filter: drop-shadow(
+      0 1px 2px color-mix(in srgb, var(--property-10, var(--primary)) 35%, transparent)
+    )
+    drop-shadow(0 2px 4px color-mix(in srgb, var(--property-10, var(--primary)) 20%, transparent));
+}
+
+@utility heart-shadow {
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--scrim) 22%, transparent));
+}
+
+@keyframes status-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility animate-spin-slow {
+  animation: status-ring-spin 6s linear infinite;
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }

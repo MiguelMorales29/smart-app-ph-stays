@@ -23,6 +23,8 @@ import { PropertyFrame } from '@/components/frames/PropertyFrame';
 import { PlaceholderPageContent } from '@/components/PlaceholderPageContent';
 import { resolveServerProperty } from '@/lib/property-server';
 
+import { StorefrontKitUi1Section } from './StorefrontKitUi1Section';
+
 export const STOREFRONT_KIT_LOOKS = [
   'ulap-suites',
   'bahay-batis',
@@ -359,6 +361,17 @@ export async function StorefrontKitView({
                   <PausedPropertyContent propertyView={pausedSampleView} />
                 </div>
               </div>
+            </KitSection>
+
+            <KitSection
+              title="Guest reactions, status rings & brand marks (UI-1)"
+              useFor="HeartToggle for saved stays, StatusLogo for open/busy/paused property rings, BrandLockup for platform branding, MessengerIcon for Messenger buttons, and theme-coloured celebration effects."
+              dont="Use MessengerIcon outside Messenger buttons or fire celebrations under reduced motion."
+            >
+              <StorefrontKitUi1Section
+                propertyName={activeLook.propertyView.property.name}
+                logoSrc={activeLook.propertyView.page_media.logo?.url ?? null}
+              />
             </KitSection>
           </div>
         </PropertyFrame>

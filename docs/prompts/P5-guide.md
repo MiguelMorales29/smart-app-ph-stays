@@ -37,6 +37,7 @@ P5-0 and P5-1 can run in parallel (different files). Everything else in order.
 5. **Words:** sentence case, plain English for Filipino owners and guests, ₱1,500, "Fri, 12 Dec" (skill `smartapp-ui-writing`).
 6. **Every page has 7 states:** loading, empty, error with retry, offline, not found, paused owner, long text and big amounts. Check them with the demo packs (`?pack=empty|busy|error|slow|offline`).
 7. **Never** weaken `eslint.config.js` or `tsconfig`, never push to `main`, never merge.
+8. **Fast mode (P5-3 to P5-6):** run `pnpm install`, `pnpm format:check` and `pnpm check` once (re-run only if something failed). Push, open the PR, then stop. Don't watch CI, don't run Lighthouse, don't regenerate screenshots, don't merge. Lighthouse runs only once after P5-4 and again at P5-7.
 
 ## The loop for each prompt
 

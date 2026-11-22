@@ -50,6 +50,11 @@ P5-1's public views carry `price_from` but not the unit's required fees, so "+ �
 - **Check-out-only day:** picking a taken night as check-out works; picking it as check-in says "That night is taken. You can check out that morning."
 - Plus the 7 standard states.
 
+## Leftovers from P5-2b
+
+- The desktop promo banner subtitle must end with `"…"` when cut (it stops at `"…and a sea of"` at 1280 px).
+- The `"Times"` section says `"Replies any time"` while the host card says `"Usually replies within a day"`. Use one reply-time value from the data in both places, and hide the Times row if it repeats the host card.
+
 ## Not in this task
 
 Holding dates, the booking form, payment (Phase 6). Editing in the page editor (P5-5).
