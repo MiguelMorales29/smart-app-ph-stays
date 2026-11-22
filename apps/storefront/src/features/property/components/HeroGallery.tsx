@@ -100,7 +100,7 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
                 fill
                 priority
                 fetchPriority="high"
-                sizes="(min-width: 1280px) 560px, (min-width: 768px) 50vw, 100vw"
+                sizes="(min-width: 1280px) 560px, (min-width: 768px) 50vw, calc(100vw - 32px)"
                 className="object-cover"
               />
             </button>

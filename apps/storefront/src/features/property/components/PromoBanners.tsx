@@ -67,7 +67,15 @@ export function PromoBanners({ slug, banners, autoplay, seconds, show }: PromoBa
         labels={BANNER_LABELS}
         show={show}
         renderImage={({ src, alt, sizes, className }) => (
-          <Image src={src} alt={alt} fill sizes={sizes} loading="lazy" className={className} />
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            loading="lazy"
+            fetchPriority="low"
+            className={className}
+          />
         )}
       />
     </section>

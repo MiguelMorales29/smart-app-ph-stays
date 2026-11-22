@@ -131,7 +131,8 @@ export function UnitPhotoCarousel({
                 alt={firstPhoto.alt}
                 fill
                 loading="lazy"
-                sizes="(min-width: 1024px) 360px, (min-width: 768px) 46vw, 100vw"
+                fetchPriority="low"
+                sizes="(min-width: 1024px) 360px, (min-width: 768px) 46vw, calc(100vw - 32px)"
                 className={cn(
                   'object-cover',
                   !hasMultiple &&

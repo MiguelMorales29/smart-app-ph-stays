@@ -149,10 +149,10 @@ export function BannerCarousel(props: BannerCarouselProps) {
   useEffect(() => {
     if (!many) return;
     if (typeof window.requestIdleCallback === 'function') {
-      const idleId = window.requestIdleCallback(() => setReady(true), { timeout: 1500 });
+      const idleId = window.requestIdleCallback(() => setReady(true), { timeout: 3500 });
       return () => window.cancelIdleCallback(idleId);
     }
-    const id = window.setTimeout(() => setReady(true), 800);
+    const id = window.setTimeout(() => setReady(true), 2500);
     return () => window.clearTimeout(id);
   }, [many]);
 
