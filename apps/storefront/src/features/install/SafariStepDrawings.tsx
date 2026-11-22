@@ -41,7 +41,7 @@ export function SafariStep1Drawing({ addressBarAtTop, slug }: SafariStepDrawingP
         <span className="truncate">smartapp.webserbisyo.com/{slug}</span>
       </div>
       <span
-        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary ring-2 ring-primary"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-property-10-soft text-property-10-soft-foreground ring-2 ring-primary"
         aria-hidden="true"
       >
         <EllipsisIcon className="size-4" />
@@ -92,9 +92,9 @@ export function SafariStep2Drawing() {
       className="flex justify-end rounded-xl border border-border bg-muted/60 p-3"
     >
       <div className="w-52 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex items-center justify-between bg-primary-tint px-3 py-2 text-xs font-semibold text-foreground ring-1 ring-primary ring-inset">
+        <div className="flex items-center justify-between bg-property-10-soft px-3 py-2 text-xs font-semibold text-property-10-soft-foreground ring-1 ring-primary ring-inset">
           <span>Share</span>
-          <ShareIcon className="size-3.5 text-primary" />
+          <ShareIcon className="size-3.5" />
         </div>
         <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
           <span>Add Bookmark</span>
@@ -122,9 +122,9 @@ export function SafariStep3Drawing() {
           <span>Copy</span>
           <CopyIcon className="size-3.5" />
         </div>
-        <div className="flex items-center justify-between bg-primary-tint px-3 py-2.5 text-xs font-semibold text-foreground ring-1 ring-primary ring-inset">
+        <div className="flex items-center justify-between bg-property-10-soft px-3 py-2.5 text-xs font-semibold text-property-10-soft-foreground ring-1 ring-primary ring-inset">
           <span>Add to Home Screen</span>
-          <SquarePlusIcon className="size-4 text-primary" />
+          <SquarePlusIcon className="size-4" />
         </div>
         <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
           <span>Add to Reading List</span>
@@ -172,9 +172,7 @@ export function SafariStep4Drawing({ propertyName, slug, logoSrc }: SafariStepDr
         <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-2">
           <span className="text-xs font-medium text-foreground">Open as Web App</span>
           <span
-            className={cn(
-              'flex h-5 w-9 items-center justify-end rounded-full bg-success px-0.5',
-            )}
+            className={cn('flex h-5 w-9 items-center justify-end rounded-full bg-success px-0.5')}
           >
             <span className="size-4 rounded-full bg-card shadow-xs" />
           </span>
@@ -185,7 +183,11 @@ export function SafariStep4Drawing({ propertyName, slug, logoSrc }: SafariStepDr
 }
 
 /** Floating CSS-only pulsing arrow anchored near the real Safari ⋯ position on phones (D82). */
-export function SafariRealCornerPointer({ addressBarAtTop }: { readonly addressBarAtTop: boolean }) {
+export function SafariRealCornerPointer({
+  addressBarAtTop,
+}: {
+  readonly addressBarAtTop: boolean;
+}) {
   return (
     <div
       aria-hidden="true"

@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  detectInstallPlatform,
-  type InstallDetection,
-  type InstallPlatform,
-} from '@smartapp/core';
+import { detectInstallPlatform, type InstallDetection, type InstallPlatform } from '@smartapp/core';
 import { useSyncExternalStore } from 'react';
 
 interface InstallPromptEvent extends Event {

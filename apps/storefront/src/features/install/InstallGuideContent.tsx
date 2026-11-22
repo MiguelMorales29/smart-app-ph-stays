@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  inAppBrowserLabel,
-  type InAppBrowser,
-  type InstallPlatform,
-} from '@smartapp/core';
+import { inAppBrowserLabel, type InAppBrowser, type InstallPlatform } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Stepper,
@@ -140,10 +136,7 @@ export function InstallGuideContent({
       <div data-slot="install-guide-in-app" className="space-y-4">
         <div className="space-y-2 rounded-2xl border border-warning/30 bg-warning-tint p-4 text-foreground">
           <div className="flex items-start gap-2.5">
-            <ExternalLinkIcon
-              aria-hidden="true"
-              className="mt-0.5 size-5 shrink-0 text-warning"
-            />
+            <ExternalLinkIcon aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-warning" />
             <div className="space-y-1">
               <p className="font-heading text-base font-semibold">
                 Open in Safari or Chrome to install
@@ -156,7 +149,11 @@ export function InstallGuideContent({
           </div>
         </div>
 
-        <Stepper defaultValue={1} orientation="vertical" aria-label="Open in Safari or Chrome steps">
+        <Stepper
+          defaultValue={1}
+          orientation="vertical"
+          aria-label="Open in Safari or Chrome steps"
+        >
           <StepperNav className="w-full gap-0">
             <StepperItem step={1} className="relative items-start">
               <div className="flex w-full items-start gap-3 pb-4">
@@ -219,7 +216,7 @@ export function InstallGuideContent({
     return (
       <div data-slot="install-guide-prompt" className="space-y-4">
         <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-tint text-primary">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-property-10-soft text-property-10-soft-foreground">
             <SmartphoneIcon aria-hidden="true" className="size-5" />
           </span>
           <div className="space-y-1">
@@ -381,9 +378,7 @@ export function InstallGuideContent({
             </StepperNav>
           </Stepper>
 
-          {showCornerPointer ? (
-            <SafariRealCornerPointer addressBarAtTop={addressBarAtTop} />
-          ) : null}
+          {showCornerPointer ? <SafariRealCornerPointer addressBarAtTop={addressBarAtTop} /> : null}
         </div>
       ) : null}
 
@@ -442,7 +437,11 @@ export function InstallGuideContent({
       ) : null}
 
       {effectiveMode === 'ios_chrome' ? (
-        <Stepper defaultValue={1} orientation="vertical" aria-label="Chrome on iPhone install steps">
+        <Stepper
+          defaultValue={1}
+          orientation="vertical"
+          aria-label="Chrome on iPhone install steps"
+        >
           <StepperNav className="w-full gap-0">
             <StepperItem step={1} className="relative items-start">
               <div className="flex w-full items-start gap-3 pb-5">

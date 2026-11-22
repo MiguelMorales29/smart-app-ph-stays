@@ -50,11 +50,7 @@ async function InstallAppInner({ params }: InstallAppPageProps) {
           </p>
         </div>
 
-        <InstallGuideContent
-          slug={property.slug}
-          propertyName={property.name}
-          logoSrc={logoSrc}
-        />
+        <InstallGuideContent slug={property.slug} propertyName={property.name} logoSrc={logoSrc} />
       </div>
     </PropertyFrame>
   );
