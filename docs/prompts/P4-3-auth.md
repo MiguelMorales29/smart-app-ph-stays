@@ -1,6 +1,6 @@
 # P4-3 · Sign-up, login, forgot password and waiting for approval
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D45–D60, O9), docs/demo-data.md, docs/ui-library.md, the `/kit` pages, `apps/dashboard/src/app/router.tsx`, `AuthFrame`, `dashboard-context.tsx`, `apps/dashboard/src/data/{auth,setup,shared}.ts*`, `packages/data/src/switches.ts`, and the contract entries `applyAsOwner`, `signIn`, `signInWithGoogle`, `requestPasswordCode`, `resetPassword` and `getMyAccount`. Look at the shadcn blocks `login-04`, `signup-04` and `login-05` as a starting point only.
 

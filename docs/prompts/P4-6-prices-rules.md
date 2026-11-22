@@ -1,6 +1,6 @@
 # P4-6 · Prices, amenities and booking rules
 
-Model: Claude Opus 5.5, High.
+Model: Gemini 4 Neon, High.
 
 Read AGENTS.md, docs/decisions.md (D45–D60, O10), `packages/core/src/pricing` (quoteStay and the golden cases), `packages/core/src/lists/pricing.ts`, the `/units/$id` page from P4-5, and the contract entries `saveUnitPrices` and `listAmenities`.
 
