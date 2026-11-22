@@ -249,7 +249,7 @@ export function ReportPageSheet({
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
+              placeholder="Optional"
             />
             <FieldDescription>Only if you want us to follow up with you.</FieldDescription>
           </Field>

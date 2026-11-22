@@ -64,8 +64,8 @@ export function PromoBanners({ slug, banners, seconds, show }: PromoBannersProps
         sizes="(min-width: 1280px) 1024px, 100vw"
         labels={BANNER_LABELS}
         show={show}
-        renderImage={({ src, alt, sizes, priority, className }) => (
-          <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className={className} />
+        renderImage={({ src, alt, sizes, className }) => (
+          <Image src={src} alt={alt} fill sizes={sizes} loading="lazy" className={className} />
         )}
       />
     </section>

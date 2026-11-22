@@ -114,8 +114,10 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
                     src={normalizeMediaSrc(photo.url)}
                     alt={photo.alt}
                     fill
-                    priority={index === 0}
-                    sizes="(max-width: 767px) 100vw, 1px"
+                    {...(index === 0
+                      ? { priority: true, fetchPriority: 'high' as const }
+                      : { loading: 'lazy' as const })}
+                    sizes="(min-width: 1280px) 512px, (min-width: 768px) 50vw, 100vw"
                     className="object-cover"
                   />
                 </button>
@@ -163,7 +165,8 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
                 alt={coverPhoto.alt}
                 fill
                 priority
-                sizes="(min-width: 1280px) 512px, (min-width: 768px) 50vw, 1px"
+                fetchPriority="high"
+                sizes="(min-width: 1280px) 512px, (min-width: 768px) 50vw, 100vw"
                 className="object-cover transition-transform duration-base ease-enter hover-hover:group-hover:scale-[1.02]"
               />
             </button>
@@ -187,6 +190,7 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
                     src={normalizeMediaSrc(photo.url)}
                     alt={photo.alt}
                     fill
+                    loading="lazy"
                     sizes="(min-width: 1280px) 256px, (min-width: 768px) 25vw, 1px"
                     className="object-cover transition-transform duration-base ease-enter hover-hover:group-hover:scale-[1.03]"
                   />
