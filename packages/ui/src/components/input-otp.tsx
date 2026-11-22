@@ -8,13 +8,22 @@ import { MinusIcon } from 'lucide-react';
 function InputOTP({
   className,
   containerClassName,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   ...props
 }: React.ComponentProps<typeof OTPInput> & {
   containerClassName?: string;
 }) {
+  const defaultAriaLabel =
+    ariaLabel === undefined && ariaLabelledBy === undefined && props.id === undefined
+      ? 'Verification code'
+      : ariaLabel;
+
   return (
     <OTPInput
       data-slot="input-otp"
+      aria-label={defaultAriaLabel}
+      aria-labelledby={ariaLabelledBy}
       containerClassName={cn(
         'cn-input-otp flex items-center has-disabled:opacity-50',
         containerClassName,

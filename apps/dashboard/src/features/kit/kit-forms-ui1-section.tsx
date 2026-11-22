@@ -35,7 +35,7 @@ import {
 import { VisuallyHiddenInput } from '@smartapp/ui/components/visually-hidden-input';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { DayChips, TimeChips } from '@smartapp/ui/compositions/slot-chips';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { DualSurfaceShowcase } from './kit-base-tab';
 
@@ -48,10 +48,11 @@ const AREA_LABELS: Readonly<Record<string, string>> = {
 
 function SelectDemo() {
   const [value, setValue] = useState<string>('tagaytay');
+  const labelId = useId();
 
   return (
     <Field className="max-w-xs">
-      <FieldLabel>Property area</FieldLabel>
+      <FieldLabel id={labelId}>Property area</FieldLabel>
       <Select
         items={AREA_LABELS}
         value={value}
@@ -59,7 +60,7 @@ function SelectDemo() {
           if (next) setValue(next);
         }}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger aria-labelledby={labelId} className="w-full">
           <SelectValue placeholder="Choose an area" />
         </SelectTrigger>
         <SelectContent>

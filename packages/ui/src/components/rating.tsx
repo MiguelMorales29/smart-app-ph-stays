@@ -847,6 +847,7 @@ function RatingItem(props: RatingItemProps) {
           role: 'radio' as React.AriaRole,
           type: 'button' as const,
           id: itemId,
+          'aria-label': `${itemValue} of ${context.max} ${itemValue === 1 ? 'star' : 'stars'}`,
           'aria-checked': isFilled,
           'aria-posinset': itemValue,
           'aria-setsize': context.max,

@@ -5,11 +5,10 @@ import {
   ItemDescription,
   ItemGroup,
   ItemMedia,
-  ItemSeparator,
   ItemTitle,
 } from '@smartapp/ui/components/item';
 import { cn } from 'cn';
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export interface InfoRow {
   readonly id: string;
@@ -47,8 +46,11 @@ export function InfoList({
       )}
     >
       {rows.map((row, index) => (
-        <Fragment key={row.id}>
-          {index > 0 ? <ItemSeparator className="my-0" /> : null}
+        <div
+          key={row.id}
+          role="listitem"
+          className={index > 0 ? 'border-t border-border' : undefined}
+        >
           <Item
             size="sm"
             data-highlight={row.highlight ? '' : undefined}
@@ -77,7 +79,7 @@ export function InfoList({
               <ItemActions className="text-right text-sm tabular">{row.value}</ItemActions>
             ) : null}
           </Item>
-        </Fragment>
+        </div>
       ))}
     </ItemGroup>
   );

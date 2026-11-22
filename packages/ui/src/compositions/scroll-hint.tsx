@@ -15,6 +15,8 @@ export interface ScrollHintProps {
   /** Shows the "More below" pill while content extends past the viewport. */
   readonly withButton?: boolean | undefined;
   readonly moreLabel?: string | undefined;
+  /** Accessible name for the keyboard-focusable scroll region. */
+  readonly label?: string | undefined;
 }
 
 /**
@@ -26,6 +28,7 @@ export function ScrollHint({
   className,
   withButton = true,
   moreLabel = 'More below',
+  label = 'Scrollable content',
 }: ScrollHintProps) {
   const ref = useScrollerRecheck<HTMLDivElement>();
   const reduced = useReducedMotion();
@@ -42,7 +45,17 @@ export function ScrollHint({
 
   return (
     <div data-slot="scroll-hint" className="relative flex min-h-0 flex-1 flex-col">
-      <Scroller ref={ref} size={32} className={cn('min-h-0 flex-1 overscroll-contain', className)}>
+      <Scroller
+        ref={ref}
+        size={32}
+        tabIndex={0}
+        role="region"
+        aria-label={label}
+        className={cn(
+          'min-h-0 flex-1 overscroll-contain outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+          className,
+        )}
+      >
         <div className="min-w-0">{children}</div>
       </Scroller>
       {withButton && more ? (

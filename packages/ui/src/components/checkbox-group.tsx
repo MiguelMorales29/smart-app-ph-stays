@@ -11,6 +11,7 @@ function CheckboxGroup({
   return (
     <CheckboxGroupPrimitive.Root
       data-slot="checkbox-group"
+      role="group"
       className={cn('flex flex-col gap-3.5 peer', className)}
       {...props}
     />

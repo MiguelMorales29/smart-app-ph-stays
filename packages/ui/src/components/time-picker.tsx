@@ -271,8 +271,8 @@ interface TimePickerProps extends DivProps {
   onOpenChange?: (open: boolean) => void;
   openOnFocus?: boolean;
   inputGroupClickAction?: 'focus' | 'open';
-  min?: string | undefined;
-  max?: string | undefined;
+  min?: string;
+  max?: string;
   hourStep?: number;
   minuteStep?: number;
   secondStep?: number;
@@ -701,7 +701,7 @@ function TimePickerInputGroup(props: DivProps) {
           id: inputGroupId,
           'aria-labelledby': labelId,
           className: cn(
-            'flex h-9 w-full cursor-text items-center gap-0.5 rounded-lg border border-input bg-background px-3 py-2 transition-shadow outline-none has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50',
+            'flex min-h-9 pointer-coarse:min-h-11 w-full cursor-text items-center gap-0.5 rounded-lg border border-input bg-background px-3 py-2 transition-shadow outline-none has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50',
             invalid && 'border-destructive ring-destructive/20',
             disabled && 'cursor-not-allowed opacity-50',
             className,
@@ -1353,6 +1353,15 @@ function TimePickerInput(props: TimePickerInputProps) {
 
   const segmentWidth = segment ? `var(--time-picker-${segment}-input-width)` : '2ch';
 
+  const segmentAriaLabel =
+    segment === 'hour'
+      ? 'Hours'
+      : segment === 'minute'
+        ? 'Minutes'
+        : segment === 'second'
+          ? 'Seconds'
+          : 'AM or PM';
+
   return (
     <input
       type="text"
@@ -1362,11 +1371,12 @@ function TimePickerInput(props: TimePickerInputProps) {
       autoCapitalize="off"
       spellCheck={false}
       translate="no"
+      aria-label={segmentAriaLabel}
       {...inputProps}
       disabled={isDisabled}
       readOnly={isReadOnly}
       className={cn(
-        'inline-flex h-full items-center justify-center border-0 bg-transparent text-center text-sm tabular-nums transition-colors outline-none focus:bg-transparent disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex h-full items-center justify-center border-0 bg-transparent text-center text-base sm:text-sm pointer-coarse:text-base tabular-nums transition-colors outline-none focus:bg-transparent disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       style={{ width: segmentWidth, ...style }}
@@ -1395,6 +1405,7 @@ function TimePickerTrigger(props: ButtonProps) {
       type="button"
       id={triggerId}
       data-slot="time-picker-trigger"
+      aria-label="Choose time"
       disabled={isDisabled}
       ref={composedRef}
       {...triggerProps}
@@ -1403,7 +1414,7 @@ function TimePickerTrigger(props: ButtonProps) {
         className,
       )}
     >
-      {children ?? <Clock />}
+      {children ?? <Clock aria-hidden="true" />}
     </PopoverTrigger>
   );
 }
