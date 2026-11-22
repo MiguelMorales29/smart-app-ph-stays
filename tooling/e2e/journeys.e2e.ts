@@ -182,10 +182,7 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await expect(bedsDialog).toContainText('Bed 7 in Room 3B');
 
     // Increment beds from 1 to 2.
-    await bedsDialog
-      .getByRole('button', { name: /Increase beds|Add beds|\+/i })
-      .first()
-      .click();
+    await bedsDialog.getByRole('button', { name: 'More beds' }).click();
     await expect(bedsDialog).toContainText('Bed 7 … Bed 8 in Room 3B');
 
     await bedsDialog.getByLabel('Monthly rent for each bed').fill('3500');
@@ -194,11 +191,11 @@ test.describe('Owner journeys (FIX-1 J)', () => {
 
     // Return to /units and verify Bed 7 and Bed 8 appear under Room 3B without a duplicate Bed 1.
     await page.getByRole('link', { name: 'Units' }).first().click();
+    const visibleRows = page.locator('tr:visible, article:visible');
+    await expect(visibleRows.filter({ hasText: /Bed 7/ }).first()).toBeVisible();
+    await expect(visibleRows.filter({ hasText: /Bed 8/ }).first()).toBeVisible();
     await expect(
-      page.getByText('Room 3B · Bed 7').or(page.getByText('Bed 7')).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByText('Room 3B · Bed 8').or(page.getByText('Bed 8')).first(),
+      visibleRows.filter({ hasText: 'Room 3B' }).filter({ hasText: '8 beds' }).first(),
     ).toBeVisible();
   });
 
