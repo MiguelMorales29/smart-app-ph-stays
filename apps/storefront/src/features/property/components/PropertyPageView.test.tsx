@@ -1,8 +1,8 @@
-import { calendarDate, fixedClock } from '@smartapp/core';
-import { getDataSource } from '@smartapp/data';
+import { DEMO_IDS, calendarDate, centavos, fixedClock } from '@smartapp/core';
+import { clearMemoryUploads, getDataSource, registerMemoryUploadUrl } from '@smartapp/data';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 async function loadProperty(slug: string, pack: 'marketing' | 'qa' = 'marketing') {
   const clock = fixedClock('2026-12-10T10:00:00+08:00');
@@ -139,5 +139,135 @@ describe('PropertyPageView', () => {
     expect(html).toContain('Message');
     expect(html).not.toContain('/ulap-suites/inquire');
     expect(html).toContain('changed in the last 7 days');
+  });
+
+  afterEach(() => {
+    clearMemoryUploads();
+  });
+
+  it('renders an owner-added unit and its uploaded photos on the storefront unit card (FIX-1 B & J)', async () => {
+    const { PropertyPageView } = await import('./PropertyPageView');
+    const clock = fixedClock('2026-12-10T10:00:00+08:00');
+    const source = await getDataSource({
+      adapter: 'memory',
+      pack: 'qa',
+      clock,
+      storefrontOrigin: '',
+    });
+    const session = {
+      role: 'owner' as const,
+      accountId: DEMO_IDS.ulapSuites.account,
+      profileId: DEMO_IDS.people.owners.ulapSuites,
+    };
+
+    const created = await source.saveUnit(
+      {
+        idempotencyKey: 'sf-fix1-unit',
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        unitId: null,
+        expectedUpdatedAt: null,
+        name: 'Sunrise Balcony Studio',
+        slug: 'sunrise-balcony-studio',
+        mode: 'short_stay',
+        unitType: 'entire_place',
+        groupLabel: null,
+        description: 'Morning sun over the ridge.',
+        maxGuests: 2,
+        bedrooms: 1,
+        beds: 1,
+        bathrooms: 1,
+        floorAreaSqm: 28,
+        arrivalInfo: null,
+        amenityIds: [DEMO_IDS.amenities.wifi],
+        stayTerms: {
+          base_nightly_centavos: centavos(310_000),
+          base_guests: 2,
+          min_nights: 1,
+          max_nights: 14,
+          prep_nights: 0,
+          weekly_discount_percent: 0,
+          monthly_discount_percent: 0,
+          down_payment_percent: 30,
+          hold_minutes: 60,
+          advance_notice_days: 0,
+          booking_window_days: 365,
+        },
+        leaseTerms: null,
+      },
+      session,
+    );
+    if (!created.ok) throw new Error(created.error.message);
+
+    const dataUrl = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+    const fileIds: string[] = [];
+    for (let i = 1; i <= 3; i += 1) {
+      const slot = await source.requestUpload(
+        {
+          idempotencyKey: `sf-fix1-req-${i}`,
+          accountId: DEMO_IDS.ulapSuites.account,
+          purpose: 'unit_photo',
+          mime: 'image/webp',
+          sizeBytes: 24_000,
+          width: 1200,
+          height: 900,
+          filename: `sunrise-${i}.webp`,
+        },
+        session,
+      );
+      if (!slot.ok) throw new Error(slot.error.message);
+      registerMemoryUploadUrl(slot.data.file.id, dataUrl);
+      const confirmed = await source.confirmUpload(
+        {
+          idempotencyKey: `sf-fix1-conf-${i}`,
+          accountId: DEMO_IDS.ulapSuites.account,
+          fileId: slot.data.file.id,
+          width: 1200,
+          height: 900,
+          usedByTable: 'listing_photos',
+          usedById: created.data.unit.id,
+        },
+        session,
+      );
+      if (!confirmed.ok) throw new Error(confirmed.error.message);
+      fileIds.push(slot.data.file.id);
+    }
+
+    const savedPhotos = await source.saveListingPhotos(
+      {
+        idempotencyKey: 'sf-fix1-photos',
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+        unitId: created.data.unit.id,
+        photos: fileIds.map((fileId, idx) => ({ fileId, altText: `Sunrise photo ${idx + 1}` })),
+      },
+      session,
+    );
+    if (!savedPhotos.ok) throw new Error(savedPhotos.error.message);
+
+    const listed = await source.setUnitStatus(
+      {
+        idempotencyKey: 'sf-fix1-list',
+        accountId: DEMO_IDS.ulapSuites.account,
+        unitId: created.data.unit.id,
+        status: 'listed',
+        expectedUpdatedAt: created.data.unit.updated_at,
+      },
+      session,
+    );
+    if (!listed.ok) throw new Error(listed.error.message);
+
+    const propRes = await source.getProperty({ slug: 'ulap-suites' }, { role: 'guest' });
+    if (!propRes.ok) throw new Error(propRes.error.message);
+
+    const html = renderToStaticMarkup(
+      createElement(PropertyPageView, {
+        propertyView: propRes.data,
+        today: calendarDate('2026-12-10'),
+      }),
+    );
+
+    expect(html).toContain('Sunrise Balcony Studio');
+    expect(html).toContain(dataUrl);
   });
 });
