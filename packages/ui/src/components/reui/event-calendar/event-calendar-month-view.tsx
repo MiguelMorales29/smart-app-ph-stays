@@ -885,11 +885,25 @@ function EventCalendarMonthCell({
             viewConfig.classNames?.monthDayNumber,
           )}
         >
+          <span className="sr-only">
+            {format(
+              toZoned(day, settings.timeZone),
+              'EEEE, MMMM ',
+              settings.locale ? { locale: settings.locale } : undefined,
+            )}
+          </span>
           {format(
             toZoned(day, settings.timeZone),
             settings.i18n.formats.monthCellDay,
             settings.locale ? { locale: settings.locale } : undefined,
           )}
+          <span className="sr-only">
+            {format(
+              toZoned(day, settings.timeZone),
+              ', yyyy',
+              settings.locale ? { locale: settings.locale } : undefined,
+            )}
+          </span>
         </span>
       </div>
     </>
@@ -919,11 +933,6 @@ function EventCalendarMonthCell({
       data-drop-target={isDropTarget ?? undefined}
       data-off={isOff || undefined}
       data-draft={inDraft ? '' : undefined}
-      aria-label={format(
-        toZoned(day, settings.timeZone),
-        settings.i18n.formats.monthCellAriaLabel,
-        settings.locale ? { locale: settings.locale } : undefined,
-      )}
       className={cn(
         'group/ec-cell relative flex min-h-0 min-w-0 flex-col overflow-hidden',
         !isLast && 'border-e',

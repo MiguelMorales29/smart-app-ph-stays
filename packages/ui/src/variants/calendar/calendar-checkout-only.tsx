@@ -152,31 +152,30 @@ export function CalendarCheckoutOnly({
             return takenSet.has(iso) && !isCheckoutOnlyDay(date);
           },
         }}
-        className="w-full rounded-xl border border-border bg-card p-2 [--cell-size:--spacing(9)] sm:p-3 sm:[--cell-size:--spacing(11)]"
+        className="w-full rounded-xl border border-border bg-card p-1.5 [--cell-size:--spacing(8)] sm:p-3 sm:[--cell-size:--spacing(11)]"
         classNames={{
           root: 'w-full',
           month: 'flex w-full flex-col gap-3',
+          month_grid: 'w-full table-fixed border-collapse',
         }}
         components={{
           DayButton: ({ children, modifiers, day, className: dayClassName, ...props }) => {
             const isOutOnly = Boolean(modifiers['checkoutOnly']);
             const isTaken = Boolean(modifiers['taken']);
             const iso = toManilaCalendarDate(day.date);
-            const dayNum = String(Number(iso.slice(8, 10)));
-            const fullDate = formatManilaCalendarDate(iso, {
+            const weekdayMonth = formatManilaCalendarDate(iso, {
               weekday: 'long',
               month: 'long',
-              day: 'numeric',
-              year: 'numeric',
             });
+            const yearText = iso.slice(0, 4);
             return (
               <CalendarDayButton
                 day={day}
                 modifiers={modifiers}
                 {...props}
-                aria-label={isOutOnly ? `${dayNum} Out, ${fullDate}, check-out only` : fullDate}
+                aria-label={undefined}
                 className={cn(
-                  'gap-0.5 px-0.5 [&>span]:opacity-100',
+                  'min-w-0 gap-0.5 px-0 [&>span]:opacity-100',
                   isOutOnly &&
                     !modifiers.range_end &&
                     'border border-dashed border-warning bg-warning-tint/60 text-foreground',
@@ -184,8 +183,13 @@ export function CalendarCheckoutOnly({
                   dayClassName,
                 )}
               >
+                <span className="sr-only">{weekdayMonth} </span>
                 <span className="text-xs leading-none font-medium tabular-nums sm:text-sm">
                   {children}
+                </span>
+                <span className="sr-only">
+                  , {yearText}
+                  {isOutOnly ? ', check-out only' : ''}
                 </span>
                 {isOutOnly ? (
                   <span className="text-[9px] leading-none font-medium text-foreground">Out</span>
@@ -213,7 +217,9 @@ export function CalendarCheckoutOnly({
             Check-out only
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="line-through opacity-60">15</span>
+            <span aria-hidden="true" className="line-through">
+              15
+            </span>
             Taken night
           </span>
         </div>

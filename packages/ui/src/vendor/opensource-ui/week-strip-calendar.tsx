@@ -165,11 +165,6 @@ export const WeekStripCalendar = forwardRef<HTMLDivElement, WeekStripCalendarPro
                 key={iso}
                 type="button"
                 aria-pressed={isSelected}
-                aria-label={formatManilaCalendarDate(iso, {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric',
-                })}
                 disabled={isClosed}
                 onClick={() => selectDay(iso, date)}
                 className={cn(
@@ -178,12 +173,16 @@ export const WeekStripCalendar = forwardRef<HTMLDivElement, WeekStripCalendarPro
                 )}
               >
                 <span
+                  aria-hidden="true"
                   className={cn(
                     'text-[10px] font-medium tracking-wide uppercase',
                     isSelected ? 'text-foreground' : 'text-muted-foreground',
                   )}
                 >
                   {formatManilaCalendarDate(iso, { weekday: 'narrow' })}
+                </span>
+                <span className="sr-only">
+                  {formatManilaCalendarDate(iso, { weekday: 'long', month: 'short' })}{' '}
                 </span>
                 <span
                   className={cn(
@@ -215,7 +214,7 @@ export const WeekStripCalendar = forwardRef<HTMLDivElement, WeekStripCalendarPro
                       state === 'open' && 'text-success',
                     )}
                   >
-                    {isClosed ? 'Closed' : isFull ? 'Full' : ''}
+                    {isClosed ? ' Closed' : isFull ? ' Full' : ''}
                   </span>
                 )}
               </button>

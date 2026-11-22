@@ -220,11 +220,6 @@ export const BookingSlotCalendar = forwardRef<HTMLDivElement, BookingSlotCalenda
                   key={iso}
                   type="button"
                   aria-pressed={active}
-                  aria-label={formatManilaCalendarDate(iso, {
-                    weekday: 'long',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
                   aria-disabled={past || undefined}
                   disabled={past}
                   onClick={() => pickDay(iso)}
@@ -234,12 +229,16 @@ export const BookingSlotCalendar = forwardRef<HTMLDivElement, BookingSlotCalenda
                   )}
                 >
                   <span
+                    aria-hidden="true"
                     className={cn(
                       'text-[10px] font-medium tracking-wide uppercase',
                       past ? 'text-muted-foreground/40' : 'text-muted-foreground',
                     )}
                   >
                     {formatManilaCalendarDate(iso, { weekday: 'narrow' })}
+                  </span>
+                  <span className="sr-only">
+                    {formatManilaCalendarDate(iso, { weekday: 'long', month: 'short' })}{' '}
                   </span>
                   <span
                     className={cn(

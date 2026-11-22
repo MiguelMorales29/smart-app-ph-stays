@@ -105,10 +105,11 @@ export function CalendarPriceRange({
         defaultMonth={range?.from ?? todayObj}
         disabled={{ before: todayObj }}
         showOutsideDays={false}
-        className="w-full rounded-xl border border-border bg-card p-2 [--cell-size:--spacing(9)] sm:p-3 sm:[--cell-size:--spacing(11)]"
+        className="w-full rounded-xl border border-border bg-card p-1.5 [--cell-size:--spacing(8)] sm:p-3 sm:[--cell-size:--spacing(11)]"
         classNames={{
           root: 'w-full',
           month: 'flex w-full flex-col gap-3',
+          month_grid: 'w-full table-fixed border-collapse',
         }}
         components={{
           DayButton: ({ children, modifiers, day, className: dayClassName, ...props }) => {
@@ -119,29 +120,29 @@ export function CalendarPriceRange({
             const isMiddle = Boolean(modifiers.range_middle);
             const showPrice = rate !== null && !modifiers.disabled;
             const priceText = showPrice ? compactPesos(rate) : null;
-            const dayNum = String(Number(iso.slice(8, 10)));
-            const fullDate = formatManilaCalendarDate(iso, {
+            const weekdayMonth = formatManilaCalendarDate(iso, {
               weekday: 'long',
               month: 'long',
-              day: 'numeric',
-              year: 'numeric',
             });
+            const yearText = iso.slice(0, 4);
 
             return (
               <CalendarDayButton
                 day={day}
                 modifiers={modifiers}
                 {...props}
-                aria-label={priceText ? `${dayNum} ${priceText}, ${fullDate}` : fullDate}
-                className={cn('gap-0.5 px-0.5 [&>span]:opacity-100', dayClassName)}
+                aria-label={undefined}
+                className={cn('min-w-0 gap-0.5 px-0 [&>span]:opacity-100', dayClassName)}
               >
+                <span className="sr-only">{weekdayMonth} </span>
                 <span className="text-xs leading-none font-medium tabular-nums sm:text-sm">
                   {children}
                 </span>
+                <span className="sr-only">, {yearText} </span>
                 {priceText !== null ? (
                   <span
                     className={cn(
-                      'text-[9px] leading-none font-normal tabular-nums sm:text-[10px]',
+                      'text-[8.5px] leading-none font-normal tracking-tighter tabular-nums sm:text-[10px] sm:tracking-normal',
                       isEndpoint
                         ? 'text-primary-foreground'
                         : isMiddle
