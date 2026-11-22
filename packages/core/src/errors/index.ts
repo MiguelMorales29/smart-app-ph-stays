@@ -1,46 +1,43 @@
 import { z } from 'zod';
 
 import { words } from '../words.js';
+import {
+  ERROR_CODES,
+  ERROR_REASONS,
+  UNIT_READY_MISSING,
+  appError,
+  err,
+  isErrorCode,
+  isErrorReason,
+  ok,
+  type AppError,
+  type ErrorCode,
+  type ErrorReason,
+  type Result,
+  type UnitReadyMissing,
+} from './runtime.js';
 
-export const ERROR_CODES = [
-  'dates_taken',
-  'price_changed',
-  'hold_limit',
-  'reference_used',
-  'invalid_move',
-  'not_allowed',
-  'not_found',
-] as const;
+export {
+  ERROR_CODES,
+  ERROR_REASONS,
+  UNIT_READY_MISSING,
+  appError,
+  err,
+  isErrorCode,
+  isErrorReason,
+  ok,
+  type AppError,
+  type ErrorCode,
+  type ErrorReason,
+  type Result,
+  type UnitReadyMissing,
+};
 
 export const errorCodeSchema = z.enum(ERROR_CODES);
 
-export type ErrorCode = z.infer<typeof errorCodeSchema>;
-
-export const ERROR_REASONS = [
-  'invalid_input',
-  'slug_taken',
-  'slug_reserved',
-  'slug_change_limit',
-  'email_taken',
-  'unit_limit',
-  'storage_full',
-  'file_too_large',
-  'not_image',
-  'last_payment_method',
-  'bank_limit',
-  'changed_elsewhere',
-  'wallet_not_checked',
-  'wrong_password',
-  'unit_not_ready',
-] as const;
-
 export const errorReasonSchema = z.enum(ERROR_REASONS);
 
-export type ErrorReason = z.infer<typeof errorReasonSchema>;
-
-export const UNIT_READY_MISSING = ['photos', 'price'] as const;
 export const unitReadyMissingSchema = z.enum(UNIT_READY_MISSING);
-export type UnitReadyMissing = z.infer<typeof unitReadyMissingSchema>;
 
 export const errorDetailsSchema = z.object({
   reason: errorReasonSchema,
@@ -65,15 +62,6 @@ export interface ParsedErrorDetails {
   readonly draft_rev?: number;
   readonly draft_updated_at?: string | null;
 }
-
-export interface AppError {
-  readonly code: ErrorCode;
-  readonly message: string;
-  readonly details?: Readonly<Record<string, unknown>>;
-}
-
-export type Result<T> =
-  { readonly ok: true; readonly data: T } | { readonly ok: false; readonly error: AppError };
 
 const rawErrorDetailsReader = z.object({
   reason: errorReasonSchema.optional(),
@@ -128,28 +116,6 @@ export function readErrorDetails(error: AppError): ParsedErrorDetails {
   };
 }
 
-export function appError(
-  code: ErrorCode,
-  message?: string,
-  details?: Readonly<Record<string, unknown>>,
-): AppError {
-  const validCode = errorCodeSchema.parse(code);
-  const resolvedMessage = message ?? words.errors[validCode];
-
-  if (details === undefined) {
-    return {
-      code: validCode,
-      message: resolvedMessage,
-    };
-  }
-
-  return {
-    code: validCode,
-    message: resolvedMessage,
-    details,
-  };
-}
-
 export function reasonError(
   code: ErrorCode,
   reason: ErrorReason,
@@ -180,12 +146,4 @@ export function reasonError(
     details['draft_updated_at'] = extra.draft_updated_at;
   }
   return appError(code, message ?? words.errorReasons[validReason], details);
-}
-
-export function ok<T>(data: T): Result<T> {
-  return { ok: true, data };
-}
-
-export function err<T = never>(error: AppError): Result<T> {
-  return { ok: false, error };
 }

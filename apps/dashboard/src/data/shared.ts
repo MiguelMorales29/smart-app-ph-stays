@@ -1,4 +1,4 @@
-import { appError, errorCodeSchema, type AppError, type Result } from '@smartapp/core';
+import { appError, isErrorCode, type AppError, type Result } from '@smartapp/core';
 import type { DataSource, Session } from '@smartapp/data';
 
 import { useDashboard } from '@/app/dashboard-context';
@@ -21,7 +21,7 @@ function isPlainAppError(value: unknown): value is AppError {
   if (typeof value !== 'object' || value === null) return false;
   if (!('code' in value) || !('message' in value)) return false;
   if (typeof value.code !== 'string' || typeof value.message !== 'string') return false;
-  return errorCodeSchema.safeParse(value.code).success;
+  return isErrorCode(value.code);
 }
 
 export function extractAppError(value: unknown): AppError {

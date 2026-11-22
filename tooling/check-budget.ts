@@ -20,6 +20,15 @@ const HEAVY: readonly { readonly label: string; readonly pattern: RegExp }[] = [
   { label: 'confetti', pattern: /canvas-confetti|confetti\.module/ },
   { label: 'dnd-kit', pattern: /useSortable|@dnd-kit/ },
   { label: 'calendar (react-day-picker)', pattern: /rdp-|react-day-picker/ },
+  { label: '@date-fns/tz', pattern: /TZDate|@date-fns\/tz/ },
+  {
+    label: 'event-calendar (ReUI)',
+    pattern: /event-calendar-month-view|data-slot="event-calendar/,
+  },
+  { label: 'gantt (ReUI)', pattern: /data-slot="gantt|gantt-bar/ },
+  { label: 'date-selector (ReUI)', pattern: /data-slot="date-selector/ },
+  { label: 'booking-slot-calendar', pattern: /data-slot="booking-slot-calendar/ },
+  { label: 'week-strip-calendar', pattern: /data-slot="week-strip-calendar/ },
 ];
 
 export interface BudgetReport {

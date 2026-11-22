@@ -1,13 +1,20 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import { EllipsisIcon, PlusIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
 import { useKeyboardOpen } from '../hooks/use-keyboard-open';
 import { countLabel, useNavLink, type NavItem } from '../lib/nav';
-import { NavDrawer } from './nav-drawer';
+
+const loadNavDrawer = () => import('./nav-drawer').then((mod) => ({ default: mod.NavDrawer }));
+const LazyNavDrawer = lazy(loadNavDrawer);
+
+function preloadNavDrawer(): void {
+  void loadNavDrawer();
+}
 
 export interface BottomDockAction {
   readonly label?: string | undefined;
   readonly onClick: () => void;
+  readonly onPointerDown?: (() => void) | undefined;
 }
 
 export interface BottomDockProps {
@@ -74,6 +81,7 @@ function DockActionButton({ action }: { readonly action: BottomDockAction }) {
       <button
         type="button"
         aria-label={action.label ?? 'Add'}
+        onPointerDown={action.onPointerDown}
         onClick={action.onClick}
         className="press relative -translate-y-6 flex size-13 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-4 ring-background outline-none hover-hover:hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
@@ -93,6 +101,22 @@ export function BottomDock({ label, items, action, more }: BottomDockProps) {
     more?.items.some((item) => Boolean(item.dot) || (item.count !== undefined && item.count > 0)) ??
     false;
   const actionIndex = action ? Math.min(2, items.length) : -1;
+
+  useEffect(() => {
+    if (!more) return;
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(() => {
+        preloadNavDrawer();
+      });
+      return () => {
+        window.cancelIdleCallback(id);
+      };
+    }
+    const timer = window.setTimeout(preloadNavDrawer, 1200);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [more]);
 
   return (
     <>
@@ -116,19 +140,22 @@ export function BottomDock({ label, items, action, more }: BottomDockProps) {
             data-active={moreActive ? '' : undefined}
             aria-haspopup="dialog"
             aria-expanded={moreOpen}
+            onPointerDown={preloadNavDrawer}
             onClick={() => setMoreOpen(true)}
           >
             <SlotContent icon={<EllipsisIcon />} label={more.label} dot={moreDot} />
           </button>
         ) : null}
       </nav>
-      {more ? (
-        <NavDrawer
-          title={more.label}
-          items={more.items}
-          open={moreOpen}
-          onOpenChange={setMoreOpen}
-        />
+      {more && moreOpen ? (
+        <Suspense fallback={null}>
+          <LazyNavDrawer
+            title={more.label}
+            items={more.items}
+            open={moreOpen}
+            onOpenChange={setMoreOpen}
+          />
+        </Suspense>
       ) : null}
     </>
   );

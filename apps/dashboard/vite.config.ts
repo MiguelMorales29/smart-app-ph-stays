@@ -82,14 +82,15 @@ export function createDashboardViteConfig(
     build: {
       rolldownOptions: {
         output: {
-          // Group always-initial shell framework code (React, TanStack Router/Query, Zod, and the
-          // Base UI primitives already used in AppFrame) into one chunk so Rolldown does not
-          // fragment first-load preloads into dozens of tiny files.
+          // Group only always-initial framework runtime (React and TanStack Router/Query) so
+          // Rolldown never sweeps lazy-route or kit-only packages (Zod, @floating-ui/react-dom,
+          // lazy @base-ui primitives) into the preloaded shell chunk.
           codeSplitting: {
+            minSize: 20_000,
             groups: [
               {
                 name: 'vendor-shell',
-                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|zod|@tanstack[\\/](react-router|router-core|react-query|query-core)|@base-ui[\\/]utils|@floating-ui|@base-ui[\\/]react[\\/](esm[\\/])?(dialog|menu|button|switch|separator|merge-props|use-render|floating-ui-react|utils))[\\/]/,
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|@tanstack[\\/](react-router|router-core|react-query|query-core))[\\/]/,
               },
             ],
           },

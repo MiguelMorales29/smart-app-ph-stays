@@ -8,10 +8,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { NotFoundPage } from '@/app/not-found';
-import { AdminFrame } from '@/app/shell/AdminFrame';
 import { AppFrame } from '@/app/shell/AppFrame';
-import { AuthFrame } from '@/app/shell/AuthFrame';
-import { FocusFrame } from '@/app/shell/FocusFrame';
 import { PlaceholderScreen } from '@/app/shell/PlaceholderScreen';
 import type { UnitEditSearch } from '@/features/units/unit-edit-page';
 import type { UnitsSearch } from '@/features/units/units-page';
@@ -34,7 +31,7 @@ const rootIndexRoute = createRoute({
 const authLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'auth-frame',
-  component: AuthFrame,
+  component: lazyRouteComponent(() => import('@/app/shell/AuthFrame'), 'AuthFrame'),
 });
 
 export interface SignupSearch {
@@ -75,7 +72,7 @@ const forgotPasswordRoute = createRoute({
 const focusLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'focus-frame',
-  component: FocusFrame,
+  component: lazyRouteComponent(() => import('@/app/shell/FocusFrame'), 'FocusFrame'),
 });
 
 export interface OnboardingSearch {
@@ -298,7 +295,7 @@ const settingsStorageRoute = createRoute({
 const adminLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'admin-frame',
-  component: AdminFrame,
+  component: lazyRouteComponent(() => import('@/app/shell/AdminFrame'), 'AdminFrame'),
 });
 
 const adminParent = { to: '/admin', title: 'Super admin' } as const;
