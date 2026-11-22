@@ -263,8 +263,8 @@ export function InstallGuideContent({
             value={fallbackTab}
             onValueChange={setFallbackTab}
             options={[
-              { value: 'ios_26', label: 'iPhone (iOS 26)' },
-              { value: 'ios_legacy', label: 'Older iPhone' },
+              { value: 'ios_26', label: 'iOS 26' },
+              { value: 'ios_legacy', label: 'Older iOS' },
               { value: 'android', label: 'Android' },
             ]}
           />

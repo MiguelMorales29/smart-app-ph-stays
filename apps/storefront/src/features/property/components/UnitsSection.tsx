@@ -49,7 +49,7 @@ function UnitCardItem({ slug, card }: { readonly slug: string; readonly card: Un
         {extraPhotos > 0 ? (
           <span
             aria-label={`${card.photoCount} photos`}
-            className="pointer-events-none absolute right-2.5 bottom-2.5 inline-flex items-center gap-1 rounded-full bg-scrim px-2.5 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
+            className="absolute right-2.5 bottom-2.5 inline-flex items-center gap-1 rounded-full bg-scrim px-2.5 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
           >
             <ImagesIcon aria-hidden="true" className="size-3" />+{extraPhotos}
           </span>
@@ -58,7 +58,7 @@ function UnitCardItem({ slug, card }: { readonly slug: string; readonly card: Un
         {card.kind === 'room' && card.badgeLabel ? (
           <Badge
             variant="secondary"
-            className="pointer-events-none absolute top-2.5 left-2.5 rounded-full border border-border/60 bg-card/95 px-2.5 py-0.5 text-xs font-medium text-foreground shadow-xs backdrop-blur-xs"
+            className="absolute top-2.5 left-2.5 rounded-full border border-border/60 bg-card/95 px-2.5 py-0.5 text-xs font-medium text-foreground shadow-xs backdrop-blur-xs"
           >
             {card.badgeLabel}
           </Badge>
