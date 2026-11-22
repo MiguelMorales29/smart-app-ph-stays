@@ -15,6 +15,7 @@ function Calendar({
   buttonVariant = 'ghost',
   locale,
   formatters,
+  labels,
   components,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
@@ -36,6 +37,17 @@ function Calendar({
       formatters={{
         formatMonthDropdown: (date) => date.toLocaleString(locale?.code, { month: 'short' }),
         ...formatters,
+      }}
+      labels={{
+        labelDayButton: (date) =>
+          date.toLocaleDateString(locale?.code ?? 'en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            ...(props.timeZone ? { timeZone: props.timeZone } : {}),
+          }),
+        ...labels,
       }}
       classNames={{
         root: cn('w-fit', defaultClassNames.root),
@@ -85,7 +97,7 @@ function Calendar({
           defaultClassNames.week_number,
         ),
         day: cn(
-          'group/day relative aspect-square h-full w-full rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)',
+          'group/day relative aspect-square h-full w-full min-w-0 flex-1 rounded-(--cell-radius) p-0 text-center select-none [&:last-child[data-selected=true]_button]:rounded-r-(--cell-radius)',
           props.showWeekNumber
             ? '[&:nth-child(2)[data-selected=true]_button]:rounded-l-(--cell-radius)'
             : '[&:first-child[data-selected=true]_button]:rounded-l-(--cell-radius)',

@@ -26,6 +26,7 @@ import { resolveServerProperty } from '@/lib/property-server';
 import { StorefrontKitUi1Section } from './StorefrontKitUi1Section';
 import { StorefrontKitUi2Section } from './StorefrontKitUi2Section';
 import { StorefrontKitUi3Section } from './StorefrontKitUi3Section';
+import { StorefrontKitUi4Section } from './StorefrontKitUi4Section';
 
 export const STOREFRONT_KIT_LOOKS = [
   'ulap-suites',
@@ -390,6 +391,14 @@ export async function StorefrontKitView({
               dont="Show raw receipt colours outside our paper tokens or omit CC-BY-4.0 artist credit."
             >
               <StorefrontKitUi3Section propertyName={activeLook.propertyView.property.name} />
+            </KitSection>
+
+            <KitSection
+              title="Dates, stay pricing & viewing slots (UI-4)"
+              useFor="CalendarPriceRange for nightly ₱ rates, CalendarCheckoutOnly for D75 check-out-only taken nights, WeekStripCalendar for 7-day availability strips, and BookingSlotCalendar for viewing or arrival windows (Asia/Manila)."
+              dont="Compute stay nights in browser-local time or block a taken night from serving as check-out when prior nights are free (D75)."
+            >
+              <StorefrontKitUi4Section propertyName={activeLook.propertyView.property.name} />
             </KitSection>
           </div>
         </PropertyFrame>

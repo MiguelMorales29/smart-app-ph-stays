@@ -10,7 +10,9 @@
     "./components/reui/data-grid": "./src/components/reui/data-grid/index.ts",
     "./components/reui/data-grid/*": "./src/components/reui/data-grid/*.tsx",
     "./components/reui/cascader/*": "./src/components/reui/cascader/*.tsx",
+    "./components/reui/event-calendar/*": "./src/components/reui/event-calendar/*.tsx",
     "./components/reui/filters/*": "./src/components/reui/filters/*.tsx",
+    "./components/reui/gantt/*": "./src/components/reui/gantt/*.tsx",
     "./components/reui/*": "./src/components/reui/*.tsx",
     "./components/*": "./src/components/*.tsx",
     "./compositions/*": "./src/compositions/*.tsx",
@@ -26,6 +28,7 @@
   "dependencies": {
     "@base-ui/react": "1.9.0",
     "@base-ui/utils": "0.5.0",
+    "@date-fns/tz": "1.5.0",
     "@dicebear/adventurer": "9.4.3",
     "@dicebear/big-smile": "9.4.3",
     "@dicebear/core": "9.4.3",

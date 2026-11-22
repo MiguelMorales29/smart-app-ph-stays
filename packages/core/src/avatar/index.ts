@@ -1,31 +1,34 @@
 import { z } from 'zod';
 
 import { uuidSchema } from '../ids/index.js';
+import {
+  AVATAR_THEMES,
+  OWNER_AVATAR_DIR,
+  OWNER_AVATAR_STYLES,
+  OWNER_FACES_PER_STYLE,
+  avatarSvgSrc,
+  hashAvatarSeed,
+  ownerAvatarFile,
+  personInitials,
+  resolveProfileAvatar,
+  type ResolvedPersonAvatar,
+} from './runtime.js';
 
-/** Seven DiceBear styles offered in the owner/member picture picker (pre-rendered WebPs + lazy customiser). */
-export const OWNER_AVATAR_STYLES = [
-  'sketch',
-  'soft',
-  'bright',
-  'people',
-  'pixel',
-  'fun',
-  'adventure',
-] as const;
+export {
+  AVATAR_THEMES,
+  OWNER_AVATAR_DIR,
+  OWNER_AVATAR_STYLES,
+  OWNER_FACES_PER_STYLE,
+  avatarSvgSrc,
+  ownerAvatarFile,
+  personInitials,
+  resolveProfileAvatar,
+  type ResolvedPersonAvatar,
+};
+
 export const ownerAvatarStyleSchema = z.enum(OWNER_AVATAR_STYLES);
 export type OwnerAvatarStyle = z.infer<typeof ownerAvatarStyleSchema>;
 
-/** Background disc tokens behind a face or initials (defined in packages/ui/src/styles/tokens.css). */
-export const AVATAR_THEMES = [
-  'sky',
-  'mint',
-  'sun',
-  'blush',
-  'lilac',
-  'sand',
-  'navy',
-  'brand',
-] as const;
 export const avatarThemeSchema = z.enum(AVATAR_THEMES);
 export type AvatarTheme = z.infer<typeof avatarThemeSchema>;
 
@@ -44,9 +47,6 @@ export const OWNER_FACE_SEEDS = [
   'Isko',
   'Liwayway',
 ] as const;
-
-export const OWNER_AVATAR_DIR = '/avatars/owner';
-export const OWNER_FACES_PER_STYLE = 12;
 
 /** Guest & member pre-made face sets (Phase 8, separate from owner faces; D84 CC-BY-4.0 credited). */
 export const GUEST_AVATAR_DIR = '/avatars';
@@ -83,7 +83,7 @@ export function guestAvatarSetOf(src: string): GuestAvatarSet | null {
 
 /** Deterministic spread of guest faces for member/guest preview stacks. */
 export function guestPreviewAvatars(seed: string, count: number): string[] {
-  const start = hashSeed(seed) % DEFAULT_GUEST_AVATAR_COUNT;
+  const start = hashAvatarSeed(seed) % DEFAULT_GUEST_AVATAR_COUNT;
   const take = Math.max(0, Math.min(count, DEFAULT_GUEST_AVATAR_COUNT));
   return Array.from({ length: take }, (_, i) =>
     guestAvatarPath((start + i * 7) % DEFAULT_GUEST_AVATAR_COUNT),
@@ -180,11 +180,6 @@ export const STARTING_MAKE: AvatarMake = {
   extra: 0,
 };
 
-/** A saved drawing as an image data URL for <img src>. */
-export function avatarSvgSrc(svg: string): string {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-
 /**
  * Profile picture shape shared across owners and members. Keeps the legacy `preset` variant and
  * optional `text`/`theme` on `initials` so older saved profiles continue to work without migration.
@@ -218,86 +213,6 @@ export const profileAvatarSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 export type ProfileAvatar = z.infer<typeof profileAvatarSchema>;
-
-/** Normalised avatar value used by PersonAvatar and FacePicker (no legacy `preset` branch). */
-export type ResolvedPersonAvatar =
-  | {
-      readonly kind: 'face';
-      readonly style: OwnerAvatarStyle;
-      readonly face: number;
-      readonly theme: AvatarTheme;
-    }
-  | {
-      readonly kind: 'custom';
-      readonly recipe: FaceRecipe;
-      readonly svg: string;
-      readonly theme: AvatarTheme;
-    }
-  | {
-      readonly kind: 'initials';
-      readonly text?: string | undefined;
-      readonly theme: AvatarTheme;
-    }
-  | {
-      readonly kind: 'photo';
-      readonly file_id: string;
-    };
-
-function hashSeed(input: string): number {
-  let hash = 0;
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
-
-/**
- * Maps any saved profile avatar (including `null`, legacy `preset`, or `initials` without a theme)
- * into a normalised avatar for `PersonAvatar` and `FacePicker`.
- */
-export function resolveProfileAvatar(
-  avatar: ProfileAvatar | null | undefined,
-  defaultTheme: AvatarTheme = 'sky',
-): ResolvedPersonAvatar {
-  if (!avatar) {
-    return { kind: 'initials', theme: defaultTheme };
-  }
-  if (avatar.kind === 'preset') {
-    const face = (hashSeed(avatar.preset_id) % OWNER_FACES_PER_STYLE) + 1;
-    return { kind: 'face', style: 'sketch', face, theme: defaultTheme };
-  }
-  if (avatar.kind === 'initials') {
-    return {
-      kind: 'initials',
-      text: avatar.text,
-      theme: avatar.theme ?? defaultTheme,
-    };
-  }
-  return avatar;
-}
-
-/** The image URL of a face, custom SVG or legacy preset; null for initials and uploaded photos. */
-export function ownerAvatarFile(avatar: ProfileAvatar | ResolvedPersonAvatar): string | null {
-  if (avatar.kind === 'preset') {
-    const resolved = resolveProfileAvatar(avatar);
-    return ownerAvatarFile(resolved);
-  }
-  if (avatar.kind === 'face') {
-    return `${OWNER_AVATAR_DIR}/${avatar.style}-${String(avatar.face).padStart(2, '0')}.webp`;
-  }
-  if (avatar.kind === 'custom') {
-    return avatarSvgSrc(avatar.svg);
-  }
-  return null;
-}
-
-/** "JD" from "Juan Dela Cruz", "K" from "Kris". */
-export function personInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.charAt(0) ?? '';
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.charAt(0) ?? '') : '';
-  return `${first}${last}`.toUpperCase();
-}
 
 export const FACE_PARTS = {
   sketch: ['hair', 'brows', 'eyes', 'glasses', 'lips', 'nose', 'beard'],

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { LaptopIcon, MoonIcon, SunIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
@@ -9,12 +10,19 @@ import { THEME_MODES, useTheme, type ThemeMode } from '@/app/theme';
 import { DashboardSwitchGate } from '@/components/DashboardSwitchGate';
 import { PreviewRibbon } from '@/components/PreviewRibbon';
 import { env } from '@/env';
-import { KitBaseTab } from './kit-base-tab';
-import { KitDashboardTab } from './kit-dashboard-tab';
-import { KitFormsTab } from './kit-forms-tab';
-import { KitPatternsTab } from './kit-patterns-tab';
-import { KitTokensTab } from './kit-tokens-tab';
 import { DASHBOARD_ROUTE_CATALOG } from './route-catalog';
+
+const KitBaseTab = lazy(() => import('./kit-base-tab').then((m) => ({ default: m.KitBaseTab })));
+const KitDashboardTab = lazy(() =>
+  import('./kit-dashboard-tab').then((m) => ({ default: m.KitDashboardTab })),
+);
+const KitFormsTab = lazy(() => import('./kit-forms-tab').then((m) => ({ default: m.KitFormsTab })));
+const KitPatternsTab = lazy(() =>
+  import('./kit-patterns-tab').then((m) => ({ default: m.KitPatternsTab })),
+);
+const KitTokensTab = lazy(() =>
+  import('./kit-tokens-tab').then((m) => ({ default: m.KitTokensTab })),
+);
 
 type KitTabKey = 'base' | 'forms' | 'patterns' | 'dashboard' | 'tokens';
 
@@ -161,11 +169,13 @@ export function KitPage() {
           </nav>
         </header>
 
-        {activeTab === 'base' ? <KitBaseTab /> : null}
-        {activeTab === 'forms' ? <KitFormsTab /> : null}
-        {activeTab === 'patterns' ? <KitPatternsTab /> : null}
-        {activeTab === 'dashboard' ? <KitDashboardTab /> : null}
-        {activeTab === 'tokens' ? <KitTokensTab /> : null}
+        <Suspense fallback={null}>
+          {activeTab === 'base' ? <KitBaseTab /> : null}
+          {activeTab === 'forms' ? <KitFormsTab /> : null}
+          {activeTab === 'patterns' ? <KitPatternsTab /> : null}
+          {activeTab === 'dashboard' ? <KitDashboardTab /> : null}
+          {activeTab === 'tokens' ? <KitTokensTab /> : null}
+        </Suspense>
       </main>
     </div>
   );

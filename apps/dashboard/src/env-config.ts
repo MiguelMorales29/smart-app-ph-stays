@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/mini';
 
 export const APP_ENV_VALUES = ['development', 'preview', 'production'] as const;
 export const appEnvSchema = z.enum(APP_ENV_VALUES);
@@ -13,11 +13,13 @@ export const dashboardEnvSchema = z
     APP_ENV: appEnvSchema,
     DATA_SOURCE: dataSourceSchema,
     STOREFRONT_ORIGIN: z.string(),
-    API_BASE_URL: z.string().optional(),
+    API_BASE_URL: z.optional(z.string()),
   })
-  .refine((value) => !(value.APP_ENV === 'production' && value.DATA_SOURCE === 'memory'), {
-    message: 'APP_ENV=production cannot use DATA_SOURCE=memory. Set DATA_SOURCE=http.',
-  });
+  .check(
+    z.refine((value) => !(value.APP_ENV === 'production' && value.DATA_SOURCE === 'memory'), {
+      message: 'APP_ENV=production cannot use DATA_SOURCE=memory. Set DATA_SOURCE=http.',
+    }),
+  );
 
 export type DashboardEnv = z.infer<typeof dashboardEnvSchema>;
 
