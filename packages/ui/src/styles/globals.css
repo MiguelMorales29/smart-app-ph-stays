@@ -376,11 +376,9 @@ body:has([data-slot='dev-switch-panel']):not(:has([data-dev-panel-menu])) {
   0%,
   100% {
     transform: translateY(0);
-    opacity: 0.9;
   }
   50% {
     transform: translateY(4px);
-    opacity: 1;
   }
 }
 
