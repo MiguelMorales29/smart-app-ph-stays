@@ -5,6 +5,7 @@ export * from './errors/index.js';
 export * from './forms/index.js';
 export * from './ids/index.js';
 export * from './inputs/index.js';
+export * from './install/index.js';
 export * from './lifecycles/index.js';
 export * from './lists/index.js';
 export * from './money/index.js';
