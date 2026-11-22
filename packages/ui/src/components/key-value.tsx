@@ -324,7 +324,6 @@ function KeyValueList(props: KeyValueListProps) {
     props: mergeProps<'div'>(
       {
         role: 'list',
-        'aria-orientation': orientation,
         className: cn(
           'flex',
           orientation === 'vertical' ? 'flex-col gap-2' : 'flex-row gap-2',

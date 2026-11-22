@@ -19,7 +19,7 @@ import {
   focusCascaderHome,
   warnCascaderOnce,
 } from '@smartapp/ui/components/reui/cascader/cascader-lib';
-import { Combobox as ComboboxPrimitive } from '@base-ui/react';
+import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 
 import { cn } from 'cn';
 import { ScrollArea } from '@smartapp/ui/components/scroll-area';

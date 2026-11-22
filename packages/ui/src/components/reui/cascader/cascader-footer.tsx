@@ -11,7 +11,7 @@ import {
   isCascaderRtl,
 } from '@smartapp/ui/components/reui/cascader/cascader-lib';
 import type { CascaderActionItem } from '@smartapp/ui/components/reui/cascader/cascader-types';
-import { Popover as PopoverPrimitive } from '@base-ui/react';
+import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 import { useDirection } from '@base-ui/react/direction-provider';
 
 import { cn } from 'cn';

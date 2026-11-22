@@ -247,7 +247,7 @@ export function KitBaseUi3Section() {
 
       <DualSurfaceShowcase
         title="HoverCard & RelativeTimeCard"
-        source="shadcn hover-card (from UI-6) · @diceui/relative-time-card"
+        source="shadcn hover-card · @diceui/relative-time-card"
         useFor="Compact timestamps ('2 hours ago') with exact Manila and UTC times on hover or focus."
         dont="Hide essential booking dates inside a hover-only card on phones."
         render={() => (
@@ -306,7 +306,7 @@ export function KitBaseUi3Section() {
 
       <DualSurfaceShowcase
         title="Guest & member pre-made faces (Toon Head · Big Smile)"
-        source="Food app port · @dicebear/toon-head & @dicebear/big-smile 9.4.3 (CC-BY-4.0, D84)"
+        source="DiceBear toon-head & big-smile 9.4.3 (CC BY 4.0)"
         useFor="Pre-made static WebP guest and member faces (Phase 8); kept separate from owner FacePicker."
         dont="Omit the CC-BY-4.0 artist credit line wherever these faces are shown or picked."
         render={() => (

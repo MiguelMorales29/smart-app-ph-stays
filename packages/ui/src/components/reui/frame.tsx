@@ -21,7 +21,7 @@ const frameVariants = cva(
     '[--frame-panel-px:calc(var(--frame-panel-px-base)+var(--frame-panel-px-adjust))] [--frame-panel-py:calc(var(--frame-panel-py-base)+var(--frame-panel-py-adjust))] [--frame-panel-header-px:calc(var(--frame-panel-header-px-base)+var(--frame-panel-header-px-adjust))] [--frame-panel-header-py:calc(var(--frame-panel-header-py-base)+var(--frame-panel-header-py-adjust))] [--frame-panel-footer-px:calc(var(--frame-panel-footer-px-base)+var(--frame-panel-footer-px-adjust))] [--frame-panel-footer-py:calc(var(--frame-panel-footer-py-base)+var(--frame-panel-footer-py-adjust))]',
     // Luma alone re-times the frame: wider gap and padding, roomier bars.
     '',
-    '[--frame-panel-bg:var(--color-card)] [--frame-panel-border-color:var(--color-border)] [--frame-border-color:var(--color-border)]',
+    '[--frame-panel-bg:var(--card)] [--frame-panel-border-color:var(--border)] [--frame-border-color:var(--border)]',
     // Concentric: the panel nests inside the frame's corner rather than copying
     // it. It is inset by the 1px border plus --frame-px, so subtracting exactly
     // that keeps the two arcs parallel. `ghost` drops the border term (no
@@ -33,7 +33,7 @@ const frameVariants = cva(
       variant: {
         default: 'border border-[var(--frame-border-color)] bg-clip-padding',
         inverse:
-          '[--frame-panel-bg:color-mix(in_srgb,var(--color-muted)_40%,transparent)] border border-[var(--frame-border-color)] bg-background bg-clip-padding',
+          '[--frame-panel-bg:color-mix(in_srgb,var(--muted)_40%,transparent)] border border-[var(--frame-border-color)] bg-background bg-clip-padding',
         ghost: '[--frame-panel-radius:calc(var(--frame-radius)-var(--frame-px))]',
       },
       // Bars read as chrome, not a second content block: py runs 0.5/1.5/2/2.5

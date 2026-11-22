@@ -299,7 +299,7 @@ function Editable(props: EditableProps) {
     ref: composedRef,
     props: mergeProps<'div'>(
       {
-        id,
+        id: rootId,
         className: cn('flex min-w-0 flex-col gap-1.5', className),
       },
       rootProps,
@@ -479,7 +479,7 @@ function EditablePreview(props: EditablePreviewProps) {
           role: 'button',
           tabIndex: context.disabled || context.readOnly ? undefined : 0,
           className: cn(
-            'cursor-text truncate rounded-md border border-transparent py-1 text-sm field-touch focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden data-empty:text-muted-foreground data-readonly:cursor-default data-disabled:cursor-not-allowed data-disabled:opacity-50',
+            'cursor-text truncate rounded-md border border-transparent py-1 text-sm pointer-coarse:min-h-11 pointer-coarse:text-base focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden data-empty:text-muted-foreground data-readonly:cursor-default data-disabled:cursor-not-allowed data-disabled:opacity-50',
             className,
           ),
           children: value || context.placeholder,
@@ -646,7 +646,7 @@ function EditableInput(props: EditableInputProps) {
           placeholder: context.placeholder,
           value: value,
           className: cn(
-            'flex rounded-lg border border-input bg-transparent py-1 text-sm field-touch transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
+            'flex rounded-lg border border-input bg-transparent py-1 text-sm pointer-coarse:min-h-11 pointer-coarse:text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
             context.autosize ? 'w-auto' : 'w-full',
             className,
           ),

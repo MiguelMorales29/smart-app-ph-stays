@@ -16,7 +16,7 @@ import type {
   CascaderLoadState,
   CascaderNode,
 } from '@smartapp/ui/components/reui/cascader/cascader-types';
-import { Combobox as ComboboxPrimitive } from '@base-ui/react';
+import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 

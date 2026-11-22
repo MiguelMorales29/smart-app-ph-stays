@@ -406,7 +406,7 @@ function FacetedInput({ variant = 'default', className, ref, ...props }: Faceted
           ref={composedRef}
           data-slot="faceted-input"
           className={cn(
-            'h-full w-full bg-transparent text-sm field-touch outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+            'h-full w-full bg-transparent text-sm pointer-coarse:min-h-11 pointer-coarse:text-base outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
             className,
           )}
           {...props}

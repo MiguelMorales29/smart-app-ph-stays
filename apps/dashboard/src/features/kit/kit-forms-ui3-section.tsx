@@ -183,7 +183,10 @@ function FiltersAndCascaderDemo() {
           value={barangay ?? ''}
           onValueChange={(next) => setBarangay(next)}
         >
-          <CascaderTrigger className="w-full justify-between">
+          <CascaderTrigger
+            aria-label="Property location"
+            className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 text-sm sm:min-h-9"
+          >
             <CascaderValue placeholder="Pick province, city and barangay" />
           </CascaderTrigger>
           <CascaderContent>
@@ -383,7 +386,7 @@ export function KitFormsUi3Section() {
     <div className="space-y-6">
       <DualSurfaceShowcase
         title="Filters & Cascader"
-        source="@reui/filters · @reui/cascader (installed early from UI-6)"
+        source="@reui/filters · @reui/cascader"
         useFor="Multi-criteria bookings & guests filters (Phase 8) and province → city → barangay location pickers (Phase 6)."
         dont="Use Cascader for a flat single-level list (use NativeSelect or Select)."
         render={() => <FiltersAndCascaderDemo />}
@@ -391,7 +394,7 @@ export function KitFormsUi3Section() {
 
       <DualSurfaceShowcase
         title="Faceted & Command"
-        source="@diceui/faceted · shadcn command (installed early from UI-6, cmdk 1.1.1)"
+        source="@diceui/faceted · shadcn command"
         useFor="Searchable multi-select filter popovers and quick keyboard command palettes."
         dont="Drop touch search inputs below 16 px or omit empty-state copy."
         render={() => <CommandAndFacetedDemo />}
@@ -399,7 +402,7 @@ export function KitFormsUi3Section() {
 
       <DualSurfaceShowcase
         title="KeyValue, Editable, TagsInput & Listbox"
-        source="@diceui/key-value · @diceui/editable · @diceui/tags-input · @diceui/listbox"
+        source="@diceui/key-value · editable · tags-input · listbox"
         useFor="Optional fee rows, inline unit rename, house rules/languages tags, and keyboard-accessible option lists."
         dont="Use TagsInput for the fixed amenity catalogue (use AmenityChips)."
         render={() => <FeesAndInlineInputsDemo />}
@@ -407,7 +410,7 @@ export function KitFormsUi3Section() {
 
       <DualSurfaceShowcase
         title="SelectionToolbar"
-        source="@diceui/selection-toolbar · @floating-ui/react-dom 2.1.9"
+        source="@diceui/selection-toolbar"
         useFor="Quick quote/copy actions when highlighting text in guest notes or messages."
         dont="Block native copy/paste or cover essential buttons when closed."
         render={() => <SelectionToolbarDemo />}

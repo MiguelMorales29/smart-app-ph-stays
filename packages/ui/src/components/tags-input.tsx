@@ -51,7 +51,7 @@ function TagsInputInput({
     <TagsInputPrimitive.Input
       data-slot="tags-input-input"
       className={cn(
-        'flex-1 bg-transparent field-touch outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+        'flex-1 bg-transparent text-sm pointer-coarse:min-h-11 pointer-coarse:text-base outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}

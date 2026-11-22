@@ -79,6 +79,23 @@ export function createDashboardViteConfig(
         '@': resolve(import.meta.dirname, './src'),
       },
     },
+    build: {
+      rolldownOptions: {
+        output: {
+          // Group always-initial shell framework code (React, TanStack Router/Query, Zod, and the
+          // Base UI primitives already used in AppFrame) into one chunk so Rolldown does not
+          // fragment first-load preloads into dozens of tiny files.
+          codeSplitting: {
+            groups: [
+              {
+                name: 'vendor-shell',
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|zod|@tanstack[\\/](react-router|router-core|react-query|query-core)|@base-ui[\\/]utils|@floating-ui|@base-ui[\\/]react[\\/](esm[\\/])?(dialog|menu|button|switch|separator|merge-props|use-render|floating-ui-react|utils))[\\/]/,
+              },
+            ],
+          },
+        },
+      },
+    },
     server: {
       port: 5174,
       strictPort: true,
