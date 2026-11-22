@@ -79,7 +79,7 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [x] UI-1 Food app components (forms, feedback, navigation) and plan updates
 - [x] UI-2 Photos, colours and the picture maker (plus screen retrofits)
 - [x] UI-3 Data and lists
-- [ ] UI-4 Dates, calendars and time
+- [x] UI-4 Dates, calendars and time
 - [ ] UI-5 Conversation, charts and stats
 - [ ] UI-6 Missing primitives and variants
 
