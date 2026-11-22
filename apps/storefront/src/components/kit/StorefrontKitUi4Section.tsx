@@ -33,7 +33,7 @@ export function StorefrontKitUi4Section({ propertyName }: { readonly propertyNam
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
             Stay range with nightly ₱ prices (CalendarPriceRange · Asia/Manila)
           </p>
@@ -48,7 +48,7 @@ export function StorefrontKitUi4Section({ propertyName }: { readonly propertyNam
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
             Check-out-only taken nights (CalendarCheckoutOnly · D75)
           </p>
@@ -63,14 +63,14 @@ export function StorefrontKitUi4Section({ propertyName }: { readonly propertyNam
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
             Quick week availability strip (WeekStripCalendar)
           </p>
           <WeekStripCalendar todayDate={GOLDEN_TODAY} dayStates={WEEK_STATES} />
         </div>
 
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
             Viewing &amp; arrival time slots (BookingSlotCalendar)
           </p>

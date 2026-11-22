@@ -476,6 +476,7 @@ function EventCalendarMonthWeek({
           real interactive bars. */}
       {(visibleBars.length > 0 || (dragGhost && ghostPos && ghostIsBar)) && (
         <div
+          role="gridcell"
           data-slot="event-calendar-month-bar-overlay"
           className={cn(
             'pointer-events-none absolute inset-x-0 top-0 z-10 grid pt-1.5',

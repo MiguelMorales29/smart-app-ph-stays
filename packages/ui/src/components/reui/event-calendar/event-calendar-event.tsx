@@ -213,7 +213,7 @@ function EventCalendarEvent<TData = unknown>({
       {!occurrence.allDay &&
         segment.isStart &&
         (view === 'month' ? (
-          <span className="text-muted-foreground shrink-0">
+          <span className="text-foreground shrink-0 font-normal">
             {format(
               toZoned(occurrence.start, settings.timeZone),
               settings.i18n.formats.eventTime,
@@ -223,7 +223,7 @@ function EventCalendarEvent<TData = unknown>({
         ) : (
           <span
             className={cn(
-              'text-muted-foreground hidden @[8rem]:inline',
+              'text-foreground hidden font-normal @[8rem]:inline',
               stackedBlock ? EVENT_CALENDAR_FADE_TRUNCATE : 'truncate',
             )}
           >

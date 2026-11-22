@@ -152,35 +152,43 @@ export function CalendarCheckoutOnly({
             return takenSet.has(iso) && !isCheckoutOnlyDay(date);
           },
         }}
-        className="w-full rounded-xl border border-border bg-card p-3 [--cell-size:--spacing(11)]"
+        className="w-full rounded-xl border border-border bg-card p-2 [--cell-size:--spacing(9)] sm:p-3 sm:[--cell-size:--spacing(11)]"
         classNames={{
           root: 'w-full',
           month: 'flex w-full flex-col gap-3',
         }}
         components={{
-          DayButton: ({ children, modifiers, day, ...props }) => {
+          DayButton: ({ children, modifiers, day, className: dayClassName, ...props }) => {
             const isOutOnly = Boolean(modifiers['checkoutOnly']);
             const isTaken = Boolean(modifiers['taken']);
+            const iso = toManilaCalendarDate(day.date);
+            const dayNum = String(Number(iso.slice(8, 10)));
+            const fullDate = formatManilaCalendarDate(iso, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            });
             return (
               <CalendarDayButton
                 day={day}
                 modifiers={modifiers}
-                aria-label={
-                  isOutOnly
-                    ? `${formatManilaCalendarDate(toManilaCalendarDate(day.date), { month: 'short', day: 'numeric' })} — check-out only`
-                    : props['aria-label']
-                }
+                {...props}
+                aria-label={isOutOnly ? `${dayNum} Out, ${fullDate}, check-out only` : fullDate}
                 className={cn(
+                  'gap-0.5 px-0.5 [&>span]:opacity-100',
                   isOutOnly &&
                     !modifiers.range_end &&
                     'border border-dashed border-warning bg-warning-tint/60 text-foreground',
                   isTaken && 'line-through',
+                  dayClassName,
                 )}
-                {...props}
               >
-                <span className="text-sm leading-none font-medium tabular-nums">{children}</span>
+                <span className="text-xs leading-none font-medium tabular-nums sm:text-sm">
+                  {children}
+                </span>
                 {isOutOnly ? (
-                  <span className="text-[9px] leading-none font-medium opacity-90">Out</span>
+                  <span className="text-[9px] leading-none font-medium text-foreground">Out</span>
                 ) : null}
               </CalendarDayButton>
             );

@@ -634,23 +634,30 @@ function DateSelectorPeriodTabs({
               className="size-8.5"
               onClick={() => onMonthChange(new Date())}
               title={i18n.today}
+              aria-label={i18n.today}
             >
-              {monthPosition === 'future' ? <CornerUpLeftIcon /> : <CornerUpRightIcon />}
+              {monthPosition === 'future' ? (
+                <CornerUpLeftIcon aria-hidden="true" />
+              ) : (
+                <CornerUpRightIcon aria-hidden="true" />
+              )}
             </Button>
           )}
           <Button
             variant="ghost"
             className="size-8.5"
+            aria-label="Previous month"
             onClick={() => onMonthChange(subMonths(calendarMonth, 1))}
           >
-            <ChevronLeftIcon className="size-4" />
+            <ChevronLeftIcon className="size-4" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             className="size-8.5"
+            aria-label="Next month"
             onClick={() => onMonthChange(addMonths(calendarMonth, 1))}
           >
-            <ChevronRightIcon className="size-4" />
+            <ChevronRightIcon className="size-4" aria-hidden="true" />
           </Button>
         </div>
       )}

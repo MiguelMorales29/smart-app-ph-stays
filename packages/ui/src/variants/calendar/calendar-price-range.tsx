@@ -16,6 +16,7 @@ import { Calendar, CalendarDayButton } from '@smartapp/ui/components/calendar';
 import { cn } from 'cn';
 
 import {
+  formatManilaCalendarDate,
   formatManilaStayRange,
   manilaCalendarDateToDate,
   toManilaCalendarDate,
@@ -104,33 +105,53 @@ export function CalendarPriceRange({
         defaultMonth={range?.from ?? todayObj}
         disabled={{ before: todayObj }}
         showOutsideDays={false}
-        className="w-full rounded-xl border border-border bg-card p-3 [--cell-size:--spacing(11)] sm:[--cell-size:--spacing(12)]"
+        className="w-full rounded-xl border border-border bg-card p-2 [--cell-size:--spacing(9)] sm:p-3 sm:[--cell-size:--spacing(11)]"
         classNames={{
           root: 'w-full',
           month: 'flex w-full flex-col gap-3',
         }}
         components={{
-          DayButton: ({ children, modifiers, day, ...props }) => {
+          DayButton: ({ children, modifiers, day, className: dayClassName, ...props }) => {
             const iso = toManilaCalendarDate(day.date);
             const rate = modifiers.outside ? null : getNightlyCentavos(iso);
             const isLow = rate !== null && lowRateCentavos !== undefined && rate <= lowRateCentavos;
             const isEndpoint = Boolean(modifiers.range_start || modifiers.range_end);
+            const isMiddle = Boolean(modifiers.range_middle);
+            const showPrice = rate !== null && !modifiers.disabled;
+            const priceText = showPrice ? compactPesos(rate) : null;
+            const dayNum = String(Number(iso.slice(8, 10)));
+            const fullDate = formatManilaCalendarDate(iso, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            });
 
             return (
-              <CalendarDayButton day={day} modifiers={modifiers} {...props}>
-                <span className="text-sm leading-none font-medium tabular-nums">{children}</span>
-                {rate !== null && !modifiers.disabled ? (
+              <CalendarDayButton
+                day={day}
+                modifiers={modifiers}
+                {...props}
+                aria-label={priceText ? `${dayNum} ${priceText}, ${fullDate}` : fullDate}
+                className={cn('gap-0.5 px-0.5 [&>span]:opacity-100', dayClassName)}
+              >
+                <span className="text-xs leading-none font-medium tabular-nums sm:text-sm">
+                  {children}
+                </span>
+                {priceText !== null ? (
                   <span
                     className={cn(
-                      'text-[10px] leading-none font-normal tabular-nums',
+                      'text-[9px] leading-none font-normal tabular-nums sm:text-[10px]',
                       isEndpoint
-                        ? 'text-primary-foreground/90 opacity-100'
-                        : isLow
-                          ? 'font-medium text-success opacity-100'
-                          : 'text-muted-foreground opacity-100',
+                        ? 'text-primary-foreground'
+                        : isMiddle
+                          ? 'text-foreground'
+                          : isLow
+                            ? 'font-medium text-success'
+                            : 'text-foreground/80',
                     )}
                   >
-                    {compactPesos(rate)}
+                    {priceText}
                   </span>
                 ) : null}
               </CalendarDayButton>
