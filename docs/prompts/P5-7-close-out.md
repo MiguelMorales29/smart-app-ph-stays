@@ -29,10 +29,11 @@ Phase 5 is covered by tests, inside its budgets, and documented, ready for Lex's
    - **Check-out on a taken night:** a stay that ends on the first night of an existing booking can be picked (D75).
    - **In-app browser:** with a Facebook in-app user agent, Install shows "Open in Safari or Chrome" (D76).
    - **Small fix from the P5-0b review:** on phone unit rows, the status on the 88 px thumbnail becomes an icon-only dot with the word for screen readers (the word "Listed" covered most of the photo).
-4. **Budgets:**
+4. **Budgets & lazy toast:**
    - Extend `tooling/check-budget.ts` to the storefront: the property page's first load at most 170 KB gzipped of JavaScript.
    - No carousel code when the page has fewer than 2 banners.
    - The editor stays out of the dashboard's first load.
+   - Load the toast layer lazily on idle or first toast, like the food app's `AppToaster` (speed only, no behaviour change).
 5. **Full UI scan** on main: `gh workflow run full-ui-scan.yml --ref main -f paths=/units,/settings,/editor` for the dashboard, plus the storefront paths for 2 brands.
 6. **Docs:**
    - PROGRESS: tick P5-7 and Phase 5. Move the property switcher, saved replies and profile photo to Phase 8's list (D70).
