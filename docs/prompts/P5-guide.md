@@ -13,17 +13,18 @@ Reserving dates, the booking form and payment stay in Phase 6. Buttons that lead
 
 ## The prompts
 
-| #     | Prompt                                                              | Model (Antigravity)    | Size | Depends on |
-| ----- | ------------------------------------------------------------------- | ---------------------- | ---- | ---------- |
-| P5-0  | Dock with +, Edit unit rows, badges, Preview switch, spacing        | Gemini 4 Argon, Medium | M    | —          |
-| P5-0b | Units page, unit cards and dock polish (round 2, D73)               | Gemini 4 Argon, Medium | M    | P5-0       |
-| P5-1  | Data contract for the pages and the editor                          | Gemini 4 Argon, Medium | M    | —          |
-| P5-2  | Property page                                                       | Gemini 4 Argon, Medium | L    | P5-1       |
-| P5-3  | Unit page                                                           | Gemini 4 Argon, Medium | M    | P5-2       |
-| P5-4  | Install, splash, share, offline, privacy                            | Gemini Flash, High     | M    | P5-2       |
-| P5-5  | Editor engine (store, preview, autosave, Undo, publish, phone dock) | Gemini 4 Argon, High   | L    | P5-2       |
-| P5-6  | Editor parts (the 14 panels)                                        | Gemini 4 Argon, Medium | L    | P5-5       |
-| P5-7  | Tests and close-out                                                 | Gemini Flash, High     | M    | all        |
+| #     | Prompt                                                              | Model (Antigravity)            | Size | Depends on |
+| ----- | ------------------------------------------------------------------- | ------------------------------ | ---- | ---------- |
+| P5-0  | Dock with +, Edit unit rows, badges, Preview switch, spacing        | Gemini 4 Argon, Medium         | M    | —          |
+| P5-0b | Units page, unit cards and dock polish (round 2, D73)               | Gemini 4 Argon, Medium         | M    | P5-0       |
+| P5-1  | Data contract for the pages and the editor                          | Gemini 4 Argon, Medium         | M    | —          |
+| P5-2  | Property page                                                       | Gemini 4 Argon, Medium         | L    | P5-1       |
+| P5-2b | Property page structure, round 2 (D79 to D82)                       | Gemini 4 Argon or Neon, Medium | M    | P5-2       |
+| P5-3  | Unit page                                                           | Gemini 4 Argon, Medium         | M    | P5-2       |
+| P5-4  | Install, splash, share, offline, privacy                            | Gemini Flash, High             | M    | P5-2       |
+| P5-5  | Editor engine (store, preview, autosave, Undo, publish, phone dock) | Gemini 4 Argon, High           | L    | P5-2       |
+| P5-6  | Editor parts (the 14 panels)                                        | Gemini 4 Argon, Medium         | L    | P5-5       |
+| P5-7  | Tests and close-out                                                 | Gemini Flash, High             | M    | all        |
 
 P5-0 and P5-1 can run in parallel (different files). Everything else in order.
 

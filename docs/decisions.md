@@ -116,6 +116,11 @@ Approved from the Phase 4 plan (Claude Doc, "Phase 4 plan" tab).
 - D78 (Lex, 2026-11-22) **Component library expansion:** install the food app's components and a wide catalog from shadcn, ReUI (free, MIT) and Dice UI (MIT), Base UI builds only, into `packages/ui` (docs/component-catalog.md; prompts UI-1 to UI-6 after P5-2). coss ui is excluded because it is AGPL-3.0; ReUI Pro is excluded because it is paid.
 - O15 (open, Lex) Allow the `motion` package only in lazily loaded pieces (owner landing page, celebrations, charts), or keep CSS-only (D62)? Recommended: allow it only in lazy pieces, enforced by the bundle budget.
 
+- D79 (Lex, 2026-11-22) **Property page navigation:** section tabs (Units, About, Rules, Location, FAQ) that stick under the top bar and follow the scroll, instead of separate pages; phone top bar keeps at most Install, Your booking and the menu; desktop shows the section links in the middle like the food app's top bar. The storefront Preview switch moves into the menu.
+- D80 **Desktop property page:** two columns with a sticky booking card (price with fees, Check dates, Message, reviews link, trust line).
+- D81 **Units section:** bed spaces grouped into one card per room; Stays and Monthly rentals as two tabs; cards show the photo count, key facts, price with fees and one highlight.
+- D82 **iPhone install guide:** a 4-step guide drawn like the guest's own Safari (iOS 26: ⋯ → Share → Add to Home Screen → keep Open as Web App on → Add; older iPhones and Chrome on iPhone have their own steps), with an arrow at the real ⋯ button; the nudge appears only on a second visit or after a confirmed booking.
+
 ## Open (not phase 1)
 
 - O1 Where the owner landing page lives. The Feature blueprint says the bare domain `webserbisyo.com`, which may already serve the webserbisyo site. Decide in phase 9.
