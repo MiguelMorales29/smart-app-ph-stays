@@ -48,6 +48,7 @@ import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
+import { PhotoCropSheet } from '@smartapp/ui/compositions/photo-crop-sheet';
 import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
 import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
 import { RadioCards } from '@smartapp/ui/compositions/radio-cards';
@@ -980,15 +981,19 @@ function PhotosStep({
       {detail.isPending ? (
         <Skeleton className="aspect-[4/3] w-1/2" />
       ) : (
-        <PhotoManager
-          tiles={pipeline.tiles}
-          max={20}
-          onAdd={pipeline.add}
-          onReorder={pipeline.reorder}
-          onAltChange={pipeline.setAlt}
-          onRemove={pipeline.remove}
-          onRetry={pipeline.retry}
-        />
+        <>
+          <PhotoManager
+            tiles={pipeline.tiles}
+            max={20}
+            onAdd={pipeline.add}
+            onAdjust={pipeline.adjust}
+            onReorder={pipeline.reorder}
+            onAltChange={pipeline.setAlt}
+            onRemove={pipeline.remove}
+            onRetry={pipeline.retry}
+          />
+          <PhotoCropSheet {...pipeline.cropSheetProps} />
+        </>
       )}
     </StepFrame>
   );

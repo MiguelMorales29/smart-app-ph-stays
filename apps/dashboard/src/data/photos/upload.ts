@@ -47,7 +47,7 @@ export interface UploadedPhoto {
 export interface UploadPhotoInput {
   readonly file: Blob;
   readonly filename: string;
-  readonly purpose: 'unit_photo' | 'property_photo' | 'payment_qr' | 'logo';
+  readonly purpose: 'unit_photo' | 'property_photo' | 'payment_qr' | 'logo' | 'profile_photo';
   readonly width?: number | undefined;
   readonly height?: number | undefined;
   readonly onProgress?: ((percent: number) => void) | undefined;

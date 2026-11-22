@@ -13,7 +13,6 @@ import {
   WifiIcon,
   WifiOffIcon,
 } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
@@ -29,16 +28,9 @@ import {
 import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
 import { openDevPanel } from '@smartapp/ui/lib/dev-panel';
 import { useDashboard } from '@/app/dashboard-context';
+import { DashboardOwnerAvatar } from '@/app/owner-avatar';
 import { useSignOut } from '@/app/auth/owner-session';
 import { THEME_MODES, useTheme, type ThemeMode } from '@/app/theme';
-
-function initialsFromLabel(label: string): string {
-  const cleaned = label.replace(/\([^)]*\)/g, '').trim();
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? 'S';
-  const second = parts[1]?.[0] ?? '';
-  return `${first}${second}`.toUpperCase();
-}
 
 function isThemeMode(value: string): value is ThemeMode {
   return value === 'light' || value === 'dark' || value === 'system';
@@ -78,13 +70,7 @@ export function AccountMenu({
         ? 'Property owner'
         : 'Signed out';
 
-  const avatar = (
-    <Avatar className="size-8 shrink-0">
-      <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
-        {initialsFromLabel(displayName)}
-      </AvatarFallback>
-    </Avatar>
-  );
+  const avatar = <DashboardOwnerAvatar name={displayName} className="size-8 shrink-0 text-xs" />;
 
   return (
     <DropdownMenu>

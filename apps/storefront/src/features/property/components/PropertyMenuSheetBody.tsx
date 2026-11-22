@@ -1,6 +1,7 @@
 'use client';
 
 import { Separator } from '@smartapp/ui/components/separator';
+import { copyText } from '@smartapp/ui/lib/copy-text';
 import {
   Sheet,
   SheetContent,
@@ -83,16 +84,8 @@ export function PropertyMenuSheetBody({
       }
     }
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(url);
-        setShareState('copied');
-        return;
-      } catch {
-        // Fall through to failure notice.
-      }
-    }
-    setShareState('failed');
+    const copied = await copyText(url);
+    setShareState(copied ? 'copied' : 'failed');
   }
 
   return (

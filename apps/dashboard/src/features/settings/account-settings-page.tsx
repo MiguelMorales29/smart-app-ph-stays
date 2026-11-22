@@ -1,29 +1,40 @@
 import { useState } from 'react';
-import { KeyRoundIcon, LogOutIcon, Trash2Icon } from 'lucide-react';
-import { changePasswordFormSchema, type OwnerAccountView } from '@smartapp/core';
+import { KeyRoundIcon, LogOutIcon, MailIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import {
+  changePasswordFormSchema,
+  type OwnerAccountView,
+  type ProfileAvatar,
+} from '@smartapp/core';
+import { compressImage } from '@smartapp/data/compress-image';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
+import type { CropperAreaData } from '@smartapp/ui/components/cropper';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { RowButton, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
-import {
-  AvatarSeedPicker,
-  OwnerAvatar,
-  type OwnerAvatarValue,
-} from '@smartapp/ui/compositions/owner-avatar';
+import { InfoList } from '@smartapp/ui/compositions/info-list';
+import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { PasswordInput } from '@smartapp/ui/compositions/password-input';
+import { YourPictureSheet } from '@smartapp/ui/compositions/picture-picker-sheet';
 import { SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import { notify } from '@smartapp/ui/lib/notify';
+import {
+  DashboardOwnerAvatar,
+  rememberProfilePhoto,
+  resolveProfilePhotoSrc,
+} from '@/app/owner-avatar';
 import { THEME_MODES, useTheme, type ThemeMode } from '@/app/theme';
 import { useRequestPasswordCodeMutation } from '@/data/auth/writes';
+import { useUploadPhotoMutation } from '@/data/photos/upload';
 import { useProfileQuery } from '@/data/settings/reads';
 import {
   useChangePasswordMutation,
   useRequestAccountDeletionMutation,
+  useSetProfilePictureMutation,
   useSignOutEverywhereMutation,
   useUpdateProfileMutation,
 } from '@/data/settings/writes';
@@ -32,6 +43,7 @@ import { SettingsPane } from './settings-nav';
 import { SettingsError, SettingsSkeleton, useOfflineSave, useSaveState } from './settings-shared';
 
 const THEME_LABEL: Record<ThemeMode, string> = { light: 'Light', dark: 'Dark', system: 'System' };
+const PROFILE_SIDE = 256;
 
 const longDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-PH', {
@@ -60,18 +72,18 @@ export function AccountSettingsPage() {
 
 function AccountForm({ view }: { readonly view: OwnerAccountView }) {
   const update = useUpdateProfileMutation();
+  const setPicture = useSetProfilePictureMutation();
+  const uploadPhoto = useUploadPhotoMutation();
   const [state, setState] = useSaveState();
   const { offline, message } = useOfflineSave();
   const { theme, setTheme } = useTheme();
-  const [saved, setSaved] = useState({
-    name: view.profile.full_name,
-    avatar: view.profile.avatar,
-  });
-  const [name, setName] = useState(saved.name);
-  const [avatar, setAvatar] = useState<OwnerAvatarValue | null>(saved.avatar);
+  const [savedName, setSavedName] = useState(view.profile.full_name);
+  const [name, setName] = useState(savedName);
+  const [avatar, setAvatar] = useState<ProfileAvatar | null>(view.profile.avatar);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(view.profile_photo_url);
   const [nameError, setNameError] = useState<string | null>(null);
   const [sheet, setSheet] = useState<'picture' | 'password' | 'signout' | 'delete' | null>(null);
-  const dirty = name !== saved.name || JSON.stringify(avatar) !== JSON.stringify(saved.avatar);
+  const dirty = name !== savedName;
   const email = view.account.contact_email;
   const deletion = view.deletion_request;
 
@@ -84,13 +96,13 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
     setState('busy');
     try {
       await update.mutateAsync({
-        expectedUpdatedAt: view.profile.updated_at,
+        expectedUpdatedAt: null,
         fullName: name.trim(),
         avatar,
         notifyEmail: view.account.notify_email,
         notify: view.member.notify,
       });
-      setSaved({ name: name.trim(), avatar });
+      setSavedName(name.trim());
       setState('done');
     } catch (caught) {
       setState('idle');
@@ -98,10 +110,56 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
     }
   }
 
+  async function handleUploadProfilePhoto(file: File, area: CropperAreaData) {
+    const shrunk = await compressImage(file, {
+      crop: area,
+      maxSide: PROFILE_SIDE,
+      quality: 0.85,
+    });
+    const uploaded = await uploadPhoto.mutateAsync({
+      file: shrunk.blob,
+      filename: 'profile.webp',
+      purpose: 'profile_photo',
+      width: shrunk.width || PROFILE_SIDE,
+      height: shrunk.height || PROFILE_SIDE,
+    });
+    const previewUrl = URL.createObjectURL(shrunk.blob);
+    rememberProfilePhoto(uploaded.fileId, previewUrl);
+    return { fileId: uploaded.fileId, previewUrl };
+  }
+
+  async function handleSavePicture(nextAvatar: ProfileAvatar, nextPreviewUrl: string | null) {
+    const photoFileId = nextAvatar.kind === 'photo' ? nextAvatar.file_id : null;
+    const saved = await setPicture.mutateAsync({
+      expectedUpdatedAt: null,
+      avatar: nextAvatar,
+      photoFileId,
+    });
+    setAvatar(saved.profile.avatar);
+    setPhotoUrl(nextPreviewUrl ?? saved.photoUrl);
+    notify.success('Picture saved');
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <OwnerAvatar name={name || 'You'} avatar={avatar} size="lg" className="size-16" />
+      <section className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center sm:flex-row sm:text-left">
+        <button
+          type="button"
+          onClick={() => setSheet('picture')}
+          aria-label="Change picture"
+          className="group relative rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <DashboardOwnerAvatar
+            name={name || 'You'}
+            avatar={avatar}
+            photoUrl={photoUrl}
+            size="lg"
+            className="size-20 text-xl"
+          />
+          <span className="absolute right-0 bottom-0 flex size-7 items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground [&_svg]:size-3.5">
+            <PencilIcon aria-hidden="true" />
+          </span>
+        </button>
         <div className="min-w-0 flex-1">
           <p className="truncate font-heading text-lg font-semibold">{name || 'Your name'}</p>
           <p className="truncate text-sm text-muted-foreground">{email}</p>
@@ -109,7 +167,7 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
         <Button variant="outline" className="min-h-11" onClick={() => setSheet('picture')}>
           Change picture
         </Button>
-      </div>
+      </section>
 
       <Field data-invalid={nameError ? true : undefined}>
         <FieldLabel htmlFor="acct-name">Your name</FieldLabel>
@@ -124,6 +182,17 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
         <FieldDescription>Guests see it on messages and receipts.</FieldDescription>
         <FieldError>{nameError ?? undefined}</FieldError>
       </Field>
+
+      <InfoList
+        rows={[
+          {
+            id: 'email',
+            icon: <MailIcon aria-hidden="true" />,
+            label: 'Sign-in email',
+            value: email,
+          },
+        ]}
+      />
 
       <section aria-labelledby="acct-look" className="flex flex-col gap-1.5">
         <h2 id="acct-look" className="text-sm font-medium text-muted-foreground">
@@ -172,28 +241,15 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
         />
       </RowGroup>
 
-      <AppSheet
+      <YourPictureSheet
         open={sheet === 'picture'}
         onOpenChange={(open) => !open && setSheet(null)}
-        size="md"
-        title="Pick a picture"
-        description="Or keep your initials."
-        footer={
-          <Button className="min-h-11" onClick={() => setSheet(null)}>
-            Done
-          </Button>
-        }
-      >
-        <div className="flex flex-col gap-4">
-          <AvatarSeedPicker
-            value={avatar?.kind === 'preset' ? avatar.preset_id : null}
-            onValueChange={(presetId) => setAvatar({ kind: 'preset', preset_id: presetId })}
-          />
-          <Button variant="outline" className="min-h-11 self-start" onClick={() => setAvatar(null)}>
-            Use my initials
-          </Button>
-        </div>
-      </AppSheet>
+        name={name || 'You'}
+        current={avatar}
+        photoSrc={(fileId) => resolveProfilePhotoSrc(fileId, photoUrl)}
+        onUploadPhoto={handleUploadProfilePhoto}
+        onSave={handleSavePicture}
+      />
       <PasswordSheet email={email} open={sheet === 'password'} onClose={() => setSheet(null)} />
       <SignOutSheet open={sheet === 'signout'} onClose={() => setSheet(null)} />
       <DeleteSheet
@@ -209,8 +265,7 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
         message={message}
         onSave={() => void onSave()}
         onDiscard={() => {
-          setName(saved.name);
-          setAvatar(saved.avatar);
+          setName(savedName);
           setNameError(null);
           notify.info('Changes discarded');
         }}
@@ -232,6 +287,7 @@ function PasswordSheet({
   const change = useChangePasswordMutation();
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState('');
+  const [resendAt, setResendAt] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -239,19 +295,26 @@ function PasswordSheet({
   function reset() {
     setSent(false);
     setCode('');
+    setResendAt(null);
     setPassword('');
     setConfirm('');
     setErrors({});
   }
 
+  async function sendCode() {
+    try {
+      await requestCode.mutateAsync({ email });
+      setSent(true);
+      setResendAt(new Date(Date.now() + 30_000).toISOString());
+      setErrors((prev) => ({ ...prev, form: '' }));
+    } catch (caught) {
+      setErrors({ form: extractAppError(caught).message });
+    }
+  }
+
   async function submit() {
     if (!sent) {
-      try {
-        await requestCode.mutateAsync({ email });
-        setSent(true);
-      } catch (caught) {
-        setErrors({ form: extractAppError(caught).message });
-      }
+      await sendCode();
       return;
     }
     const parsed = changePasswordFormSchema.safeParse({
@@ -291,7 +354,9 @@ function PasswordSheet({
       size="sm"
       title="Change password"
       description={
-        sent ? `We sent a 6-digit code to ${email}.` : `We'll email a 6-digit code to ${email}.`
+        sent
+          ? `Enter the 6-digit code we sent to ${email}.`
+          : `We'll email a 6-digit code to ${email}.`
       }
       footer={
         <AsyncButton
@@ -317,18 +382,18 @@ function PasswordSheet({
               <AlertDescription>{errors.form}</AlertDescription>
             </Alert>
           ) : null}
-          <Field data-invalid={errors.code ? true : undefined}>
-            <FieldLabel htmlFor="pw-code">Code</FieldLabel>
-            <Input
-              id="pw-code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-            />
-            <FieldError>{errors.code}</FieldError>
-          </Field>
+          <OtpResend
+            id="pw-code"
+            value={code}
+            onChange={setCode}
+            label="Code"
+            sentLine={`We sent a 6-digit code to ${email}.`}
+            hint="Check your spam folder if you don't see it."
+            resendAt={resendAt}
+            resending={requestCode.isPending}
+            onResend={() => void sendCode()}
+            error={errors.code}
+          />
           <Field data-invalid={errors.newPassword ? true : undefined}>
             <FieldLabel htmlFor="pw-new">New password</FieldLabel>
             <PasswordInput

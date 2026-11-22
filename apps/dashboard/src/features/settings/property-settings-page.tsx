@@ -16,8 +16,10 @@ import { Input } from '@smartapp/ui/components/input';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { RowButton, RowGroup, RowSwitch } from '@smartapp/ui/compositions/grouped-rows';
+import { InfoList } from '@smartapp/ui/compositions/info-list';
 import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
 import { LeaveGuardDialog, SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { SlugField } from '@smartapp/ui/compositions/slug-field';
@@ -183,15 +185,23 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
         <FieldError>{errors.name}</FieldError>
       </Field>
 
-      <RowGroup title="Web address">
-        <RowButton
-          label={<span className="tabular">smartapp.ph/{property.slug}</span>}
-          hint="Old links and printed QR codes keep working"
-          value="Change"
-          icon={<LinkIcon />}
-          onClick={() => setLinkOpen(true)}
+      <div className="flex flex-col gap-2">
+        <RowGroup title="Web address">
+          <RowButton
+            label={<span className="tabular">smartapp.webserbisyo.com/{property.slug}</span>}
+            hint="Old links and printed QR codes keep working"
+            value="Change"
+            icon={<LinkIcon />}
+            onClick={() => setLinkOpen(true)}
+          />
+        </RowGroup>
+        <CopyButton
+          value={`https://smartapp.webserbisyo.com/${property.slug}`}
+          label="Copy web address"
+          copiedLabel="Link copied"
+          className="min-h-11 self-start"
         />
-      </RowGroup>
+      </div>
 
       <section className="flex flex-col gap-4" aria-labelledby="prop-contacts">
         <h2 id="prop-contacts" className="text-sm font-medium text-muted-foreground">
@@ -430,9 +440,14 @@ function ChangeLinkSheet({
           />
         </Field>
         {oldSlugs.length > 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Still working: {oldSlugs.map((old) => `smartapp.ph/${old}`).join(', ')}
-          </p>
+          <InfoList
+            rows={oldSlugs.map((old) => ({
+              id: old,
+              icon: <LinkIcon aria-hidden="true" />,
+              label: `smartapp.webserbisyo.com/${old}`,
+              value: 'Still works',
+            }))}
+          />
         ) : null}
       </div>
     </AppSheet>

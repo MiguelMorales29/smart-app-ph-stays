@@ -39,6 +39,7 @@ import {
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
@@ -340,7 +341,7 @@ export function UnitsPage() {
 
   const selectedIds = [...selected].filter((id) => byId.has(id));
   // TopBar already shows "Units" at every size (D73).
-  const srTitle = <h1 className="sr-only">Units</h1>;
+  const srTitle = <PageHeader title="Units" />;
 
   const sheet = (
     <AddUnitSheet
