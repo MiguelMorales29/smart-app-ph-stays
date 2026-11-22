@@ -1,10 +1,13 @@
 import {
+  appError,
   manilaToday,
   propertySlugSchema,
   systemClock,
   type CalendarDate,
+  type Clock,
   type PropertyView,
 } from '@smartapp/core';
+import type { DataSource } from '@smartapp/data';
 import { getHttpDataSource } from '@smartapp/data/http';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
@@ -12,6 +15,14 @@ import { cache } from 'react';
 import { env } from '../env';
 
 const SWITCH_COOKIE_NAME = 'smartapp.dev.switches';
+
+// Bounded server-side cache for read-only memory DataSource instances in dev/preview.
+// Avoids rebuilding the entire demo world 3× per request (which took ~2.4s on cold previews).
+const memorySourceCache = new Map<
+  string,
+  Promise<{ readonly source: DataSource; readonly clock: Clock }>
+>();
+const MAX_CACHED_MEMORY_SOURCES = 12;
 
 export type ServerPropertyResult =
   | {
@@ -57,20 +68,60 @@ export async function resolveServerPropertyResult(
     process.env.NEXT_PUBLIC_DATA_SOURCE === 'memory' &&
     process.env.NEXT_PUBLIC_APP_ENV !== 'production'
   ) {
-    const switches = await import('@smartapp/data/switches');
+    const [switches, { getDataSource }] = await Promise.all([
+      import('@smartapp/data/switches'),
+      import('@smartapp/data'),
+    ]);
     const fromCookie =
       switches.parseSwitchStateCookie(switchCookieValue) ?? switches.createDefaultSwitchState();
     const search = buildSearchString(searchParams);
     const state = search ? switches.parseSwitchStateFromSearch(search, fromCookie) : fromCookie;
-    const bundle = await switches.createSwitchClientBundle(state, {
-      storefrontOrigin: env.STOREFRONT_ORIGIN,
-    });
-    const res = await bundle.source.getProperty({ slug }, { role: 'guest' });
+    const demoPack = switches.resolveDemoPackForScenario(state.pack);
+    const clock = switches.resolveSwitchClock(state.clock);
+    const today = manilaToday(clock);
+    const cacheKey = [
+      state.pack,
+      demoPack,
+      state.clock,
+      today,
+      state.errorCode,
+      state.latencyMs,
+      env.STOREFRONT_ORIGIN,
+    ].join('|');
+
+    let entry = memorySourceCache.get(cacheKey);
+    if (!entry) {
+      const failWith =
+        state.pack === 'offline'
+          ? appError('not_found', 'Offline: no network connection.', { offline: true })
+          : state.pack === 'error'
+            ? state.errorCode
+            : undefined;
+      entry = getDataSource({
+        adapter: 'memory',
+        pack: demoPack,
+        clock,
+        storefrontOrigin: env.STOREFRONT_ORIGIN,
+        ...(state.pack === 'slow' ? { latencyMs: state.latencyMs } : {}),
+        ...(failWith !== undefined ? { failWith } : {}),
+      }).then((source) => ({ source, clock }));
+
+      if (memorySourceCache.size >= MAX_CACHED_MEMORY_SOURCES) {
+        const oldestKey = memorySourceCache.keys().next().value;
+        if (oldestKey !== undefined) {
+          memorySourceCache.delete(oldestKey);
+        }
+      }
+      memorySourceCache.set(cacheKey, entry);
+    }
+
+    const { source } = await entry;
+    const res = await source.getProperty({ slug }, { role: 'guest' });
     if (res.ok) {
       return {
         kind: 'ok',
         propertyView: res.data,
-        today: manilaToday(bundle.clock),
+        today,
       };
     }
     if (switches.isOfflineError(res.error)) {
