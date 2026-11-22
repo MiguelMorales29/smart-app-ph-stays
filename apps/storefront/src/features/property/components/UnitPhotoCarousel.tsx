@@ -115,22 +115,14 @@ export function UnitPhotoCarousel({
         >
           <HomeIcon aria-hidden="true" className="size-8 opacity-50" />
         </button>
-      ) : showInteractive ? (
-        <LazyUnitPhotoCarouselInteractive
-          cardId={cardId}
-          title={title}
-          photos={photos}
-          advanceToken={advanceToken}
-          preloadNext={preloadNext}
-          onInteractionChange={onInteractionChange}
-          onOpenQuickLook={onOpenQuickLook}
-        />
       ) : (
         <>
           <button
             type="button"
             onClick={onOpenQuickLook}
             aria-label={`Quick look: ${title}`}
+            aria-hidden={showInteractive || undefined}
+            tabIndex={showInteractive ? -1 : undefined}
             className="relative block aspect-4/3 w-full overflow-hidden bg-muted text-left outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset"
           >
             {firstPhoto ? (
@@ -165,13 +157,27 @@ export function UnitPhotoCarousel({
               ))}
             </div>
           ) : null}
+
+          {showInteractive ? (
+            <div className="absolute inset-0 z-10">
+              <LazyUnitPhotoCarouselInteractive
+                cardId={cardId}
+                title={title}
+                photos={photos}
+                advanceToken={advanceToken}
+                preloadNext={preloadNext}
+                onInteractionChange={onInteractionChange}
+                onOpenQuickLook={onOpenQuickLook}
+              />
+            </div>
+          ) : null}
         </>
       )}
 
       {extraPhotos > 0 ? (
         <span
           aria-label={`${total} photos`}
-          className="absolute right-2.5 bottom-2.5 inline-flex items-center gap-1 rounded-full bg-scrim px-2.5 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
+          className="pointer-events-none absolute right-2.5 bottom-2.5 z-20 inline-flex items-center gap-1 rounded-full bg-scrim px-2.5 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
         >
           <ImagesIcon aria-hidden="true" className="size-3" />+{extraPhotos}
         </span>
@@ -180,7 +186,7 @@ export function UnitPhotoCarousel({
       {badgeLabel ? (
         <Badge
           variant="secondary"
-          className="absolute top-2.5 left-2.5 rounded-full border border-border/60 bg-card/95 px-2.5 py-0.5 text-xs font-medium text-foreground shadow-xs backdrop-blur-xs"
+          className="pointer-events-none absolute top-2.5 left-2.5 z-20 rounded-full border border-border/60 bg-card/95 px-2.5 py-0.5 text-xs font-medium text-foreground shadow-xs backdrop-blur-xs"
         >
           {badgeLabel}
         </Badge>

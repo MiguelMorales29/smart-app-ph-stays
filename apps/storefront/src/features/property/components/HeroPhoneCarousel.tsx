@@ -30,7 +30,7 @@ export function HeroPhoneCarousel({
 }: HeroPhoneCarouselProps) {
   const [phoneApi, setPhoneApi] = useState<CarouselApi>();
   const [phoneIndex, setPhoneIndex] = useState(0);
-  const [loadedIndices, setLoadedIndices] = useState<ReadonlySet<number>>(() => new Set([0, 1]));
+  const [loadedIndices, setLoadedIndices] = useState<ReadonlySet<number>>(() => new Set([0]));
 
   const totalCount = allPhotos.length;
 

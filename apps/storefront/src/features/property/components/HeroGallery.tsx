@@ -4,7 +4,7 @@ import { Button } from '@smartapp/ui/components/button';
 import { cn } from '@smartapp/ui/lib/utils';
 import { ImagesIcon } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { normalizeMediaSrc } from '../media-src';
 import type { ResolvedPropertyPhoto } from '../property-rules';
@@ -18,8 +18,9 @@ export interface HeroGalleryProps {
 
 /**
  * Property hero gallery (part 4, D81, D74–D77):
- * - Phone: static LCP cover + "1 / N" counter on SSR/first paint; upgrades to the lazy-loaded Embla
- *   swipe gallery on touch/pointer or after browser idle (never auto-advances, E4).
+ * - Phone: static LCP cover + "1 / N" counter on SSR/first paint; upgrades in place (zero CLS,
+ *   never unmounting the reserved `aspect-4/3` box) to the lazy-loaded Embla swipe gallery on
+ *   touch/pointer interaction (never auto-advances, E4).
  * - From 768 px: 1 large cover + up to 4 small photos mosaic with "Show all photos".
  * - Full-screen grouped viewer modal is lazy-loaded only when opened.
  */
@@ -42,22 +43,6 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
     }
     return false;
   }, [allPhotos]);
-
-  // Upgrade the phone hero to the swipeable Embla carousel after idle on phone viewports only.
-  useEffect(() => {
-    if (totalCount <= 1 || phoneCarouselActive) return;
-    if (typeof window === 'undefined') return;
-    if (!window.matchMedia('(max-width: 767px)').matches) return;
-
-    if (typeof window.requestIdleCallback === 'function') {
-      const idleId = window.requestIdleCallback(() => setPhoneCarouselActive(true), {
-        timeout: 1800,
-      });
-      return () => window.cancelIdleCallback(idleId);
-    }
-    const timer = window.setTimeout(() => setPhoneCarouselActive(true), 1200);
-    return () => window.clearTimeout(timer);
-  }, [totalCount, phoneCarouselActive]);
 
   if (totalCount === 0) {
     return null;
@@ -89,7 +74,7 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
       data-slot="hero-gallery"
       className="relative"
     >
-      {/* Phone swipe gallery: never auto-advances (decision E4); static LCP frame upgrades lazily */}
+      {/* Phone swipe gallery: never auto-advances (decision E4); fixed aspect-4/3 box prevents CLS */}
       {coverPhoto ? (
         <div
           className="space-y-2.5 md:hidden"
@@ -100,41 +85,45 @@ export function HeroGallery({ propertyName, mosaicPhotos, allPhotos }: HeroGalle
             if (totalCount > 1) setPhoneCarouselActive(true);
           }}
         >
-          {phoneCarouselActive && totalCount > 1 ? (
-            <LazyHeroPhoneCarousel
-              propertyName={propertyName}
-              allPhotos={allPhotos}
-              onOpenCarouselAt={openCarouselAt}
-            />
-          ) : (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => openCarouselAt(0)}
-                aria-label={`View photo 1 of ${totalCount}: ${coverPhoto.alt}`}
-                className="relative block aspect-4/3 w-full overflow-hidden rounded-2xl bg-muted text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
-              >
-                <Image
-                  src={normalizeMediaSrc(coverPhoto.url)}
-                  alt={coverPhoto.alt}
-                  fill
-                  priority
-                  fetchPriority="high"
-                  sizes="(min-width: 1280px) 560px, (min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              </button>
+          <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-muted">
+            <button
+              type="button"
+              onClick={() => openCarouselAt(0)}
+              aria-label={`View photo 1 of ${totalCount}: ${coverPhoto.alt}`}
+              aria-hidden={phoneCarouselActive || undefined}
+              tabIndex={phoneCarouselActive ? -1 : undefined}
+              className="relative block size-full overflow-hidden text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
+            >
+              <Image
+                src={normalizeMediaSrc(coverPhoto.url)}
+                alt={coverPhoto.alt}
+                fill
+                priority
+                fetchPriority="high"
+                sizes="(min-width: 1280px) 560px, (min-width: 768px) 50vw, 100vw"
+                className="object-cover"
+              />
+            </button>
 
-              {totalCount > 1 ? (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-3 bottom-3 rounded-full bg-scrim px-3 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
-                >
-                  1 / {totalCount}
-                </div>
-              ) : null}
-            </div>
-          )}
+            {totalCount > 1 ? (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute right-3 bottom-3 rounded-full bg-scrim px-3 py-1 text-xs font-medium text-on-scrim tabular backdrop-blur-xs"
+              >
+                1 / {totalCount}
+              </div>
+            ) : null}
+
+            {phoneCarouselActive && totalCount > 1 ? (
+              <div className="absolute inset-0 z-10">
+                <LazyHeroPhoneCarousel
+                  propertyName={propertyName}
+                  allPhotos={allPhotos}
+                  onOpenCarouselAt={openCarouselAt}
+                />
+              </div>
+            ) : null}
+          </div>
 
           {totalCount > 1 ? (
             <Button
