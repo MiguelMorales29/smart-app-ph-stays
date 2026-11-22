@@ -66,17 +66,17 @@ function makeSolidPng(
 const SAMPLE_PHOTO_1 = {
   name: 'room-1.png',
   mimeType: 'image/png',
-  buffer: makeSolidPng(320, 240, [48, 104, 212]),
+  buffer: makeSolidPng(640, 480, [48, 104, 212]),
 };
 const SAMPLE_PHOTO_2 = {
   name: 'room-2.png',
   mimeType: 'image/png',
-  buffer: makeSolidPng(320, 240, [24, 152, 112]),
+  buffer: makeSolidPng(640, 480, [24, 152, 112]),
 };
 const SAMPLE_PHOTO_3 = {
   name: 'room-3.png',
   mimeType: 'image/png',
-  buffer: makeSolidPng(320, 240, [218, 130, 42]),
+  buffer: makeSolidPng(640, 480, [218, 130, 42]),
 };
 const SAMPLE_SQUARE = {
   name: 'avatar-qr.png',
@@ -160,31 +160,32 @@ test.describe('Owner journeys (FIX-1 J)', () => {
 
     // 1. Monthly property preselects Monthly rent in Add unit.
     await page.getByRole('button', { name: 'Add unit' }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog', { name: 'Add a unit' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('button', { name: 'Monthly rent' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
-    await expect(dialog.getByText('a month')).toBeVisible();
+    await expect(dialog.getByLabel('Monthly rent')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
 
     // 2. Click "Add a bed" on Room 3B (which already has Beds 1..6) and add 2 beds -> Bed 7 & Bed 8.
     const room3bHeader = page.locator('tr, article').filter({ hasText: 'Room 3B' }).first();
     await room3bHeader.getByRole('button', { name: 'Add a bed' }).click();
-    await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText('Bed 7 in Room 3B');
+    const bedsDialog = page.getByRole('dialog', { name: 'Add bed spaces' });
+    await expect(bedsDialog).toBeVisible();
+    await expect(bedsDialog).toContainText('Bed 7 in Room 3B');
 
     // Increment beds from 1 to 2.
-    await dialog
+    await bedsDialog
       .getByRole('button', { name: /Increase beds|Add beds|\+/i })
       .first()
       .click();
-    await expect(dialog).toContainText('Bed 7 … Bed 8 in Room 3B');
+    await expect(bedsDialog).toContainText('Bed 7 … Bed 8 in Room 3B');
 
-    await dialog.getByLabel('Monthly rent for each bed').fill('3500');
-    await dialog.getByRole('button', { name: 'Add 2 beds' }).click();
+    await bedsDialog.getByLabel('Monthly rent for each bed').fill('3500');
+    await bedsDialog.getByRole('button', { name: 'Add 2 beds' }).click();
     await expect(page).toHaveURL(/\/units\/.+\/photos/);
 
     // Return to /units and verify Bed 7 and Bed 8 appear under Room 3B without a duplicate Bed 1.
@@ -206,7 +207,7 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     });
 
     await page.getByRole('button', { name: 'Change picture' }).first().click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog', { name: 'Your picture' });
     await expect(dialog).toBeVisible();
 
     await dialog.getByRole('tab', { name: 'Photo' }).click();
@@ -267,13 +268,18 @@ test.describe('Owner journeys (FIX-1 J)', () => {
       waitUntil: 'networkidle',
     });
 
-    // Open edit sheet on the first existing payment method.
-    await page.getByRole('button', { name: /Edit/i }).first().click();
-    const sheet = page.getByRole('dialog').first();
+    // Open edit sheet on the first existing payment method via its row menu.
+    await page
+      .getByRole('button', { name: /^More for /i })
+      .first()
+      .click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
+    const sheet = page.getByRole('dialog', { name: /^Edit /i });
     await expect(sheet).toBeVisible();
 
     await sheet.locator('#pay-qr').setInputFiles(SAMPLE_SQUARE);
-    const cropBtn = page.getByRole('button', { name: 'Use this QR' });
+    const cropDialog = page.getByRole('dialog', { name: 'Crop QR code' });
+    const cropBtn = cropDialog.getByRole('button', { name: 'Use this QR' });
     await expect(cropBtn).toBeVisible();
     await cropBtn.click();
 
@@ -288,8 +294,12 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await page.getByRole('link', { name: 'Payments' }).first().click();
     await expect(page).toHaveURL(/\/settings\/payments/);
 
-    await page.getByRole('button', { name: /Edit/i }).first().click();
-    const qrImg = page.getByRole('dialog').first().getByAltText('Your QR code');
+    await page
+      .getByRole('button', { name: /^More for /i })
+      .first()
+      .click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
+    const qrImg = page.getByRole('dialog', { name: /^Edit /i }).getByAltText('Your QR code');
     await expect(qrImg).toBeVisible();
     expect(
       await qrImg.evaluate((el) => el instanceof HTMLImageElement && el.naturalWidth > 0),
@@ -306,7 +316,7 @@ test.describe('Owner journeys (FIX-1 J)', () => {
       'Please remember to turn off all air conditioners, lights, and water heaters before leaving the studio.';
     const input = page.locator('#pol-own-rule');
     await input.fill(longRule);
-    const addBtn = page.getByRole('button', { name: 'Add', exact: true });
+    const addBtn = page.locator('main').getByRole('button', { name: 'Add', exact: true });
     await addBtn.click();
 
     await expect(page.getByRole('button', { name: longRule })).toBeVisible();

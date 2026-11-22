@@ -322,7 +322,7 @@ async function assertNoSheetOverflow(page: Page, label: string): Promise<void> {
       problems.push(`page overflows sideways: ${root.scrollWidth}px in ${root.clientWidth}px`);
     }
     const sheets = document.querySelectorAll(
-      '[role="dialog"], [data-slot="dialog-content"], [data-slot="drawer-content"]',
+      '[role="dialog"]:not([data-slot="toast"]), [data-slot="dialog-content"], [data-slot="drawer-content"]',
     );
     for (const sheet of sheets) {
       const box = sheet.getBoundingClientRect();
@@ -443,10 +443,10 @@ test.describe('UI scan · interactive sheets and dialogs (FIX-1 A)', () => {
         await page.waitForTimeout(200);
 
         const quickLookTrigger = page
-          .locator('[data-slot="units-section"] [data-slot="unit-photo-carousel"] button')
+          .locator('[data-slot="unit-card"] button[aria-haspopup="dialog"]')
           .first();
         await quickLookTrigger.click();
-        await expect(page.getByRole('dialog')).toBeVisible();
+        await expect(page.getByRole('dialog').first()).toBeVisible();
         await page.waitForTimeout(250);
         await assertNoSheetOverflow(page, `Unit quick look sheet at ${size.name}`);
       } finally {
@@ -464,8 +464,8 @@ test.describe('UI scan · interactive sheets and dialogs (FIX-1 A)', () => {
     const page = await context.newPage();
     try {
       await page.goto(`${DASHBOARD_ORIGIN}/home?clock=golden`, { waitUntil: 'networkidle' });
-      await page.locator('[data-slot="bottom-dock"] button[aria-label="New"]').click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      await page.locator('[data-slot="bottom-dock"] button[aria-label="Add"]').click();
+      await expect(page.getByRole('dialog').first()).toBeVisible();
       await page.waitForTimeout(250);
       await assertNoSheetOverflow(page, 'Quick add sheet at phone');
     } finally {

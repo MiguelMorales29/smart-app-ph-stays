@@ -828,7 +828,8 @@ function UnitEditor({
     </div>
   );
 
-  const hasEnoughPhotos = photoCount >= 3;
+  const savedPhotoCount = photos.tiles.filter((tile) => tile.status === 'saved').length;
+  const hasEnoughPhotos = savedPhotoCount >= 3;
   const hasPrice = !needsYou.price;
   const isReadyToList = hasEnoughPhotos && hasPrice && !photos.busy;
 
@@ -860,7 +861,9 @@ function UnitEditor({
               ) : (
                 <CircleIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
               )}
-              <span className="tabular">At least 3 photos ({Math.min(photoCount, 3)} of 3)</span>
+              <span className="tabular">
+                At least 3 photos ({Math.min(savedPhotoCount, 3)} of 3)
+              </span>
             </span>
             {!hasEnoughPhotos && activeSection !== 'photos' ? (
               <Link
