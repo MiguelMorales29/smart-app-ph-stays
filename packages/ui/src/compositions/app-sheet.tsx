@@ -101,7 +101,7 @@ export function AppSheet({
           </div>
           <div
             ref={fadesRef}
-            className="scroll-fades min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4"
+            className="scroll-fades min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4"
           >
             {shown.children}
           </div>
@@ -158,7 +158,7 @@ export function AppSheet({
           <div
             ref={fadesRef}
             data-base-ui-swipe-ignore="y"
-            className="scroll-fades min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 pb-4"
+            className="scroll-fades min-h-0 min-w-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 pb-4"
           >
             {shown.children}
           </div>

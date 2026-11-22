@@ -190,28 +190,19 @@ function YourPictureBody({
   return (
     <form
       id={formId}
-      className="flex flex-col gap-5"
+      className="flex min-w-0 flex-col gap-5"
       onSubmit={(event) => {
         event.preventDefault();
         void handleSave();
       }}
     >
-      <div className="flex justify-center">
-        <PersonAvatar
-          avatar={draft}
-          name={name}
-          photoSrc={resolvePreview}
-          className="size-24 text-2xl shadow-md ring-4 ring-background"
-        />
-      </div>
-
       <Tabs
         value={tab}
         onValueChange={(value) => {
           const next = TABS.find((t) => t === value);
           if (next) setTab(next);
         }}
-        className="gap-4"
+        className="min-w-0 gap-5"
       >
         <TabsList className="grid w-full grid-cols-2 group-data-horizontal/tabs:h-auto">
           <TabsTrigger value="faces" className="h-11 md:h-9">
@@ -222,11 +213,20 @@ function YourPictureBody({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="faces">
+        <div className="flex justify-center">
+          <PersonAvatar
+            avatar={draft}
+            name={name}
+            photoSrc={resolvePreview}
+            className="size-24 text-2xl shadow-md ring-4 ring-background"
+          />
+        </div>
+
+        <TabsContent value="faces" className="min-w-0">
           <FacePicker value={face} name={name} onChange={setFace} />
         </TabsContent>
 
-        <TabsContent value="photo">
+        <TabsContent value="photo" className="min-w-0">
           <PhotoTab
             onUploadPhoto={onUploadPhoto}
             onPicked={(result) =>
@@ -293,7 +293,7 @@ function PhotoTab({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <p className="text-sm text-muted-foreground">
         Fit your photo in the circle. We keep a 256 px copy.
       </p>

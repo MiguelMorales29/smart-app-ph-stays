@@ -118,8 +118,8 @@ export function FacePicker({
   };
 
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
-      <Scroller orientation="horizontal" hideScrollbar className="-mx-1 px-1">
+    <div className={cn('flex min-w-0 flex-col gap-4', className)}>
+      <Scroller orientation="horizontal" hideScrollbar size={24} className="w-full min-w-0">
         <ToggleGroup
           aria-label={W.styleLabel}
           value={[style]}

@@ -157,6 +157,7 @@ export function CalendarCheckoutOnly({
           root: 'w-full',
           month: 'flex w-full flex-col gap-3',
           month_grid: 'w-full table-fixed border-collapse',
+          week: 'mt-1.5 flex w-full gap-0.5',
         }}
         components={{
           DayButton: ({ children, modifiers, day, className: dayClassName, ...props }) => {
@@ -175,7 +176,7 @@ export function CalendarCheckoutOnly({
                 {...props}
                 aria-label={undefined}
                 className={cn(
-                  'min-w-0 gap-0.5 px-0 [&>span]:opacity-100',
+                  'min-w-0 gap-0.5 px-0.5 [&>span]:opacity-100',
                   isOutOnly &&
                     !modifiers.range_end &&
                     'border border-dashed border-warning bg-warning-tint/60 text-foreground',
