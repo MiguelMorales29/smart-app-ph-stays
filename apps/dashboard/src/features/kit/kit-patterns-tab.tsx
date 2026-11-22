@@ -1,4 +1,4 @@
-import { createElement, useState } from 'react';
+import { Suspense, createElement, lazy, useState } from 'react';
 import {
   BedDoubleIcon,
   CalendarDaysIcon,
@@ -31,6 +31,10 @@ import { QUICK_ADD_ITEMS } from '@/app/nav-config';
 import { KitPatternsUi1Section } from './kit-patterns-ui1-section';
 import { KitPatternsUi2Section } from './kit-patterns-ui2-section';
 import { KitPatternsUi3Section } from './kit-patterns-ui3-section';
+
+const KitPatternsUi4Section = lazy(() =>
+  import('./kit-patterns-ui4-section').then((m) => ({ default: m.KitPatternsUi4Section })),
+);
 
 type Section = 'basics' | 'price' | 'rules';
 
@@ -520,6 +524,9 @@ export function KitPatternsTab() {
       <KitPatternsUi1Section />
       <KitPatternsUi2Section />
       <KitPatternsUi3Section />
+      <Suspense fallback={null}>
+        <KitPatternsUi4Section />
+      </Suspense>
     </div>
   );
 }

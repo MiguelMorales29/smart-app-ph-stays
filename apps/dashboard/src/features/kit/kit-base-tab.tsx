@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { Suspense, lazy, useState, type ReactNode } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/alert';
 import { Avatar, AvatarBadge, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Badge } from '@smartapp/ui/components/badge';
@@ -82,6 +82,10 @@ import {
 import { KitBaseUi1Section } from './kit-base-ui1-section';
 import { KitBaseUi2Section } from './kit-base-ui2-section';
 import { KitBaseUi3Section } from './kit-base-ui3-section';
+
+const KitBaseUi4Section = lazy(() =>
+  import('./kit-base-ui4-section').then((m) => ({ default: m.KitBaseUi4Section })),
+);
 
 export function DualSurfaceShowcase({
   title,
@@ -525,6 +529,9 @@ export function KitBaseTab() {
           <KitBaseUi1Section />
           <KitBaseUi2Section />
           <KitBaseUi3Section />
+          <Suspense fallback={null}>
+            <KitBaseUi4Section />
+          </Suspense>
         </div>
       </TooltipProvider>
     </Toaster>

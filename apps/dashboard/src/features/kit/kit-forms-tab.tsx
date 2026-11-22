@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { Suspense, lazy, useState, type ReactNode } from 'react';
 import { BedDoubleIcon, CreditCardIcon, HomeIcon, UserIcon } from 'lucide-react';
 import { Button } from '@smartapp/ui/components/button';
 import { Calendar } from '@smartapp/ui/components/calendar';
@@ -90,6 +90,13 @@ import { ToggleGroupSpaced } from '@smartapp/ui/variants/toggle-group/toggle-gro
 import { KitFormsUi1Section } from './kit-forms-ui1-section';
 import { KitFormsUi2Section } from './kit-forms-ui2-section';
 import { KitFormsUi3Section } from './kit-forms-ui3-section';
+
+const KitCalendarVariantsRow = lazy(() =>
+  import('./kit-forms-ui4-section').then((m) => ({ default: m.KitCalendarVariantsRow })),
+);
+const KitFormsUi4Section = lazy(() =>
+  import('./kit-forms-ui4-section').then((m) => ({ default: m.KitFormsUi4Section })),
+);
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -605,6 +612,9 @@ export function KitFormsTab() {
         >
           {() => <OverlaysDemo />}
         </Section>
+        <Suspense fallback={null}>
+          <KitCalendarVariantsRow />
+        </Suspense>
         <Section
           title="Stepper"
           source="ReUI stepper"
@@ -657,6 +667,9 @@ export function KitFormsTab() {
         <KitFormsUi1Section />
         <KitFormsUi2Section />
         <KitFormsUi3Section />
+        <Suspense fallback={null}>
+          <KitFormsUi4Section />
+        </Suspense>
       </div>
     </>
   );

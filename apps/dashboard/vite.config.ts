@@ -90,7 +90,7 @@ export function createDashboardViteConfig(
             groups: [
               {
                 name: 'vendor-shell',
-                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|@tanstack[\\/](react-router|router-core|react-query|query-core))[\\/]/,
+                test: /[\\/]node_modules[\\/](react|react-dom|scheduler|cn|class-variance-authority|@base-ui[\\/]utils|@tanstack[\\/](react-router|router-core|react-query|query-core)|@base-ui[\\/]react[\\/](esm[\\/])?(menu|tooltip|toast|button|avatar|separator|merge-props|use-render|floating-ui-react|utils))[\\/]/,
               },
             ],
           },
