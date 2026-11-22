@@ -137,9 +137,9 @@ test.describe('Owner journeys (FIX-1 J)', () => {
 
     // Navigate back to /units and verify the new unit and its uploaded cover photo show up.
     await page.getByRole('link', { name: 'Units' }).first().click();
-    await expect(page.getByText('Ridge View Loft')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ridge View Loft' }).first()).toBeVisible();
     const listCardImg = page
-      .locator('article, tr')
+      .locator('article:visible, tr:visible')
       .filter({ hasText: 'Ridge View Loft' })
       .locator('img')
       .first();
@@ -171,7 +171,11 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await expect(dialog).toBeHidden();
 
     // 2. Click "Add a bed" on Room 3B (which already has Beds 1..6) and add 2 beds -> Bed 7 & Bed 8.
-    const room3bHeader = page.locator('tr, article').filter({ hasText: 'Room 3B' }).first();
+    const room3bHeader = page
+      .locator('tr:visible, article:visible')
+      .filter({ hasText: 'Room 3B' })
+      .filter({ has: page.getByRole('button', { name: 'Add a bed' }) })
+      .first();
     await room3bHeader.getByRole('button', { name: 'Add a bed' }).click();
     const bedsDialog = page.getByRole('dialog', { name: 'Add bed spaces' });
     await expect(bedsDialog).toBeVisible();
@@ -289,9 +293,17 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await expect(sheet).toBeHidden();
 
     // Navigate away and back, reopen the same payment method, and confirm the QR image survives.
-    await page.getByRole('link', { name: 'Account' }).first().click();
+    await page
+      .locator('main')
+      .getByRole('link', { name: /Account/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/settings\/account/);
-    await page.getByRole('link', { name: 'Payments' }).first().click();
+    await page
+      .locator('main')
+      .getByRole('link', { name: /Payments/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/settings\/payments/);
 
     await page

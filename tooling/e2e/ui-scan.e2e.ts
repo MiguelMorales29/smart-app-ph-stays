@@ -341,7 +341,8 @@ async function assertNoSheetOverflow(page: Page, label: string): Promise<void> {
       const sheetRight = box.right + 1;
       const sheetLeft = box.left - 1;
       for (const child of sheet.querySelectorAll('*')) {
-        if (child.closest('[data-slot="scroller"], [data-slot="cropper"]')) continue;
+        if (child.closest('[data-slot="scroller"], [data-slot="cropper"], [data-slot="carousel"]'))
+          continue;
         const style = getComputedStyle(child);
         if (
           style.display === 'none' ||
