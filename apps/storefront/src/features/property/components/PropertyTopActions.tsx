@@ -1,94 +1,110 @@
 'use client';
 
 import { Button } from '@smartapp/ui/components/button';
-import { CheckIcon, DownloadIcon, Share2Icon } from 'lucide-react';
+import { CalendarIcon, DownloadIcon, UserRoundIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+import { InstallGuideSheet } from '@/features/install/InstallGuideSheet';
+import { useInstallPlatform } from '@/features/install/install-store';
+
+import type { UnitDisplayCard } from '../property-rules';
+import { UnitChooserSheet } from './UnitChooserSheet';
 
 export interface PropertyTopActionsProps {
   readonly slug: string;
   readonly propertyName: string;
-  readonly tagline: string | null;
+  readonly logoSrc: string | null;
+  readonly unitCards?: readonly UnitDisplayCard[] | undefined;
 }
 
-/** Top-bar Share (Web Share API with copy-link fallback) and Install (`/install`) actions. */
-export function PropertyTopActions({ slug, propertyName, tagline }: PropertyTopActionsProps) {
-  const [shareState, setShareState] = useState<'idle' | 'copied' | 'failed'>('idle');
+/**
+ * Top-bar right actions (D79):
+ * - Phone: Install (hidden when installed) + Your booking (person icon → `/<slug>/find`), alongside
+ *   the Menu trigger so the phone bar holds at most three controls.
+ * - Desktop (≥1024 px): Install + Your booking + filled "Check dates" button.
+ */
+export function PropertyTopActions({
+  slug,
+  propertyName,
+  logoSrc,
+  unitCards = [],
+}: PropertyTopActionsProps) {
+  const installPlatform = useInstallPlatform();
+  const [installOpen, setInstallOpen] = useState(false);
+  const [chooserOpen, setChooserOpen] = useState(false);
 
-  useEffect(() => {
-    if (shareState === 'idle') return;
-    const timer = window.setTimeout(() => setShareState('idle'), 2400);
-    return () => window.clearTimeout(timer);
-  }, [shareState]);
-
-  async function handleShare() {
-    const url = window.location.href;
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try {
-        await navigator.share({
-          title: propertyName,
-          ...(tagline ? { text: tagline } : {}),
-          url,
-        });
-        return;
-      } catch (caught: unknown) {
-        if (caught instanceof DOMException && caught.name === 'AbortError') {
-          return;
-        }
-      }
-    }
-
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(url);
-        setShareState('copied');
-        return;
-      } catch {
-        // Fall through to failure notice.
-      }
-    }
-    setShareState('failed');
-  }
+  const singleCard = unitCards.length === 1 ? unitCards[0] : null;
+  const hasMultipleCards = unitCards.length > 1;
 
   return (
-    <div className="flex shrink-0 items-center gap-1.5">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => void handleShare()}
-        aria-label={shareState === 'copied' ? 'Link copied' : `Share ${propertyName}`}
-        className="min-h-11 min-w-11 gap-1.5 px-2.5 sm:px-3"
-      >
-        {shareState === 'copied' ? (
-          <CheckIcon aria-hidden="true" className="size-4 text-success" />
-        ) : (
-          <Share2Icon aria-hidden="true" className="size-4" />
-        )}
-        <span className="hidden text-sm sm:inline">
-          {shareState === 'copied' ? 'Copied' : 'Share'}
-        </span>
-      </Button>
+    <>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {installPlatform !== 'installed' ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setInstallOpen(true)}
+            aria-label={`Install ${propertyName} app`}
+            className="min-h-11 min-w-11 gap-1.5 rounded-full px-2.5 sm:px-3.5"
+          >
+            <DownloadIcon aria-hidden="true" className="size-4" />
+            <span className="hidden text-sm sm:inline">Install</span>
+          </Button>
+        ) : null}
 
-      <Button
-        variant="outline"
-        size="sm"
-        nativeButton={false}
-        render={<Link href={`/${slug}/install`} />}
-        aria-label={`Install ${propertyName} app`}
-        className="min-h-11 min-w-11 gap-1.5 px-2.5 sm:px-3"
-      >
-        <DownloadIcon aria-hidden="true" className="size-4" />
-        <span className="hidden text-sm sm:inline">Install</span>
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          nativeButton={false}
+          render={<Link href={`/${slug}/find`} />}
+          aria-label="Your booking"
+          className="size-11 shrink-0 rounded-full"
+        >
+          <UserRoundIcon aria-hidden="true" className="size-5" />
+        </Button>
 
-      <span role="status" aria-live="polite" className="sr-only">
-        {shareState === 'copied'
-          ? 'Link copied to clipboard.'
-          : shareState === 'failed'
-            ? 'Could not copy link. Copy the address from your browser bar.'
-            : ''}
-      </span>
-    </div>
+        {singleCard ? (
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={<Link href={`/${slug}/units/${singleCard.targetUnitSlug}`} />}
+            className="hidden min-h-11 gap-1.5 rounded-full px-4 font-semibold lg:inline-flex"
+          >
+            <CalendarIcon aria-hidden="true" className="size-4" />
+            Check dates
+          </Button>
+        ) : hasMultipleCards ? (
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setChooserOpen(true)}
+            className="hidden min-h-11 gap-1.5 rounded-full px-4 font-semibold lg:inline-flex"
+          >
+            <CalendarIcon aria-hidden="true" className="size-4" />
+            Check dates
+          </Button>
+        ) : null}
+      </div>
+
+      <InstallGuideSheet
+        open={installOpen}
+        onOpenChange={setInstallOpen}
+        slug={slug}
+        propertyName={propertyName}
+        logoSrc={logoSrc}
+      />
+
+      {hasMultipleCards ? (
+        <UnitChooserSheet
+          open={chooserOpen}
+          onOpenChange={setChooserOpen}
+          slug={slug}
+          propertyName={propertyName}
+          cards={unitCards}
+        />
+      ) : null}
+    </>
   );
 }
