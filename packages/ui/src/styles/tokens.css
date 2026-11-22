@@ -51,8 +51,13 @@
   --info-tint: #dcf0ff;
 
   --border: #e3e0d7;
+  --border-strong: #b8b4a8;
   --input: #8a867b;
   --ring: #4883ff;
+
+  /* Receipt paper (thermal booking & payment receipt). */
+  --paper: oklch(0.979 0.008 91.5);
+  --paper-foreground: oklch(0.27 0 0);
 
   --font-sans:
     'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -146,8 +151,13 @@
   --info-tint: #133951;
 
   --border: #3b3a36;
+  --border-strong: #5c5a53;
   --input: #7a776e;
   --ring: #7aa5ff;
+
+  /* Receipt paper stays warm off-white in dark mode, like real paper. */
+  --paper: oklch(0.979 0.008 91.5);
+  --paper-foreground: oklch(0.27 0 0);
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
   --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.3);

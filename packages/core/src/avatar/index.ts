@@ -48,6 +48,57 @@ export const OWNER_FACE_SEEDS = [
 export const OWNER_AVATAR_DIR = '/avatars/owner';
 export const OWNER_FACES_PER_STYLE = 12;
 
+/** Guest & member pre-made face sets (Phase 8, separate from owner faces; D84 CC-BY-4.0 credited). */
+export const GUEST_AVATAR_DIR = '/avatars';
+export const DEFAULT_GUEST_AVATAR_COUNT = 24;
+export const GUEST_AVATARS_PER_SET = 12;
+export const GUEST_AVATAR_SETS = ['toon', 'smile'] as const;
+export const guestAvatarSetSchema = z.enum(GUEST_AVATAR_SETS);
+export type GuestAvatarSet = z.infer<typeof guestAvatarSetSchema>;
+
+/** One of the 24 default Toon Head guest avatars (0-based index, wraps cleanly). */
+export function guestAvatarPath(index: number): string {
+  const safe =
+    ((Math.trunc(index) % DEFAULT_GUEST_AVATAR_COUNT) + DEFAULT_GUEST_AVATAR_COUNT) %
+    DEFAULT_GUEST_AVATAR_COUNT;
+  return `${GUEST_AVATAR_DIR}/default-${String(safe + 1).padStart(2, '0')}.webp`;
+}
+
+/** Pre-made WebP choices for a guest/member face set (12 per set; Toon Head uses default-01..12). */
+export function guestAvatarChoices(set: GuestAvatarSet): string[] {
+  return Array.from({ length: GUEST_AVATARS_PER_SET }, (_, i) =>
+    set === 'toon'
+      ? guestAvatarPath(i)
+      : `${GUEST_AVATAR_DIR}/${set}-${String(i + 1).padStart(2, '0')}.webp`,
+  );
+}
+
+/** Identifies which guest face set a static avatar path belongs to; null for photos or unknown paths. */
+export function guestAvatarSetOf(src: string): GuestAvatarSet | null {
+  const file = src.split('/').pop() ?? '';
+  if (file.startsWith('default-')) return 'toon';
+  const prefix = file.split('-')[0];
+  return GUEST_AVATAR_SETS.find((set) => set === prefix) ?? null;
+}
+
+/** Deterministic spread of guest faces for member/guest preview stacks. */
+export function guestPreviewAvatars(seed: string, count: number): string[] {
+  const start = hashSeed(seed) % DEFAULT_GUEST_AVATAR_COUNT;
+  const take = Math.max(0, Math.min(count, DEFAULT_GUEST_AVATAR_COUNT));
+  return Array.from({ length: take }, (_, i) =>
+    guestAvatarPath((start + i * 7) % DEFAULT_GUEST_AVATAR_COUNT),
+  );
+}
+
+export const guestFaceWords = {
+  sets: {
+    toon: 'Toon',
+    smile: 'Big smile',
+  },
+  credit:
+    'Guest faces from DiceBear: Toon Head by Johan Melin and Big Smile by Ashley Seo (CC BY 4.0).',
+} as const;
+
 /** "none" turns an optional piece off (glasses, beard, …). */
 export const FACE_NONE = 'none';
 
