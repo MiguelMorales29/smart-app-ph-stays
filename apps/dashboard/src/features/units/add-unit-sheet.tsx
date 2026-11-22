@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { BedDoubleIcon, DoorClosedIcon, HomeIcon } from 'lucide-react';
 import {
   readErrorDetails,
   slugifyPropertyName,
+  type OwnerUnitListItemView,
   type UnitMode,
   type UnitType,
 } from '@smartapp/core';
@@ -11,6 +12,7 @@ import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
+import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { RowControl, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
@@ -21,6 +23,14 @@ import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import { useDashboard } from '@/app/dashboard-context';
 import { extractAppError } from '@/data/shared';
 import { useCreateBedSpacesMutation, useSaveUnitMutation } from '@/data/units/writes';
+import {
+  deriveDefaultUnitMode,
+  nextBedNumberForRoom,
+  nextNewRoomName,
+  summarizeBedSpaceRooms,
+} from './bed-space-helpers';
+
+const NEW_ROOM_VALUE = '__new__';
 
 const TYPE_OPTIONS: readonly {
   value: UnitType;
@@ -49,41 +59,156 @@ const TYPE_OPTIONS: readonly {
 ];
 
 /**
- * The short "Add unit" and "Add bed spaces" sheet (P4-5, D72). It lives in the address
- * (`?add=unit` or `?add=beds`), asks one question ("What do guests get?") at the top, and saving
- * replaces that history entry with the new unit's page.
+ * The short "Add unit" and "Add bed spaces" sheet (P4-5, D72, FIX-1 C & D). It lives in the
+ * address (`?add=unit` or `?add=beds&room=...`), preselects the property's majority mode, lets
+ * owners pick an existing room or type a new one while continuing bed numbering after that room's
+ * highest bed, and saving replaces that history entry with the new unit's page.
  */
 export function AddUnitSheet({
   open,
   kind,
   propertyId,
-  unitCount,
+  units,
+  initialRoom,
   onKindChange,
   onClose,
 }: {
   readonly open: boolean;
   readonly kind: 'unit' | 'beds';
   readonly propertyId: string | null;
-  readonly unitCount: number;
+  readonly units: readonly OwnerUnitListItemView[];
+  readonly initialRoom?: string | null | undefined;
   readonly onKindChange: (kind: 'unit' | 'beds') => void;
   readonly onClose: () => void;
+}) {
+  const [submitLabel, setSubmitLabel] = useState(
+    kind === 'beds' ? 'Create 4 beds' : 'Save and add photos',
+  );
+  const [busy, setBusy] = useState(false);
+  const handleFooterSync = useCallback((label: string, isBusy: boolean) => {
+    setSubmitLabel(label);
+    setBusy(isBusy);
+  }, []);
+
+  const footer = (
+    <>
+      <Button
+        data-sheet-cancel=""
+        type="button"
+        variant="outline"
+        className="min-h-11"
+        onClick={onClose}
+      >
+        Cancel
+      </Button>
+      <AsyncButton
+        type="submit"
+        form="add-unit-form"
+        className="min-h-11"
+        state={busy ? 'busy' : 'idle'}
+      >
+        {submitLabel}
+      </AsyncButton>
+    </>
+  );
+
+  return (
+    <AppSheet
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      height="full"
+      title={kind === 'beds' ? 'Add bed spaces' : 'Add a unit'}
+      description={
+        kind === 'beds'
+          ? 'Beds in one room share their photos and price. You can change each bed later.'
+          : 'Start with the basics. Photos come next.'
+      }
+      footer={footer}
+    >
+      {open ? (
+        <AddUnitForm
+          key={`${initialRoom ?? ''}`}
+          kind={kind}
+          propertyId={propertyId}
+          units={units}
+          initialRoom={initialRoom}
+          onKindChange={onKindChange}
+          onClose={onClose}
+          onFooterSync={handleFooterSync}
+        />
+      ) : null}
+    </AppSheet>
+  );
+}
+
+function AddUnitForm({
+  kind,
+  propertyId,
+  units,
+  initialRoom,
+  onKindChange,
+  onClose,
+  onFooterSync,
+}: {
+  readonly kind: 'unit' | 'beds';
+  readonly propertyId: string | null;
+  readonly units: readonly OwnerUnitListItemView[];
+  readonly initialRoom?: string | null | undefined;
+  readonly onKindChange: (kind: 'unit' | 'beds') => void;
+  readonly onClose: () => void;
+  readonly onFooterSync: (label: string, busy: boolean) => void;
 }) {
   const navigate = useNavigate();
   const { today } = useDashboard();
   const saveUnit = useSaveUnitMutation();
   const createBeds = useCreateBedSpacesMutation();
+
+  const existingRooms = useMemo(() => summarizeBedSpaceRooms(units), [units]);
+  const defaultMode = useMemo(() => deriveDefaultUnitMode(units), [units]);
+  const defaultNewRoom = useMemo(() => nextNewRoomName(units), [units]);
+
+  const trimmedInitial = initialRoom?.trim() ?? '';
+  const matchedInitialRoom = trimmedInitial
+    ? existingRooms.find((r) => r.label.toLowerCase() === trimmedInitial.toLowerCase())
+    : undefined;
+
   const [unitType, setUnitType] = useState<Exclude<UnitType, 'bed_space'>>('entire_place');
-  const [mode, setMode] = useState<UnitMode>('short_stay');
+  const [mode, setMode] = useState<UnitMode>(defaultMode);
   const [name, setName] = useState('');
   const [guests, setGuests] = useState(2);
-  const [room, setRoom] = useState(`Room ${unitCount + 1}`);
-  const [beds, setBeds] = useState(4);
+  const [roomChoice, setRoomChoice] = useState<string>(() =>
+    matchedInitialRoom ? matchedInitialRoom.label : NEW_ROOM_VALUE,
+  );
+  const [newRoomName, setNewRoomName] = useState<string>(() =>
+    trimmedInitial && !matchedInitialRoom ? trimmedInitial : defaultNewRoom,
+  );
+  const [beds, setBeds] = useState(() => (trimmedInitial ? 1 : 4));
   const [price, setPrice] = useState<number | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [limit, setLimit] = useState<{ limit: number; used: number } | null>(null);
+
   const busy = saveUnit.isPending || createBeds.isPending;
   const per = mode === 'long_term' ? 'a month' : 'a night';
   const selectedType: UnitType = kind === 'beds' ? 'bed_space' : unitType;
+
+  const isExistingRoomSelected =
+    existingRooms.length > 0 &&
+    roomChoice !== NEW_ROOM_VALUE &&
+    existingRooms.some((r) => r.label === roomChoice);
+  const effectiveRoom = isExistingRoomSelected ? roomChoice : newRoomName;
+  const startNumber = nextBedNumberForRoom(existingRooms, effectiveRoom);
+  const endNumber = startNumber + beds - 1;
+
+  const computedSubmitLabel =
+    kind === 'beds'
+      ? isExistingRoomSelected
+        ? `Add ${beds} ${beds === 1 ? 'bed' : 'beds'}`
+        : `Create ${beds} ${beds === 1 ? 'bed' : 'beds'}`
+      : 'Save and add photos';
+
+  useEffect(() => {
+    onFooterSync(computedSubmitLabel, busy);
+  }, [computedSubmitLabel, busy, onFooterSync]);
 
   function selectType(next: UnitType) {
     if (next === 'bed_space') {
@@ -106,19 +231,22 @@ export function AddUnitSheet({
   async function submit() {
     const next: Record<string, string> = {};
     if (kind === 'unit' && !name.trim()) next.name = 'Enter the unit name.';
-    if (kind === 'beds' && !room.trim()) next.room = 'Enter the room name.';
+    if (kind === 'beds' && !effectiveRoom.trim()) next.room = 'Enter the room name.';
     if (price === null || price <= 0) next.price = 'Enter a price above ₱0.';
     setErrors(next);
     setLimit(null);
     if (Object.keys(next).length > 0 || propertyId === null || price === null) return;
     try {
       if (kind === 'beds') {
+        const canonicalRoom =
+          existingRooms.find((r) => r.label.toLowerCase() === effectiveRoom.trim().toLowerCase())
+            ?.label ?? effectiveRoom.trim().slice(0, 40);
         const created = await createBeds.mutateAsync({
           propertyId,
-          groupLabel: room.trim().slice(0, 40),
+          groupLabel: canonicalRoom,
           namePrefix: 'Bed',
           count: beds,
-          startNumber: 1,
+          startNumber,
           mode,
           bathrooms: 1,
           description: null,
@@ -193,166 +321,165 @@ export function AddUnitSheet({
     }
   }
 
-  const footer = (
-    <>
-      <Button
-        data-sheet-cancel=""
-        type="button"
-        variant="outline"
-        className="min-h-11"
-        onClick={onClose}
-      >
-        Cancel
-      </Button>
-      <AsyncButton
-        type="submit"
-        form="add-unit-form"
-        className="min-h-11"
-        state={busy ? 'busy' : 'idle'}
-      >
-        {kind === 'beds' ? `Create ${beds} ${beds === 1 ? 'bed' : 'beds'}` : 'Save and add photos'}
-      </AsyncButton>
-    </>
-  );
+  const priceLabel =
+    kind === 'beds'
+      ? mode === 'long_term'
+        ? 'Monthly rent for each bed'
+        : 'Nightly price for each bed'
+      : mode === 'long_term'
+        ? 'Monthly rent'
+        : 'Nightly price';
 
   return (
-    <AppSheet
-      open={open}
-      onOpenChange={(next) => !next && onClose()}
-      height="full"
-      title={kind === 'beds' ? 'Add bed spaces' : 'Add a unit'}
-      description={
-        kind === 'beds'
-          ? 'Beds in one room share their photos and price. You can change each bed later.'
-          : 'Start with the basics. Photos come next.'
-      }
-      footer={footer}
+    <form
+      id="add-unit-form"
+      noValidate
+      className="flex flex-col gap-5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void submit();
+      }}
     >
-      <form
-        id="add-unit-form"
-        noValidate
-        className="flex flex-col gap-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit();
-        }}
-      >
-        {limit ? (
-          <Alert>
-            <AlertDescription>
-              You're using {limit.used} of {limit.limit} units.{' '}
-              <Link to="/settings/plan" className="font-medium text-primary-hover underline">
-                More units come with your plan.
-              </Link>
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        {errors.form ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errors.form}</AlertDescription>
-          </Alert>
-        ) : null}
-        <Field>
-          <FieldLabel id="add-type-label">What do guests get?</FieldLabel>
-          <RadioCards
-            aria-labelledby="add-type-label"
-            columns={1}
-            options={TYPE_OPTIONS}
-            value={selectedType}
-            onValueChange={selectType}
-          />
-        </Field>
+      {limit ? (
+        <Alert>
+          <AlertDescription>
+            You&apos;re using {limit.used} of {limit.limit} units.{' '}
+            <Link to="/settings/plan" className="font-medium text-primary-hover underline">
+              More units come with your plan.
+            </Link>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {errors.form ? (
+        <Alert variant="destructive">
+          <AlertDescription>{errors.form}</AlertDescription>
+        </Alert>
+      ) : null}
+      <Field>
+        <FieldLabel id="add-type-label">What do guests get?</FieldLabel>
+        <RadioCards
+          aria-labelledby="add-type-label"
+          columns={1}
+          options={TYPE_OPTIONS}
+          value={selectedType}
+          onValueChange={selectType}
+        />
+      </Field>
 
-        {kind === 'unit' ? (
-          <>
-            <Field data-invalid={errors.name ? true : undefined}>
-              <FieldLabel htmlFor="add-name">Unit name</FieldLabel>
-              <Input
-                id="add-name"
-                value={name}
-                maxLength={80}
-                placeholder="e.g. Suite A"
-                aria-invalid={errors.name ? true : undefined}
-                onChange={(event) => setName(event.target.value)}
+      {kind === 'unit' ? (
+        <>
+          <Field data-invalid={errors.name ? true : undefined}>
+            <FieldLabel htmlFor="add-name">Unit name</FieldLabel>
+            <Input
+              id="add-name"
+              value={name}
+              maxLength={80}
+              placeholder="e.g. Suite A"
+              aria-invalid={errors.name ? true : undefined}
+              onChange={(event) => setName(event.target.value)}
+            />
+            <FieldError>{errors.name}</FieldError>
+          </Field>
+          <RowGroup>
+            <RowControl label="Guests" hint="The most people who can stay">
+              <InlineStepper
+                id="add-guests"
+                label="guests"
+                value={guests}
+                onValueChange={setGuests}
+                min={1}
+                max={30}
               />
-              <FieldError>{errors.name}</FieldError>
+            </RowControl>
+          </RowGroup>
+        </>
+      ) : (
+        <>
+          {existingRooms.length > 0 ? (
+            <Field>
+              <FieldLabel htmlFor="add-room-select">Room</FieldLabel>
+              <NativeSelect
+                id="add-room-select"
+                className="w-full"
+                value={isExistingRoomSelected ? roomChoice : NEW_ROOM_VALUE}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setRoomChoice(value);
+                  setErrors((prev) => ({ ...prev, room: '' }));
+                }}
+              >
+                {existingRooms.map((r) => (
+                  <NativeSelectOption key={r.label} value={r.label}>
+                    {r.label} ({r.count} {r.count === 1 ? 'bed' : 'beds'})
+                  </NativeSelectOption>
+                ))}
+                <NativeSelectOption value={NEW_ROOM_VALUE}>New room…</NativeSelectOption>
+              </NativeSelect>
             </Field>
-            <RowGroup>
-              <RowControl label="Guests" hint="The most people who can stay">
-                <InlineStepper
-                  id="add-guests"
-                  label="guests"
-                  value={guests}
-                  onValueChange={setGuests}
-                  min={1}
-                  max={30}
-                />
-              </RowControl>
-            </RowGroup>
-          </>
-        ) : (
-          <>
+          ) : null}
+          {!isExistingRoomSelected ? (
             <Field data-invalid={errors.room ? true : undefined}>
-              <FieldLabel htmlFor="add-room">Room name</FieldLabel>
+              <FieldLabel htmlFor="add-room">
+                {existingRooms.length > 0 ? 'New room name' : 'Room name'}
+              </FieldLabel>
               <Input
                 id="add-room"
-                value={room}
+                value={newRoomName}
                 maxLength={40}
                 aria-invalid={errors.room ? true : undefined}
-                onChange={(event) => setRoom(event.target.value)}
+                onChange={(event) => setNewRoomName(event.target.value)}
               />
               <FieldError>{errors.room}</FieldError>
             </Field>
-            <RowGroup
-              footer={
-                <span aria-live="polite">
-                  Bed 1{beds > 1 ? ` … Bed ${beds}` : ''} in {room.trim() || 'this room'}
-                </span>
-              }
-            >
-              <RowControl label="Beds in this room">
-                <InlineStepper
-                  id="add-beds"
-                  label="beds"
-                  value={beds}
-                  onValueChange={setBeds}
-                  min={1}
-                  max={20}
-                />
-              </RowControl>
-            </RowGroup>
-          </>
-        )}
-
-        <Field>
-          <FieldLabel id="add-mode-label">How guests rent it</FieldLabel>
-          <SegmentedControl
-            aria-labelledby="add-mode-label"
-            value={mode}
-            onValueChange={setMode}
-            options={[
-              { value: 'short_stay', label: 'By the night' },
-              { value: 'long_term', label: 'By the month' },
-            ]}
-          />
-        </Field>
-        <Field data-invalid={errors.price ? true : undefined}>
-          <FieldLabel htmlFor="add-price">
-            {kind === 'beds' ? 'Price for each bed' : 'Price'}
-          </FieldLabel>
-          <MoneyInput
-            id="add-price"
-            value={price}
-            per={per}
-            onValueChange={setPrice}
-            invalid={errors.price !== undefined}
-          />
-          {kind === 'unit' && mode === 'short_stay' ? (
-            <FieldDescription>For up to 2 guests. Change it any time.</FieldDescription>
           ) : null}
-          <FieldError>{errors.price}</FieldError>
-        </Field>
-      </form>
-    </AppSheet>
+          <RowGroup
+            footer={
+              <span aria-live="polite">
+                Bed {startNumber}
+                {beds > 1 ? ` … Bed ${endNumber}` : ''} in {effectiveRoom.trim() || 'this room'}
+              </span>
+            }
+          >
+            <RowControl label={isExistingRoomSelected ? 'Beds to add' : 'Beds in this room'}>
+              <InlineStepper
+                id="add-beds"
+                label="beds"
+                value={beds}
+                onValueChange={setBeds}
+                min={1}
+                max={20}
+              />
+            </RowControl>
+          </RowGroup>
+        </>
+      )}
+
+      <Field>
+        <FieldLabel id="add-mode-label">How guests rent it</FieldLabel>
+        <SegmentedControl
+          aria-labelledby="add-mode-label"
+          value={mode}
+          onValueChange={setMode}
+          options={[
+            { value: 'short_stay', label: 'Nightly stays' },
+            { value: 'long_term', label: 'Monthly rent' },
+          ]}
+        />
+      </Field>
+      <Field data-invalid={errors.price ? true : undefined}>
+        <FieldLabel htmlFor="add-price">{priceLabel}</FieldLabel>
+        <MoneyInput
+          id="add-price"
+          value={price}
+          per={per}
+          onValueChange={setPrice}
+          invalid={errors.price !== undefined}
+        />
+        {kind === 'unit' && mode === 'short_stay' ? (
+          <FieldDescription>For up to 2 guests. Change it any time.</FieldDescription>
+        ) : null}
+        <FieldError>{errors.price}</FieldError>
+      </Field>
+    </form>
   );
 }

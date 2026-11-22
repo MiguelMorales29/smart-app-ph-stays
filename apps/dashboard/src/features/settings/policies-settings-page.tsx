@@ -310,9 +310,9 @@ function PoliciesForm({
         ) : null}
       </RowGroup>
 
-      <fieldset className="flex flex-col gap-3">
+      <fieldset className="flex min-w-0 flex-col gap-3">
         <legend className="mb-1.5 text-sm font-medium text-muted-foreground">House rules</legend>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-0 flex-wrap gap-2">
           {ruleChips.map((rule) => (
             <ChoiceChip
               key={rule}
@@ -328,7 +328,7 @@ function PoliciesForm({
           ))}
         </div>
         <form
-          className="flex gap-2"
+          className="flex min-w-0 gap-2"
           onSubmit={(event) => {
             event.preventDefault();
             addOwnRule();
@@ -339,6 +339,7 @@ function PoliciesForm({
           </label>
           <Input
             id="pol-own-rule"
+            className="min-w-0 flex-1"
             placeholder="Add your own rule"
             maxLength={200}
             value={ownRule}

@@ -6,6 +6,7 @@ import { DevSwitchPanel, type DevSwitchField } from '@smartapp/ui/compositions/d
 import type {
   ClockKey,
   ClockOption,
+  PlanLimitKey,
   ScenarioKey,
   ScenarioOption,
   SwitchState,
@@ -109,6 +110,25 @@ export function DashboardSwitchBar() {
         }
       },
     },
+    ...(import.meta.env.VITE_APP_ENV !== 'production'
+      ? [
+          {
+            id: 'planLimit',
+            label: 'Plan limit',
+            value: state.planLimit,
+            options: [
+              { value: 'on', label: 'On (default)' },
+              { value: 'off', label: 'Off (testing)' },
+            ],
+            onChange: (value: string) => {
+              const nextLimit = controller.planLimitKeySchema.safeParse(value);
+              if (nextLimit.success) {
+                applyNextState({ ...state, planLimit: nextLimit.data satisfies PlanLimitKey });
+              }
+            },
+          },
+        ]
+      : []),
     ...(state.pack === 'error'
       ? [
           {

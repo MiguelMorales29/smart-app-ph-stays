@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import {
   ArrowDownIcon,
@@ -15,7 +15,7 @@ import {
   PlusIcon,
   XIcon,
 } from 'lucide-react';
-import type { OwnerUnitListItemView, UnitStatus } from '@smartapp/core';
+import { countPlanUnits, type OwnerUnitListItemView, type UnitStatus } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
 import {
@@ -45,9 +45,9 @@ import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { notify } from '@smartapp/ui/lib/notify';
 import { cn } from '@smartapp/ui/lib/utils';
-import { useLastDefined } from '@smartapp/ui/hooks/use-last-defined';
 import { useDashboard } from '@/app/dashboard-context';
 import { useOwnerPropertyQuery } from '@/data/property/reads';
+import { useMyAccountQuery } from '@/data/auth/reads';
 import { extractAppError } from '@/data/shared';
 import { useBulkUnitPriceMutation, useBulkUnitStatusMutation } from '@/data/units/bulk';
 import { useOwnerUnitsQuery } from '@/data/units/reads';
@@ -57,8 +57,8 @@ import {
   useReorderUnitsMutation,
 } from '@/data/units/writes';
 import { AddUnitSheet } from './add-unit-sheet';
+import { UnitNotReadySheet, type NotReadyState } from './unit-not-ready-sheet';
 import {
-  MISSING_LABEL,
   UNIT_STATUS_META,
   UNIT_TYPE_LABEL,
   UnitStatusBadge,
@@ -71,6 +71,7 @@ export type UnitsFilter = 'listed' | 'hidden' | 'drafts';
 export interface UnitsSearch {
   readonly filter?: UnitsFilter;
   readonly add?: 'unit' | 'beds';
+  readonly room?: string;
 }
 
 const FILTER_STATUS: Record<UnitsFilter, UnitStatus> = {
@@ -125,19 +126,12 @@ function entryUnitIds(entry: Entry): string[] {
   return entry.kind === 'unit' ? [entry.item.unit.id] : entry.beds.map((bed) => bed.unit.id);
 }
 
-interface NotReady {
-  readonly units: readonly {
-    readonly id: string;
-    readonly name: string;
-    readonly missing: readonly string[];
-  }[];
-}
-
 /** /units (OW-08, OW-27): every unit and bed space, filters, bulk actions and reorder. */
 export function UnitsPage() {
   const search = useSearch({ from: '/app-frame/units' });
   const navigate = useNavigate();
-  const { today } = useDashboard();
+  const { today, client } = useDashboard();
+  const account = useMyAccountQuery();
   const property = useOwnerPropertyQuery();
   const units = useOwnerUnitsQuery();
   const bulkStatus = useBulkUnitStatusMutation();
@@ -149,11 +143,11 @@ export function UnitsPage() {
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [reordering, setReordering] = useState(false);
-  const [notReady, setNotReady] = useState<NotReady | null>(null);
-  // Keep the list while the sheet slides away (Pattern Guide §2).
-  const shownNotReady = useLastDefined(notReady);
+  const [notReady, setNotReady] = useState<NotReadyState | null>(null);
+  const [limitSheetOpen, setLimitSheetOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const all = useMemo(() => units.data ?? [], [units.data]);
   const byId = useMemo(() => new Map(all.map((item) => [item.unit.id, item])), [all]);
@@ -162,17 +156,26 @@ export function UnitsPage() {
   const entries = toEntries(visible);
   const propertyId = property.data?.property.id ?? null;
 
+  const planUnitsUsed = useMemo(() => countPlanUnits(all.map((item) => item.unit)), [all]);
+  const planLimitTotal =
+    (account.data?.plan?.included_units ?? 5) + (account.data?.subscription?.extra_units ?? 0);
+  const planLimitEnforced = client?.planLimit !== 'off';
+  const atPlanLimit = planLimitEnforced && planUnitsUsed >= planLimitTotal;
+
   function go(
-    change: { filter?: UnitsFilter | null; add?: 'unit' | 'beds' | null },
+    change: { filter?: UnitsFilter | null; add?: 'unit' | 'beds' | null; room?: string | null },
     replace = false,
   ) {
     const filterValue = change.filter === undefined ? search.filter : change.filter;
     const addValue = change.add === undefined ? search.add : change.add;
+    const roomValue =
+      change.room !== undefined ? change.room : addValue === 'beds' ? search.room : null;
     void navigate({
       to: '/units',
       search: {
         ...(filterValue ? { filter: filterValue } : {}),
         ...(addValue ? { add: addValue } : {}),
+        ...(roomValue ? { room: roomValue } : {}),
       },
       replace,
     });
@@ -182,8 +185,28 @@ export function UnitsPage() {
     go({ filter: next === 'all' ? null : next });
   }
 
-  function openAdd(kind: 'unit' | 'beds') {
-    go({ add: kind });
+  function openAdd(kind: 'unit' | 'beds', roomLabel?: string) {
+    if (planLimitEnforced) {
+      if (kind === 'beds' && roomLabel && propertyId) {
+        const afterAddingOneBed = countPlanUnits([
+          ...all.map((item) => item.unit),
+          {
+            property_id: propertyId,
+            unit_type: 'bed_space',
+            group_label: roomLabel,
+            archived_at: null,
+          },
+        ]);
+        if (afterAddingOneBed > planLimitTotal) {
+          setLimitSheetOpen(true);
+          return;
+        }
+      } else if (atPlanLimit) {
+        setLimitSheetOpen(true);
+        return;
+      }
+    }
+    go({ add: kind, room: roomLabel ?? null });
   }
 
   function toggle(ids: readonly string[], on: boolean) {
@@ -348,10 +371,50 @@ export function UnitsPage() {
       open={search.add !== undefined}
       kind={search.add ?? 'unit'}
       propertyId={propertyId}
-      unitCount={all.length}
-      onKindChange={(kind) => go({ add: kind }, true)}
-      onClose={() => go({ add: null })}
+      units={all}
+      initialRoom={search.room ?? null}
+      onKindChange={(kind) =>
+        go({ add: kind, room: kind === 'beds' ? (search.room ?? null) : null }, true)
+      }
+      onClose={() => go({ add: null, room: null })}
     />
+  );
+
+  const planLimitSheet = (
+    <AppSheet
+      open={limitSheetOpen}
+      onOpenChange={setLimitSheetOpen}
+      size="sm"
+      title={`You've used all ${planLimitTotal} units on your plan`}
+      description="Add more units to your plan, or archive a unit you're not renting right now."
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            onClick={() => {
+              setLimitSheetOpen(false);
+              listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          >
+            Archive a unit
+          </Button>
+          <Button
+            className="min-h-11"
+            render={<Link to="/settings/plan" />}
+            onClick={() => setLimitSheetOpen(false)}
+          >
+            See plans
+          </Button>
+        </>
+      }
+    >
+      <p className="text-sm text-muted-foreground tabular">
+        Currently using {planUnitsUsed} of {planLimitTotal} units on your plan. A room of up to 12
+        bed spaces counts as 1 unit.
+      </p>
+    </AppSheet>
   );
 
   if (all.length === 0) {
@@ -409,15 +472,20 @@ export function UnitsPage() {
 
       {/* D73: phones put [+ Add unit] (left) and ⋯ (right) above the chips; desktop puts them on the right of the chips row. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="order-1 flex items-center justify-between gap-2 sm:order-2 sm:shrink-0 sm:justify-end">
-          <Button
-            className="min-h-11 sm:min-h-9"
-            disabled={propertyId === null}
-            onClick={() => openAdd('unit')}
-          >
-            <PlusIcon aria-hidden="true" />
-            Add unit
-          </Button>
+        <div className="order-1 flex flex-wrap items-center justify-between gap-2 sm:order-2 sm:shrink-0 sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="min-h-11 sm:min-h-9"
+              disabled={propertyId === null}
+              onClick={() => openAdd('unit')}
+            >
+              <PlusIcon aria-hidden="true" />
+              Add unit
+            </Button>
+            <span className="text-xs text-muted-foreground tabular">
+              {planUnitsUsed} of {planLimitTotal} units on your plan
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             {reordering ? (
               <Button
@@ -540,7 +608,7 @@ export function UnitsPage() {
           </button>
         </p>
       ) : (
-        <>
+        <div ref={listRef}>
           {/* Cards: rows on phones (< 640px), auto-fill grid from 640px up (2 on tablet, 3 on 1280px, 4 from 1536px). */}
           <ul
             className={cn(
@@ -567,6 +635,7 @@ export function UnitsPage() {
                     selecting={selecting}
                     selected={selected}
                     onCheck={toggle}
+                    onAddBed={() => openAdd('beds', entry.label)}
                     menuFor={menuFor}
                   />
                 </li>
@@ -615,11 +684,26 @@ export function UnitsPage() {
                           </TableCell>
                         ) : null}
                         <TableCell colSpan={5} className="font-medium">
-                          {entry.label}
-                          <span className="text-muted-foreground">
-                            {' '}
-                            · {entry.beds.length} beds · {listed} listed
-                          </span>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span>
+                              {entry.label}
+                              <span className="text-muted-foreground">
+                                {' '}
+                                · {entry.beds.length} {entry.beds.length === 1 ? 'bed' : 'beds'} ·{' '}
+                                {listed} listed
+                              </span>
+                            </span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="min-h-9"
+                              onClick={() => openAdd('beds', entry.label)}
+                            >
+                              <PlusIcon aria-hidden="true" />
+                              Add a bed
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>,
                     );
@@ -669,7 +753,7 @@ export function UnitsPage() {
               </TableBody>
             </Table>
           </div>
-        </>
+        </div>
       )}
 
       {selecting && selectedIds.length > 0 ? (
@@ -762,50 +846,9 @@ export function UnitsPage() {
         </Field>
       </AppSheet>
 
-      <AppSheet
-        open={notReady !== null}
-        onOpenChange={(open) => !open && setNotReady(null)}
-        size="sm"
-        title={
-          shownNotReady?.units.length === 1
-            ? `${shownNotReady.units[0]?.name ?? 'This unit'} can't be listed yet`
-            : `${shownNotReady?.units.length ?? 0} units can't be listed yet`
-        }
-        description="Finish these first, then show it on your page."
-        footer={
-          <Button className="min-h-11" onClick={() => setNotReady(null)}>
-            Got it
-          </Button>
-        }
-      >
-        <ul className="space-y-3">
-          {shownNotReady?.units.map((unit) => (
-            <li key={unit.id} className="space-y-1">
-              {shownNotReady.units.length > 1 ? (
-                <p className="text-sm font-medium">{unit.name}</p>
-              ) : null}
-              <ul className="space-y-1">
-                {unit.missing.map((missing) => (
-                  <li key={missing}>
-                    <Link
-                      to="/units/$unitId"
-                      params={{ unitId: unit.id }}
-                      search={{ section: missing === 'photos' ? 'photos' : 'price' }}
-                      className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary-hover underline-offset-4 hover-hover:hover:underline"
-                    >
-                      {missing === 'photos' ? (
-                        <ImageIcon aria-hidden="true" className="size-4" />
-                      ) : null}
-                      {MISSING_LABEL[missing] ?? missing}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      </AppSheet>
+      <UnitNotReadySheet notReady={notReady} onClose={() => setNotReady(null)} />
 
+      {planLimitSheet}
       {sheet}
     </section>
   );
@@ -948,6 +991,7 @@ function RoomCard({
   selecting,
   selected,
   onCheck,
+  onAddBed,
   menuFor,
 }: {
   readonly label: string;
@@ -955,6 +999,7 @@ function RoomCard({
   readonly selecting: boolean;
   readonly selected: ReadonlySet<string>;
   readonly onCheck: (ids: readonly string[], on: boolean) => void;
+  readonly onAddBed: () => void;
   readonly menuFor: (item: OwnerUnitListItemView) => React.ReactNode;
 }) {
   const listed = beds.filter((bed) => bed.unit.status === 'listed').length;
@@ -963,12 +1008,13 @@ function RoomCard({
   const price = first ? unitPriceText(first) : null;
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex items-center gap-3 border-b border-border p-3">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
         {first ? <Cover item={first} className="w-20 shrink-0 rounded-md" /> : null}
         <div className="min-w-0 flex-1">
           <h2 className="line-clamp-2 font-medium">{label}</h2>
           <p className="text-sm text-muted-foreground tabular">
-            {beds.length} beds · {listed} listed{price ? ` · ${price}` : ''}
+            {beds.length} {beds.length === 1 ? 'bed' : 'beds'} · {listed} listed
+            {price ? ` · ${price}` : ''}
           </p>
         </div>
         {selecting ? (
@@ -979,7 +1025,18 @@ function RoomCard({
               onCheckedChange={(on) => onCheck(ids, on)}
             />
           </div>
-        ) : null}
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-11 shrink-0 sm:min-h-9"
+            onClick={onAddBed}
+          >
+            <PlusIcon aria-hidden="true" />
+            Add a bed
+          </Button>
+        )}
       </div>
       <ul className="divide-y divide-border">
         {beds.map((bed) => (

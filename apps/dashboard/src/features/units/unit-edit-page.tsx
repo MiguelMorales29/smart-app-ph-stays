@@ -7,7 +7,15 @@ import {
   useRouterState,
   useSearch,
 } from '@tanstack/react-router';
-import { BedDoubleIcon, CalendarClockIcon, ImageIcon, SparklesIcon, TagIcon } from 'lucide-react';
+import {
+  BedDoubleIcon,
+  CalendarClockIcon,
+  CheckCircle2Icon,
+  CircleIcon,
+  ImageIcon,
+  SparklesIcon,
+  TagIcon,
+} from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -26,6 +34,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { DraftNotice } from '@smartapp/ui/compositions/draft-notice';
+import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { RowControl, RowGroup } from '@smartapp/ui/compositions/grouped-rows';
 import { InlineStepper } from '@smartapp/ui/compositions/inline-stepper';
@@ -47,8 +56,9 @@ import { useSaveUnitPricesMutation } from '@/data/prices/writes';
 import { extractAppError } from '@/data/shared';
 import { saveUnitInputFromDetail } from '@/data/units/bulk';
 import { useAmenitiesQuery, useOwnerUnitQuery, useOwnerUnitsQuery } from '@/data/units/reads';
-import { useSaveUnitMutation } from '@/data/units/writes';
+import { useSaveUnitMutation, useSetUnitStatusMutation } from '@/data/units/writes';
 import { applyAppErrorToForm } from '@/data/use-form-errors';
+import { UnitNotReadySheet, type NotReadyState } from './unit-not-ready-sheet';
 import {
   AmenitiesField,
   BookingRulesFields,
@@ -188,7 +198,10 @@ function UnitEditor({
   const save = useSaveUnitMutation();
   const savePhotos = useSetUnitPhotosMutation();
   const savePrices = useSaveUnitPricesMutation();
+  const setUnitStatus = useSetUnitStatusMutation();
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [listing, setListing] = useState(false);
+  const [notReady, setNotReady] = useState<NotReadyState | null>(null);
   const [stale, setStale] = useState(false);
   const [topError, setTopError] = useState<string | null>(null);
   const [current, setCurrent] = useState(detail);
@@ -448,20 +461,22 @@ function UnitEditor({
         setRules(rulesDraftFrom(next));
       }
       if (photos.dirty) {
-        await savePhotos.mutateAsync({
+        const savedPhotosList = await savePhotos.mutateAsync({
           propertyId: unit.property_id,
           units: roomBeds.length > 0 ? roomBeds : [{ unitId: unit.id, name: unit.name }],
           photos: photos.photosToSave,
         });
         photos.markSaved();
+        setCurrent((prev) => ({ ...prev, photos: savedPhotosList }));
       }
       setState('done');
+      return true;
     } catch (caught) {
       setState('idle');
       const error = extractAppError(caught);
       if (readErrorDetails(error).reason === 'changed_elsewhere') {
         setStale(true);
-        return;
+        return false;
       }
       const applied = applyAppErrorToForm(caught, form, {
         knownFields: [
@@ -477,6 +492,47 @@ function UnitEditor({
       });
       setTopError(applied.topError);
       if (!applied.topError) onSection('basics');
+      return false;
+    }
+  }
+
+  async function onListUnit() {
+    setTopError(null);
+    if (photos.busy) {
+      setTopError('Wait for the photos to finish uploading, then list this unit.');
+      return;
+    }
+    setListing(true);
+    try {
+      if (dirty) {
+        const savedOk = await onSave();
+        if (!savedOk) return;
+      }
+      const updated = await setUnitStatus.mutateAsync({
+        unitId: unit.id,
+        status: 'listed',
+        expectedUpdatedAt: null,
+      });
+      setCurrent((prev) => ({ ...prev, unit: updated }));
+      notify.success(`${updated.name} is now listed`);
+    } catch (caught) {
+      const error = extractAppError(caught);
+      const details = readErrorDetails(error);
+      if (details.reason === 'unit_not_ready') {
+        setNotReady({
+          units: [
+            {
+              id: unit.id,
+              name: unit.name,
+              missing: details.missing.length > 0 ? details.missing : ['photos', 'price'],
+            },
+          ],
+        });
+        return;
+      }
+      setTopError(error.message);
+    } finally {
+      setListing(false);
     }
   }
 
@@ -772,6 +828,83 @@ function UnitEditor({
     </div>
   );
 
+  const hasEnoughPhotos = photoCount >= 3;
+  const hasPrice = !needsYou.price;
+  const isReadyToList = hasEnoughPhotos && hasPrice && !photos.busy;
+
+  const readinessCard =
+    unit.status !== 'listed' ? (
+      <section
+        aria-label="Listing readiness"
+        data-slot="unit-readiness-card"
+        className="space-y-3 rounded-xl border border-border bg-card p-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <h2 className="text-sm font-semibold text-foreground">
+              {isReadyToList ? 'Ready to list' : 'Before you list this unit'}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {isReadyToList
+                ? 'Guests will be able to see and book this unit once listed.'
+                : 'Add at least 3 photos and a price so guests can book.'}
+            </p>
+          </div>
+          {!wide && activeSection !== null ? <UnitStatusBadge status={unit.status} /> : null}
+        </div>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              {hasEnoughPhotos ? (
+                <CheckCircle2Icon aria-hidden="true" className="size-4 shrink-0 text-success" />
+              ) : (
+                <CircleIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+              )}
+              <span className="tabular">At least 3 photos ({Math.min(photoCount, 3)} of 3)</span>
+            </span>
+            {!hasEnoughPhotos && activeSection !== 'photos' ? (
+              <Link
+                to="/units/$unitId/$section"
+                params={{ unitId: unit.id, section: 'photos' }}
+                className="text-xs font-medium text-primary-hover underline-offset-4 hover-hover:hover:underline"
+              >
+                Add photos
+              </Link>
+            ) : null}
+          </li>
+          <li className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              {hasPrice ? (
+                <CheckCircle2Icon aria-hidden="true" className="size-4 shrink-0 text-success" />
+              ) : (
+                <CircleIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+              )}
+              <span>{isLong ? 'Monthly rent set' : 'Nightly price set'}</span>
+            </span>
+            {!hasPrice && activeSection !== 'price' ? (
+              <Link
+                to="/units/$unitId/$section"
+                params={{ unitId: unit.id, section: 'price' }}
+                className="text-xs font-medium text-primary-hover underline-offset-4 hover-hover:hover:underline"
+              >
+                Set price
+              </Link>
+            ) : null}
+          </li>
+        </ul>
+        {isReadyToList ? (
+          <AsyncButton
+            type="button"
+            className="min-h-11 w-full sm:min-h-9"
+            state={listing ? 'busy' : 'idle'}
+            onClick={() => void onListUnit()}
+          >
+            List this unit
+          </AsyncButton>
+        ) : null}
+      </section>
+    ) : null;
+
   const alerts = (
     <>
       {stale ? (
@@ -806,6 +939,7 @@ function UnitEditor({
         {wide || activeSection === null ? (
           <aside className="space-y-5 lg:sticky lg:top-[calc(var(--shell-header-height)+1rem)]">
             {unitHeader}
+            {readinessCard}
             {!wide ? alerts : null}
             <SettingsList label="Unit sections" groups={[{ id: 'sections', title: '', rows }]} />
           </aside>
@@ -813,6 +947,15 @@ function UnitEditor({
 
         {activeSection !== null ? (
           <section className="min-w-0 max-w-[560px] space-y-5">
+            {!wide ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="truncate font-heading text-base font-semibold text-foreground">
+                  {unit.name}
+                </p>
+                <UnitStatusBadge status={unit.status} />
+              </div>
+            ) : null}
+            {!wide ? readinessCard : null}
             {alerts}
             {openSectionMeta ? (
               <h1 className="font-heading text-2xl font-semibold tracking-tight max-md:sr-only lg:text-xl">
@@ -823,6 +966,12 @@ function UnitEditor({
           </section>
         ) : null}
       </div>
+
+      <UnitNotReadySheet
+        notReady={notReady}
+        onClose={() => setNotReady(null)}
+        onPickSection={(_, section) => onSection(section)}
+      />
 
       <SaveBar
         dirty={dirty}
