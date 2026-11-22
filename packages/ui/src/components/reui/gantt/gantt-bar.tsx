@@ -253,6 +253,16 @@ function GanttBar<TData = unknown>({
     </>
   );
 
+  const barAriaLabel = settings.i18n.functions.formatEventAriaLabel({
+    title: event.title,
+    timeLabel,
+    milestoneLabel: milestone ? settings.i18n.labels.milestone : undefined,
+    rowTitle,
+    progressLabel: progress !== null ? settings.i18n.labels.progress(progress) : undefined,
+    plannedLabel,
+    continues: segment.continuesBefore || segment.continuesAfter,
+  });
+
   const defaultProps = {
     type: 'button' as const,
     'data-slot': 'gantt-bar',
@@ -268,15 +278,7 @@ function GanttBar<TData = unknown>({
     'data-completed': progress === 100 || undefined,
     'data-baseline': !!baseline || undefined,
     'data-baseline-variance': baselineVariance ?? undefined,
-    'aria-label': settings.i18n.functions.formatEventAriaLabel({
-      title: event.title,
-      timeLabel,
-      milestoneLabel: milestone ? settings.i18n.labels.milestone : undefined,
-      rowTitle,
-      progressLabel: progress !== null ? settings.i18n.labels.progress(progress) : undefined,
-      plannedLabel,
-      continues: segment.continuesBefore || segment.continuesAfter,
-    }),
+    'aria-label': labelOutside || milestone ? barAriaLabel : undefined,
     style: {
       '--gantt-event-color': event.color ?? 'var(--color-primary)',
     } as CSSProperties,
@@ -349,6 +351,7 @@ function GanttBar<TData = unknown>({
           <CheckIcon className="relative size-2.5 shrink-0 opacity-80" aria-hidden="true" />
         )}
         {content}
+        {!labelOutside && !milestone && <span className="sr-only">, {barAriaLabel}</span>}
         {resizeHandles}
       </>
     ),
