@@ -13,24 +13,25 @@ Reserving dates, the booking form and payment stay in Phase 6. Buttons that lead
 
 ## The prompts
 
-| #     | Prompt                                                              | Model (Antigravity)    | Size | Depends on |
-| ----- | ------------------------------------------------------------------- | ---------------------- | ---- | ---------- |
-| P5-0  | Dock with +, Edit unit rows, badges, Preview switch, spacing        | Gemini 4 Argon, Medium | M    | —          |
-| P5-0b | Units page, unit cards and dock polish (round 2, D73)               | Gemini 4 Argon, Medium | M    | P5-0       |
-| P5-1  | Data contract for the pages and the editor                          | Gemini 4 Argon, Medium | M    | —          |
-| P5-2  | Property page                                                       | Gemini 4 Argon, Medium | L    | P5-1       |
-| P5-3  | Unit page                                                           | Gemini 4 Argon, Medium | M    | P5-2       |
-| P5-4  | Install, splash, share, offline, privacy                            | Gemini Flash, High     | M    | P5-2       |
-| P5-5  | Editor engine (store, preview, autosave, Undo, publish, phone dock) | Gemini 4 Argon, High   | L    | P5-2       |
-| P5-6  | Editor parts (the 14 panels)                                        | Gemini 4 Argon, Medium | L    | P5-5       |
-| P5-7  | Tests and close-out                                                 | Gemini Flash, High     | M    | all        |
+| #     | Prompt                                                              | Model (Antigravity)            | Size | Depends on |
+| ----- | ------------------------------------------------------------------- | ------------------------------ | ---- | ---------- |
+| P5-0  | Dock with +, Edit unit rows, badges, Preview switch, spacing        | Gemini 4 Argon, Medium         | M    | —          |
+| P5-0b | Units page, unit cards and dock polish (round 2, D73)               | Gemini 4 Argon, Medium         | M    | P5-0       |
+| P5-1  | Data contract for the pages and the editor                          | Gemini 4 Argon, Medium         | M    | —          |
+| P5-2  | Property page                                                       | Gemini 4 Argon, Medium         | L    | P5-1       |
+| P5-2b | Property page structure, round 2 (D79 to D82)                       | Gemini 4 Argon or Neon, Medium | M    | P5-2       |
+| P5-3  | Unit page                                                           | Gemini 4 Argon, Medium         | M    | P5-2       |
+| P5-4  | Install, splash, share, offline, privacy                            | Gemini Flash, High             | M    | P5-2       |
+| P5-5  | Editor engine (store, preview, autosave, Undo, publish, phone dock) | Gemini 4 Argon, High           | L    | P5-2       |
+| P5-6  | Editor parts (the 14 panels)                                        | Gemini 4 Argon, Medium         | L    | P5-5       |
+| P5-7  | Tests and close-out                                                 | Gemini Flash, High             | M    | all        |
 
 P5-0 and P5-1 can run in parallel (different files). Everything else in order.
 
 ## Rules for every Phase 5 prompt
 
-1. **Read first:** AGENTS.md, docs/pattern-guide.md, docs/decisions.md (D60 to D70), the files the prompt names. Load the repo skills `smartapp-ui`, `smartapp-ui-writing`, `smartapp-ui-check`.
-2. **Reuse before building.** The food app's working code is next to this repo at `../Smart-App-PH---FINAL-2026` (read-only; never edit it). If that folder is missing, stop and ask Lex for its path; don't guess the code. Each prompt names the exact files to port. Port means: copy the logic, rename to this app's words, use our tokens and compositions, keep its tests.
+1. **Read first:** AGENTS.md, docs/pattern-guide.md, docs/research/phase-5-guest-pages.md, docs/decisions.md (D60 to D77), the files the prompt names. Load the repo skills `smartapp-ui`, `smartapp-ui-writing`, `smartapp-ui-check`.
+2. **Reuse before building.** The food app's working code is the reference. At the start of any prompt that ports from it, clone it read-only: `rm -rf /tmp/food-ref && gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` (always the latest main; never edit it). Each prompt names the exact files to port. Port means: copy the logic, rename to this app's words, use our tokens and compositions, keep its tests.
 3. **Components:** sourcing order D60. Our compositions first (`packages/ui/src/compositions`), then installed components, then shadcn / ReUI / Dice UI (Base UI builds) with the pinned CLI. Ask before adding any other package. Never hand-build something a listed library has. Read how an installed component animates, scrolls and shows selection before wiring it (the Phase 4 lesson).
 4. **Storefront looks:** the property's own colours through `PropertyTheme` and `--property-*` tokens; light only; text contrast fixed by `packages/core/src/theme/palette.ts`. The dashboard keeps the platform look (D61).
 5. **Words:** sentence case, plain English for Filipino owners and guests, ₱1,500, "Fri, 12 Dec" (skill `smartapp-ui-writing`).

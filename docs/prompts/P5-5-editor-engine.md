@@ -2,9 +2,9 @@
 
 Model: Gemini 4 Argon, High. Planning mode. After P5-2 is merged (P5-3 and P5-4 can be merged or not).
 
-Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7a "How the editor works" (steps 1 to 9) and decisions E1, E2, Stack register (Zustand with zundo). Contract from P5-1: `getPageEditor`, `savePageDraft`, `discardPageDraft`, `publishPropertyPage`, `getPageChanges`, and `packages/core/src/editor/preview-messages.ts`.
+Read first: AGENTS.md, docs/prompts/P5-guide.md, docs/research/phase-5-guest-pages.md (section 7), Feature blueprint §7a "How the editor works" (steps 1 to 9) and decisions E1, E2, Stack register (Zustand with zundo). Contract from P5-1: `getPageEditor`, `savePageDraft`, `discardPageDraft`, `publishPropertyPage`, `getPageChanges`, and `packages/core/src/editor/preview-messages.ts`.
 
-Port from the food app (`../Smart-App-PH---FINAL-2026`, read-only; it is the approved engine, decision E2):
+Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing; it is the approved engine, decision E2):
 
 - `apps/dashboard/src/features/editor/screens/editor.tsx`, `use-editor-draft.ts`, `preview-frame.tsx`, `preview-pages.tsx`, `parts-list.tsx`, `part-panel.tsx`, `phone-sheet.tsx`, `use-sheet-gestures.ts`, `editor-top-bar.tsx`, `editor-dialogs.tsx`, `parts.ts`
 - `apps/storefront/src/app/[shop]/preview/page.tsx` and `apps/storefront/src/features/preview/`
@@ -31,7 +31,9 @@ The owner opens `/editor`, sees the real property page live, picks a part, and e
 3. **Preview frame:**
    - `/<slug>/preview` in the storefront (noindex, `Cache-Control: no-store`, `frame-ancestors` only the dashboard origin from env) renders the P5-2 / P5-3 pages from a draft received over `postMessage`.
    - Every message is checked by origin, sender and the Zod schema.
-   - Tapping a part on the preview selects it; hovering a part in the list outlines it.
+   - Tapping a part on the preview selects it; a second tap on a link or button inside it follows it (Shopify's pattern); hovering a part in the list outlines it.
+   - Sticky and fixed elements in the preview (the top bar, the phone action bar) stay as guests see them, but never cover a selected part: selecting scrolls the part into view below them and draws its outline on top.
+   - A "Preview as a guest" switch hides every outline and handle, so the owner sees exactly the live page.
    - Switches: Phone 390 / Laptop 1280 (scaled to fit), and pages Home · A unit · Booking form (placeholder) · Property info.
    - A slow preview says why after 4 s; "Try again" after 8 s.
 4. **Layout:**

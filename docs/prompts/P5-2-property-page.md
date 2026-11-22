@@ -2,9 +2,9 @@
 
 Model: Gemini 4 Argon, Medium. Planning mode. After P5-1 is merged.
 
-Read first: AGENTS.md, docs/prompts/P5-guide.md, Feature blueprint §7 (`/` brief), §7a "The sections" (parts 4 to 15) and decisions E4, E5, E7, E9. Files: `apps/storefront/src/app/[slug]/`, `components/frames/PropertyFrame.tsx`, `packages/ui/src/compositions/property-theme.tsx`, `packages/core/src/theme/palette.ts`.
+Read first: AGENTS.md, docs/prompts/P5-guide.md, docs/research/phase-5-guest-pages.md (sections 1, 3 to 6), Feature blueprint §7 (`/` brief), §7a "The sections" (parts 4 to 15) and decisions E4, E5, E7, E9. Files: `apps/storefront/src/app/[slug]/`, `components/frames/PropertyFrame.tsx`, `packages/ui/src/compositions/property-theme.tsx`, `packages/core/src/theme/palette.ts`.
 
-Port from the food app (`../Smart-App-PH---FINAL-2026`, read-only):
+Port from the food app (`/tmp/food-ref`, read-only; clone it there first with `gh repo clone webserbisyo/Smart-App-PH---FINAL-2026 /tmp/food-ref` if it is missing):
 
 - `packages/ui/src/compositions/banner-carousel.tsx` and `banner-carousel-slides.tsx` (the timer dots, Pause, reduced motion, loads only for 2+ slides)
 - `apps/storefront/src/features/home/components/announcement-strip.tsx`, `home-hero.tsx`, `home-info-card.tsx`, `home-sections.tsx`, `shop-footer.tsx` (structure and the show/hide part switch)
@@ -48,8 +48,16 @@ A guest opens `/<slug>` on a phone and understands the place, sees its units wit
     - "Report this page" (PA-11) opens a sheet with three reasons and a note (the `reportPage` operation).
 14. **Footer:** privacy link, "Made with Smart App PH", demo label on demo accounts.
 15. **Sticky action bar on phones:**
-    - "Check dates" (goes to the first unit, or to the units list when there are several) and "Message".
+    - "Check dates" (goes to the first unit, or to the units list when there are several) and "Message", which opens a contact sheet with the owner's channels (Messenger, call, text, Facebook from Settings → Property). Not `/inquire`: inquiries are wave 2 (BK-10).
     - It never covers the last section, and it respects the home indicator.
+
+## Added after the research pass (22 Nov 2026, D74 to D77)
+
+- Unit cards: "from ₱X a night" plus "+ ₱500 cleaning fee" when the unit has a required fee (D74).
+- Name block: "See reviews on Google" when the owner set the link.
+- "Show all photos" groups photos by unit name.
+- Trust panel (D77): the official web address and "This is the official page for <name>"; "Pay only to the accounts shown in your booking conversation. We never ask you to pay a personal GCash or bank account in chat or by text."; tapping "Verified owner" opens a sheet saying what we checked.
+- Install button in Facebook, Messenger, Instagram or TikTok in-app browsers: "Open in Safari or Chrome to install" with Copy link (D76; the full rules are in P5-4).
 
 ## Rules
 
