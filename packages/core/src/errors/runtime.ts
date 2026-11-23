@@ -28,6 +28,7 @@ export const ERROR_REASONS = [
   'wallet_not_checked',
   'wrong_password',
   'unit_not_ready',
+  'mode_locked',
 ] as const;
 
 export type ErrorReason = (typeof ERROR_REASONS)[number];

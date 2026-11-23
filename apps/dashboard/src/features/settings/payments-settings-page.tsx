@@ -21,6 +21,7 @@ import {
   type PaymentAccountMethod,
   type PaymentAccountsRow,
 } from '@smartapp/core';
+import { resolveMemoryUploadUrl } from '@smartapp/data';
 import { checkPhotoFile, prepareQrImage } from '@smartapp/data/compress-image';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
@@ -407,7 +408,9 @@ function AccountForm({
   const { offline } = useOfflineSave();
   const [draft, setDraft] = useState(() => draftFrom(account, me.data?.profile.full_name ?? ''));
   const [password, setPassword] = useState('');
-  const [qrPreview, setQrPreview] = useState<string | null>(null);
+  const [qrPreview, setQrPreview] = useState<string | null>(() =>
+    account?.qr_file_id ? resolveMemoryUploadUrl(account.qr_file_id) : null,
+  );
   const [qrCropTarget, setQrCropTarget] = useState<{
     readonly file: File;
     readonly src: string;

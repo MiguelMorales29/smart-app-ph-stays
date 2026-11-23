@@ -31,6 +31,8 @@ const errorReasonMessages = {
     'Check your GCash, Maya or bank history first, then tick the box before approving.',
   wrong_password: 'That password is incorrect. Enter your current password and try again.',
   unit_not_ready: 'Add at least 3 photos and a base price before listing this unit.',
+  mode_locked:
+    "You can't switch between nightly stays and monthly rent after this unit has a booking or lease.",
 } as const satisfies Record<ErrorReason, string>;
 
 const bankLabels = {

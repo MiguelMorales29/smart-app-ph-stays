@@ -43,6 +43,15 @@ function compactPesos(centavos: number): string {
   return `₱${pesos.toLocaleString('en-PH')}`;
 }
 
+/** Short mobile cell label (e.g. "2.6k", "3k", "850") so prices never touch at 360 px. */
+export function formatShortCalendarPrice(centavos: number): string {
+  const pesos = Math.round(centavos / 100);
+  if (pesos >= 1_000) {
+    return `${(pesos / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  }
+  return String(pesos);
+}
+
 /**
  * Stay date range calendar showing each night's ₱ rate beneath the day number (Asia/Manila dates).
  */
@@ -110,6 +119,7 @@ export function CalendarPriceRange({
           root: 'w-full',
           month: 'flex w-full flex-col gap-3',
           month_grid: 'w-full table-fixed border-collapse',
+          week: 'mt-1.5 flex w-full gap-0.5',
         }}
         components={{
           DayButton: ({ children, modifiers, day, className: dayClassName, ...props }) => {
@@ -119,12 +129,20 @@ export function CalendarPriceRange({
             const isEndpoint = Boolean(modifiers.range_start || modifiers.range_end);
             const isMiddle = Boolean(modifiers.range_middle);
             const showPrice = rate !== null && !modifiers.disabled;
-            const priceText = showPrice ? compactPesos(rate) : null;
+            const fullPriceText = showPrice ? compactPesos(rate) : null;
+            const shortPriceText = showPrice ? formatShortCalendarPrice(rate) : null;
             const weekdayMonth = formatManilaCalendarDate(iso, {
               weekday: 'long',
               month: 'long',
             });
             const yearText = iso.slice(0, 4);
+            const toneClass = isEndpoint
+              ? 'text-primary-foreground'
+              : isMiddle
+                ? 'text-foreground'
+                : isLow
+                  ? 'font-medium text-success'
+                  : 'text-foreground/80';
 
             return (
               <CalendarDayButton
@@ -132,28 +150,37 @@ export function CalendarPriceRange({
                 modifiers={modifiers}
                 {...props}
                 aria-label={undefined}
-                className={cn('min-w-0 gap-0.5 px-0 [&>span]:opacity-100', dayClassName)}
+                className={cn('min-w-0 gap-0.5 px-0.5 [&>span]:opacity-100', dayClassName)}
               >
                 <span className="sr-only">{weekdayMonth} </span>
                 <span className="text-xs leading-none font-medium tabular-nums sm:text-sm">
                   {children}
                 </span>
-                <span className="sr-only">, {yearText} </span>
-                {priceText !== null ? (
-                  <span
-                    className={cn(
-                      'text-[8.5px] leading-none font-normal tracking-tighter tabular-nums sm:text-[10px] sm:tracking-normal',
-                      isEndpoint
-                        ? 'text-primary-foreground'
-                        : isMiddle
-                          ? 'text-foreground'
-                          : isLow
-                            ? 'font-medium text-success'
-                            : 'text-foreground/80',
-                    )}
-                  >
-                    {priceText}
-                  </span>
+                <span className="sr-only">, {yearText}</span>
+                {fullPriceText !== null && shortPriceText !== null ? (
+                  <>
+                    <span className="sr-only">, {fullPriceText}</span>
+                    <span
+                      aria-hidden="true"
+                      data-slot="calendar-price-short"
+                      className={cn(
+                        'max-w-full truncate text-[9px] leading-none font-normal tabular-nums sm:hidden',
+                        toneClass,
+                      )}
+                    >
+                      {shortPriceText}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      data-slot="calendar-price-full"
+                      className={cn(
+                        'hidden max-w-full truncate text-[10px] leading-none font-normal tabular-nums sm:inline',
+                        toneClass,
+                      )}
+                    >
+                      {fullPriceText}
+                    </span>
+                  </>
                 ) : null}
               </CalendarDayButton>
             );
@@ -162,12 +189,9 @@ export function CalendarPriceRange({
       />
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
         {summary ? (
-          <>
-            <span className="text-muted-foreground">{summary.label}</span>
-            <span className="font-semibold text-foreground tabular-nums">
-              {summary.totalLabel} total
-            </span>
-          </>
+          <span className="font-medium text-foreground tabular-nums">
+            {summary.label} · {summary.totalLabel}
+          </span>
         ) : (
           <span className="text-muted-foreground">
             Pick check-in and check-out dates (Manila time).

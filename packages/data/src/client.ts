@@ -12,6 +12,7 @@ export type DataClientConfig =
       readonly latencyMs?: number;
       readonly failWith?: ErrorCode | AppError;
       readonly validateOutput?: boolean;
+      readonly enforcePlanLimit?: boolean;
     }
   | {
       readonly adapter: 'http';
@@ -36,6 +37,9 @@ export async function getDataSource(config: DataClientConfig): Promise<DataSourc
       ...(config.latencyMs !== undefined ? { latencyMs: config.latencyMs } : {}),
       ...(config.failWith !== undefined ? { failWith: config.failWith } : {}),
       ...(config.validateOutput !== undefined ? { validateOutput: config.validateOutput } : {}),
+      ...(config.enforcePlanLimit !== undefined
+        ? { enforcePlanLimit: config.enforcePlanLimit }
+        : {}),
     });
   }
 

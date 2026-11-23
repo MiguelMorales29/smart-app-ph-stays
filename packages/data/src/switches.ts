@@ -45,6 +45,7 @@ export function serializeSwitchStateCookie(state: SwitchState): string {
     clock: state.clock,
     latencyMs: state.latencyMs,
     errorCode: state.errorCode,
+    planLimit: state.planLimit,
   });
   return `${SWITCH_COOKIE_NAME}=${encodeURIComponent(payload)}; Path=/; SameSite=Lax`;
 }
@@ -86,12 +87,18 @@ export const CLOCK_KEYS = ['now', 'golden', '+1h', '+1d'] as const;
 export const clockKeySchema = z.enum(CLOCK_KEYS);
 export type ClockKey = z.infer<typeof clockKeySchema>;
 
+export const PLAN_LIMIT_KEYS = ['on', 'off'] as const;
+
+export const planLimitKeySchema = z.enum(PLAN_LIMIT_KEYS);
+export type PlanLimitKey = z.infer<typeof planLimitKeySchema>;
+
 export const switchStateSchema = z.object({
   as: viewAsKeySchema,
   pack: scenarioKeySchema,
   clock: clockKeySchema,
   errorCode: errorCodeSchema,
   latencyMs: z.number().int().min(1500).max(3000),
+  planLimit: planLimitKeySchema.default('on'),
 });
 
 export type SwitchState = z.infer<typeof switchStateSchema>;
@@ -123,6 +130,7 @@ export interface SwitchClientBundle {
   readonly accountId: string | null;
   readonly isPendingOwner: boolean;
   readonly hasBookingLink: boolean;
+  readonly planLimit: PlanLimitKey;
 }
 
 export function createDefaultSwitchState(overrides?: Partial<SwitchState>): SwitchState {
@@ -132,6 +140,7 @@ export function createDefaultSwitchState(overrides?: Partial<SwitchState>): Swit
     clock: overrides?.clock ?? 'now',
     errorCode: overrides?.errorCode ?? DEFAULT_ERROR_CODE,
     latencyMs: overrides?.latencyMs ?? DEFAULT_SLOW_LATENCY_MS,
+    planLimit: overrides?.planLimit ?? 'on',
   });
 }
 
@@ -295,6 +304,7 @@ export function parseSwitchStateFromSearch(
   const packParsed = scenarioKeySchema.safeParse(params.get('pack'));
   const clockParsed = clockKeySchema.safeParse(params.get('clock'));
   const errorParsed = errorCodeSchema.safeParse(params.get('error'));
+  const planLimitParsed = planLimitKeySchema.safeParse(params.get('planLimit'));
 
   return switchStateSchema.parse({
     as: asParsed.success ? asParsed.data : fallback.as,
@@ -302,6 +312,7 @@ export function parseSwitchStateFromSearch(
     clock: clockParsed.success ? clockParsed.data : fallback.clock,
     errorCode: errorParsed.success ? errorParsed.data : fallback.errorCode,
     latencyMs: fallback.latencyMs,
+    planLimit: planLimitParsed.success ? planLimitParsed.data : fallback.planLimit,
   });
 }
 
@@ -316,6 +327,11 @@ export function serializeSwitchStateToSearch(state: SwitchState, existingSearch 
     params.set('error', state.errorCode);
   } else {
     params.delete('error');
+  }
+  if (state.planLimit === 'off') {
+    params.set('planLimit', 'off');
+  } else {
+    params.delete('planLimit');
   }
   const encoded = params.toString();
   return encoded.length > 0 ? `?${encoded}` : '';
@@ -502,6 +518,7 @@ export async function createSwitchClientBundle(
     pack: demoPack,
     clock,
     storefrontOrigin: options.storefrontOrigin,
+    enforcePlanLimit: validState.planLimit !== 'off',
     ...(validState.pack === 'slow' ? { latencyMs: validState.latencyMs } : {}),
     ...(failWith !== undefined ? { failWith } : {}),
   });
@@ -555,5 +572,6 @@ export async function createSwitchClientBundle(
     accountId: resolved.accountId,
     isPendingOwner: resolved.isPendingOwner,
     hasBookingLink,
+    planLimit: validState.planLimit,
   };
 }

@@ -18,6 +18,7 @@ export interface DashboardClientState {
   readonly pack: string;
   readonly as: string;
   readonly errorCode: ErrorCode;
+  readonly planLimit: 'on' | 'off';
 }
 
 function propertyNameFromAs(asKey: string, label: string): string {
@@ -71,6 +72,7 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
       pack: state.pack,
       as: state.as,
       errorCode: state.errorCode,
+      planLimit: state.planLimit,
     };
   }
 
@@ -92,5 +94,6 @@ export async function loadDashboardClient(search: string): Promise<DashboardClie
     pack: 'http',
     as: 'guest',
     errorCode: 'not_allowed',
+    planLimit: 'on',
   };
 }

@@ -85,6 +85,7 @@ export interface MemorySourceOptions {
   readonly latencyMs?: number;
   readonly failWith?: ErrorCode | AppError;
   readonly validateOutput?: boolean;
+  readonly enforcePlanLimit?: boolean;
 }
 
 interface StoredIdempotencyEntry {
@@ -2411,7 +2412,19 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           );
           if (!sourceUnit) return err(appError('not_found'));
 
-          const limitCheck = checkUnitLimitForAccount(world, acctCheck.data, 1);
+          const limitCheck = checkUnitLimitForAccount(
+            world,
+            acctCheck.data,
+            [
+              {
+                property_id: sourceUnit.property_id,
+                unit_type: sourceUnit.unit_type,
+                group_label: sourceUnit.group_label,
+                archived_at: null,
+              },
+            ],
+            options.enforcePlanLimit ?? true,
+          );
           if (!limitCheck.ok) return limitCheck;
 
           const nowIso = nowIsoFromClock(clock);
@@ -2872,6 +2885,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
       ids,
       mediaConfig,
       auth,
+      enforcePlanLimit: options.enforcePlanLimit ?? true,
       beforeCall,
       requireOwnerAccountMatch,
       runIdempotent,

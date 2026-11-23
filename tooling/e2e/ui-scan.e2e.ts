@@ -312,3 +312,165 @@ test.describe('UI scan', () => {
     }
   }
 });
+
+/** Checks that neither the page nor any open sheet/dialog overflows sideways (FIX-1 A). */
+async function assertNoSheetOverflow(page: Page, label: string): Promise<void> {
+  const issues = await page.evaluate(() => {
+    const problems: string[] = [];
+    const root = document.documentElement;
+    if (root.scrollWidth > root.clientWidth + 1) {
+      problems.push(`page overflows sideways: ${root.scrollWidth}px in ${root.clientWidth}px`);
+    }
+    const sheets = document.querySelectorAll(
+      '[role="dialog"]:not([data-slot="toast"]), [data-slot="dialog-content"], [data-slot="drawer-content"]',
+    );
+    for (const sheet of sheets) {
+      const box = sheet.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      if (box.right > window.innerWidth + 1 || box.left < -1) {
+        problems.push(
+          `sheet extends outside viewport: left=${Math.round(box.left)} right=${Math.round(box.right)} viewport=${window.innerWidth}`,
+        );
+      }
+      if (sheet.scrollWidth > sheet.clientWidth + 1) {
+        problems.push(
+          `sheet scrolls sideways: scrollWidth=${sheet.scrollWidth}px clientWidth=${sheet.clientWidth}px`,
+        );
+      }
+      // Check non-scrollable descendants don't extend past the sheet's inner width.
+      const sheetRight = box.right + 1;
+      const sheetLeft = box.left - 1;
+      for (const child of sheet.querySelectorAll('*')) {
+        if (child.closest('[data-slot="scroller"], [data-slot="cropper"], [data-slot="carousel"]'))
+          continue;
+        const style = getComputedStyle(child);
+        if (
+          style.display === 'none' ||
+          style.visibility === 'hidden' ||
+          style.overflowX === 'auto' ||
+          style.overflowX === 'scroll' ||
+          style.overflowX === 'hidden' ||
+          style.overflowX === 'clip'
+        ) {
+          continue;
+        }
+        const childBox = child.getBoundingClientRect();
+        if (childBox.width === 0 || childBox.height === 0) continue;
+        if (childBox.right > sheetRight + 2 || childBox.left < sheetLeft - 2) {
+          problems.push(
+            `descendant <${child.tagName.toLowerCase()}> overflows sheet (${Math.round(childBox.left)}..${Math.round(childBox.right)} vs ${Math.round(sheetLeft)}..${Math.round(sheetRight)})`,
+          );
+          break;
+        }
+      }
+    }
+    return problems;
+  });
+  expect(issues, label).toEqual([]);
+}
+
+test.describe('UI scan · interactive sheets and dialogs (FIX-1 A)', () => {
+  test.describe.configure({ mode: 'parallel', retries: 0 });
+
+  for (const size of [
+    { name: 'phone', width: 360, height: 800 },
+    { name: 'desktop', width: 1280, height: 800 },
+  ] as const) {
+    const isPhone = size.name === 'phone';
+
+    test(`Your picture sheet (Faces + Photo tabs) at ${size.name}`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: size.width, height: size.height },
+        hasTouch: isPhone,
+        isMobile: isPhone,
+      });
+      const page = await context.newPage();
+      try {
+        await page.goto(`${DASHBOARD_ORIGIN}/settings/account?clock=golden`, {
+          waitUntil: 'networkidle',
+        });
+        await page.getByRole('button', { name: 'Change picture' }).first().click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.waitForTimeout(250);
+        await assertNoSheetOverflow(page, `Your picture (Faces) at ${size.name}`);
+
+        await page.getByRole('tab', { name: 'Photo' }).click();
+        await page.waitForTimeout(200);
+        await assertNoSheetOverflow(page, `Your picture (Photo) at ${size.name}`);
+      } finally {
+        await context.close();
+      }
+    });
+
+    test(`PhotoCropSheet on unit photos at ${size.name}`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: size.width, height: size.height },
+        hasTouch: isPhone,
+        isMobile: isPhone,
+      });
+      const page = await context.newPage();
+      try {
+        await page.goto(
+          `${DASHBOARD_ORIGIN}/units/dec0de10-0005-4000-8000-000000000001/photos?clock=golden`,
+          { waitUntil: 'networkidle' },
+        );
+        const moreBtn = page.getByRole('button', { name: /More for photo/i }).first();
+        await moreBtn.click();
+        await page.getByRole('menuitem', { name: 'Adjust' }).click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.waitForTimeout(250);
+        await assertNoSheetOverflow(page, `PhotoCropSheet at ${size.name}`);
+      } finally {
+        await context.close();
+      }
+    });
+
+    test(`Property contact sheet and Unit quick look at ${size.name}`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: size.width, height: size.height },
+        hasTouch: isPhone,
+        isMobile: isPhone,
+      });
+      const page = await context.newPage();
+      try {
+        await page.goto(`${STOREFRONT_ORIGIN}/ulap-suites?clock=golden`, {
+          waitUntil: 'networkidle',
+        });
+        await page.getByRole('button', { name: 'Message' }).first().click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.waitForTimeout(250);
+        await assertNoSheetOverflow(page, `Property contact sheet at ${size.name}`);
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(200);
+
+        const quickLookTrigger = page
+          .locator('[data-slot="unit-card"] button[aria-haspopup="dialog"]')
+          .first();
+        await quickLookTrigger.click();
+        await expect(page.getByRole('dialog').first()).toBeVisible();
+        await page.waitForTimeout(250);
+        await assertNoSheetOverflow(page, `Unit quick look sheet at ${size.name}`);
+      } finally {
+        await context.close();
+      }
+    });
+  }
+
+  test('Quick add sheet at phone', async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 360, height: 800 },
+      hasTouch: true,
+      isMobile: true,
+    });
+    const page = await context.newPage();
+    try {
+      await page.goto(`${DASHBOARD_ORIGIN}/home?clock=golden`, { waitUntil: 'networkidle' });
+      await page.locator('[data-slot="bottom-dock"] button[aria-label="Add"]').click();
+      await expect(page.getByRole('dialog').first()).toBeVisible();
+      await page.waitForTimeout(250);
+      await assertNoSheetOverflow(page, 'Quick add sheet at phone');
+    } finally {
+      await context.close();
+    }
+  });
+});

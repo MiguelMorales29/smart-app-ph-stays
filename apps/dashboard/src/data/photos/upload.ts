@@ -1,3 +1,4 @@
+import { registerMemoryUpload } from '@smartapp/data';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { setupKeys } from '../setup/keys';
@@ -85,6 +86,8 @@ export function useUploadPhotoMutation() {
       input.onProgress?.(10);
       if (slot.uploadUrl.startsWith('http')) {
         await putWithProgress(slot.uploadUrl, input.file, (percent) => input.onProgress?.(percent));
+      } else if (slot.uploadUrl.startsWith('memory-upload://')) {
+        await registerMemoryUpload(slot.file.id, input.file);
       }
       input.onProgress?.(90);
       const confirmed = unwrapResult(
@@ -121,26 +124,25 @@ export function useSetUnitPhotosMutation() {
       readonly photos: readonly { readonly fileId: string; readonly altText: string | null }[];
     }) => {
       const { source, session, accountId } = requireOwnerClient(active);
+      let firstSaved: Awaited<ReturnType<typeof source.saveListingPhotos>> | null = null;
       for (const unit of input.units) {
-        unwrapResult(
-          await source.saveListingPhotos(
-            {
-              idempotencyKey: createIdempotencyKey('save-photos'),
-              accountId,
-              propertyId: input.propertyId,
-              unitId: unit.unitId,
-              photos: input.photos.map((photo, index) => ({
-                fileId: photo.fileId,
-                altText: (photo.altText?.trim() || `${unit.name}, photo ${index + 1}`).slice(
-                  0,
-                  160,
-                ),
-              })),
-            },
-            session,
-          ),
+        const res = await source.saveListingPhotos(
+          {
+            idempotencyKey: createIdempotencyKey('save-photos'),
+            accountId,
+            propertyId: input.propertyId,
+            unitId: unit.unitId,
+            photos: input.photos.map((photo, index) => ({
+              fileId: photo.fileId,
+              altText: (photo.altText?.trim() || `${unit.name}, photo ${index + 1}`).slice(0, 160),
+            })),
+          },
+          session,
         );
+        unwrapResult(res);
+        if (firstSaved === null) firstSaved = res;
       }
+      return firstSaved && firstSaved.ok ? firstSaved.data : [];
     },
     onSuccess: async () => {
       await Promise.all([

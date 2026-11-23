@@ -101,7 +101,7 @@ export function AppSheet({
           </div>
           <div
             ref={fadesRef}
-            className="scroll-fades min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4"
+            className="scroll-fades min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4"
           >
             {shown.children}
           </div>
@@ -158,14 +158,14 @@ export function AppSheet({
           <div
             ref={fadesRef}
             data-base-ui-swipe-ignore="y"
-            className="scroll-fades min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 pb-4"
+            className="scroll-fades min-h-0 min-w-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 pb-4"
           >
             {shown.children}
           </div>
           {shown.footer ? (
             <div
               data-slot="app-sheet-footer"
-              className="flex shrink-0 flex-col gap-2 border-t border-border bg-popover px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+var(--drawer-keyboard-inset,0px)+0.75rem)] transition-transform duration-slow ease-enter [transform:translateY(calc(-1*var(--drawer-snap-point-offset,0px)))] [&>*]:min-h-12 [&>*]:w-full [&>[data-sheet-cancel]]:hidden sm:flex-row sm:justify-end sm:[&>*]:w-auto"
+              className="relative flex shrink-0 flex-col gap-2 border-t border-border bg-popover px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+var(--drawer-keyboard-inset,0px)+0.75rem)] transition-transform duration-slow ease-enter [transform:translateY(calc(-1*var(--drawer-snap-point-offset,0px)))] [&>*:not(.sr-only)]:min-h-12 [&>*:not(.sr-only)]:w-full [&>[data-sheet-cancel]]:hidden sm:flex-row sm:justify-end sm:[&>*:not(.sr-only)]:w-auto"
             >
               {shown.footer}
             </div>

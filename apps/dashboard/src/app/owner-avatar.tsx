@@ -1,4 +1,5 @@
 import type { ProfileAvatar } from '@smartapp/core';
+import { resolveMemoryUploadUrl } from '@smartapp/data';
 import { PersonAvatar, directPhotoSrc } from '@smartapp/ui/compositions/person-avatar';
 import { useProfileQuery } from '@/data/settings/reads';
 
@@ -16,6 +17,8 @@ export function resolveProfilePhotoSrc(
 ): string | null {
   const cached = localPhotoCache.get(fileId);
   if (cached) return cached;
+  const memoryUploaded = resolveMemoryUploadUrl(fileId);
+  if (memoryUploaded) return memoryUploaded;
   if (serverPhotoUrl) return serverPhotoUrl;
   return directPhotoSrc(fileId);
 }

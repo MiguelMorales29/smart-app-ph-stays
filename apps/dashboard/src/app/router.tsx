@@ -158,9 +158,14 @@ const UNITS_FILTERS = ['listed', 'hidden', 'drafts'] as const;
 function parseUnitsSearch(search: Record<string, unknown>): UnitsSearch {
   const filter = UNITS_FILTERS.find((value) => value === search.filter);
   const add = search.add === 'unit' || search.add === 'beds' ? search.add : undefined;
+  const room =
+    typeof search.room === 'string' && search.room.trim().length > 0
+      ? search.room.trim().slice(0, 40)
+      : undefined;
   return {
     ...(filter ? { filter } : {}),
     ...(add ? { add } : {}),
+    ...(room ? { room } : {}),
   };
 }
 
