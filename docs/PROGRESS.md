@@ -81,7 +81,7 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [x] UI-3 Data and lists
 - [x] UI-4 Dates, calendars and time
 - [x] FIX-1 Urgent audit fixes (custom style variants, Your picture sheet, memory uploads, bed spaces, mode defaults & lock, unit readiness card, house rules wrap, O4 plan limit, mobile calendar prices, Playwright journeys)
-- [ ] UI-5 Conversation, charts and stats
+- [x] UI-5 Conversation, charts and stats (plus step 0 tooling: turbo TUI, `pnpm ui-scan`, `pnpm e2e`, `pnpm budget`, scan warm-up, kit-examples guard)
 - [ ] UI-6 Missing primitives and variants
 
 ## Later phases
@@ -101,4 +101,5 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [ ] 13 Plans, super admin and Meta for real
 - [ ] 14 Hardening and pilot launch
 - [ ] 15 Rentals (wave 2)
+  - Step 0: demo history pack (12 months of bookings, payments and bills per demo property), so Reports and the UI-5 charts show real-looking history.
 - [ ] 16 Rewards and the funnel report (wave 3)

@@ -97,6 +97,9 @@ const KitCalendarVariantsRow = lazy(() =>
 const KitFormsUi4Section = lazy(() =>
   import('./kit-forms-ui4-section').then((m) => ({ default: m.KitFormsUi4Section })),
 );
+const KitFormsUi5Section = lazy(() =>
+  import('./kit-forms-ui5-section').then((m) => ({ default: m.KitFormsUi5Section })),
+);
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -669,6 +672,9 @@ export function KitFormsTab() {
         <KitFormsUi3Section />
         <Suspense fallback={null}>
           <KitFormsUi4Section />
+        </Suspense>
+        <Suspense fallback={null}>
+          <KitFormsUi5Section />
         </Suspense>
       </div>
     </>

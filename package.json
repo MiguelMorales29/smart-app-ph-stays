@@ -15,7 +15,10 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "demo:print": "pnpm --silent --filter @smartapp/core build && node tooling/demo-print.ts"
+    "demo:print": "pnpm --silent --filter @smartapp/core build && node tooling/demo-print.ts",
+    "e2e": "pnpm --filter @smartapp/tooling test:e2e",
+    "ui-scan": "pnpm --filter @smartapp/tooling ui-scan",
+    "budget": "pnpm --filter @smartapp/tooling budget"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

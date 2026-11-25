@@ -7,13 +7,17 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "art": "node scripts/fluent-art.ts"
+    "art": "node scripts/fluent-art.ts",
+    "ui-scan": "playwright test -c e2e/playwright.config.ts ui-scan",
+    "budget": "cd .. && APP_ENV=preview DATA_SOURCE=memory VITE_APP_ENV=preview VITE_DATA_SOURCE=memory pnpm --filter @smartapp/dashboard build && node tooling/check-budget.ts",
+    "emojibase": "node scripts/copy-emojibase.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@playwright/test": "catalog:",
     "@smartapp/core": "workspace:*",
     "@types/node": "catalog:",
+    "emojibase-data": "17.0.0",
     "eslint": "10.14.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
