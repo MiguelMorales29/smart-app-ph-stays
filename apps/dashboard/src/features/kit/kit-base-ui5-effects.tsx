@@ -8,7 +8,9 @@ import { ProgressiveBlur } from '@smartapp/ui/components/progressive-blur';
 import { PulsatingButton } from '@smartapp/ui/components/pulsating-button';
 import { ShineBorder } from '@smartapp/ui/components/shine-border';
 import { WordRotate } from '@smartapp/ui/components/word-rotate';
-import { RocketIcon } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { Button } from '@smartapp/ui/components/button';
+import { PlayIcon, RocketIcon } from 'lucide-react';
 
 import { DualSurfaceShowcase } from './kit-base-tab';
 
@@ -24,7 +26,24 @@ const ARRIVALS = [
   'Paolo Cruz booked 3 nights at Pine Room',
 ];
 
-function ShowcaseCard({ children }: { readonly children: React.ReactNode }) {
+/**
+ * Plays an effect only after a tap, the way screens use them (an answer to an action). Until then
+ * nothing fades, so the page reads the same in screenshots and the accessibility scan.
+ */
+function PlayOnTap({ label, children }: { readonly label: string; readonly children: ReactNode }) {
+  const [round, setRound] = useState(0);
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" size="sm" onClick={() => setRound((value) => value + 1)}>
+        <PlayIcon aria-hidden="true" />
+        {round === 0 ? label : 'Play again'}
+      </Button>
+      {round > 0 ? <div key={round}>{children}</div> : null}
+    </div>
+  );
+}
+
+function ShowcaseCard({ children }: { readonly children: ReactNode }) {
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4">
       {children}
@@ -114,13 +133,15 @@ function SurfacesDemo() {
 
 function EntranceDemo() {
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <BlurFade delay={0.1} inView>
-        <p className="rounded-lg bg-success-tint px-3 py-2 text-sm text-foreground">
-          Booking confirmed
-        </p>
-      </BlurFade>
+    <div className="flex flex-wrap items-start gap-4">
       <PulsatingButton className="h-11 px-5 text-sm">Approve payment</PulsatingButton>
+      <PlayOnTap label="Confirm a booking">
+        <BlurFade delay={0.1}>
+          <p className="rounded-lg bg-success-tint px-3 py-2 text-sm text-foreground">
+            Booking confirmed
+          </p>
+        </BlurFade>
+      </PlayOnTap>
     </div>
   );
 }
@@ -134,14 +155,22 @@ export function KitBaseUi5Effects() {
         source="Magic UI (MIT) · motion · lazy (UI-5)"
         useFor="A ₱ total counting up once on Home; one rotating word in an onboarding headline."
         dont="Animate numbers in tables or anywhere a person needs to read the value quickly."
-        render={() => <NumbersDemo />}
+        render={() => (
+          <PlayOnTap label="Play the count">
+            <NumbersDemo />
+          </PlayOnTap>
+        )}
       />
       <DualSurfaceShowcase
         title="AnimatedList"
         source="Magic UI (MIT) · motion · lazy (UI-5)"
         useFor="New activity arriving on Home (paid, proof sent, booked)."
         dont="Use it for lists people scroll or act on; items keep moving."
-        render={() => <ArrivalsDemo />}
+        render={() => (
+          <PlayOnTap label="Show new activity">
+            <ArrivalsDemo />
+          </PlayOnTap>
+        )}
       />
       <DualSurfaceShowcase
         title="BorderBeam · ShineBorder"
