@@ -1318,6 +1318,68 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       expect(afterRemove?.amenity_ids).not.toContain(own.id);
     });
 
+    it('24e. setSpecialDays drops past days, refuses closed days with times, and shows on the guest page (R-2b)', async () => {
+      const { source } = await makeSource();
+      const nextKey = createKeyMaker('r2b-special');
+      const base = {
+        accountId: DEMO_IDS.ulapSuites.account,
+        propertyId: DEMO_IDS.ulapSuites.property,
+      };
+      const saved = assertOk(
+        await source.setSpecialDays(
+          {
+            ...base,
+            idempotencyKey: nextKey(),
+            days: [
+              {
+                starts_on: '2026-12-24',
+                ends_on: '2026-12-25',
+                kind: 'hours',
+                ranges: [{ start: '09:00', end: '12:00' }],
+                applies_to: 'both',
+                reason: 'Christmas',
+              },
+              {
+                starts_on: '2026-01-01',
+                ends_on: '2026-01-01',
+                kind: 'closed',
+                ranges: [],
+                applies_to: 'replies',
+                reason: null,
+              },
+            ],
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(saved).toHaveLength(1);
+      expect(saved[0]?.reason).toBe('Christmas');
+
+      const refused = assertErr(
+        await source.setSpecialDays(
+          {
+            ...base,
+            idempotencyKey: nextKey(),
+            days: [
+              {
+                starts_on: '2026-12-30',
+                ends_on: '2026-12-31',
+                kind: 'closed',
+                ranges: [{ start: '09:00', end: '12:00' }],
+                applies_to: 'both',
+                reason: null,
+              },
+            ],
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(refused.code).toBe('not_allowed');
+
+      const page = assertOk(await source.getProperty({ slug: 'ulap-suites' }, GUEST_SESSION));
+      expect(page.special_days.map((day) => day.reason)).toEqual(['Christmas']);
+    });
+
     it('25. uploads (not_image, file_too_large, storage_full) and listing photo limits', async () => {
       const { source } = await makeSource();
       const nextKey = createKeyMaker('p4-upload');
@@ -1627,7 +1689,6 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
               fri: [],
               sat: [],
               sun: [],
-              closed_dates: [],
             },
             viewingHours: null,
           },
@@ -1652,14 +1713,13 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
               fri: [],
               sat: [],
               sun: [],
-              closed_dates: ['2026-12-25'],
             },
             viewingHours: null,
           },
           ULAP_OWNER_SESSION,
         ),
       );
-      expect(savedHours.reply_hours?.closed_dates).toEqual(['2026-12-25']);
+      expect(savedHours.reply_hours?.mon).toEqual([{ start: '08:00', end: '20:00' }]);
 
       // updateProfile with DiceBear preset avatar
       const updatedProfile = assertOk(

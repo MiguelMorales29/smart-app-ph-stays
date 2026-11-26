@@ -12,6 +12,7 @@ import {
   isValidBankAccount,
   isValidWalletMobile,
   manilaToday,
+  nightsBetween,
   normalizeBankAccount,
   normalizePhMobile,
   ok,
@@ -434,6 +435,7 @@ type P4OwnerOperationName =
   | 'saveAmenity'
   | 'removeAmenity'
   | 'setPropertyAmenities'
+  | 'setSpecialDays'
   | 'listAmenities'
   | 'saveUnitPrices'
   | 'requestUpload'
@@ -1042,6 +1044,9 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
         amenity_ids: world.property_amenities
           .filter((link) => link.property_id === property.id)
           .map((link) => link.amenity_id),
+        special_days: world.special_days
+          .filter((day) => day.property_id === property.id)
+          .sort((a, b) => a.starts_on.localeCompare(b.starts_on)),
       });
     },
 
@@ -2203,6 +2208,60 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             });
           }
           return ok(unique);
+        },
+      );
+    },
+
+    async setSpecialDays(input, session) {
+      const guard = await beforeCall('setSpecialDays', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'setSpecialDays',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.setSpecialDays.output,
+        async () => {
+          const property = world.properties.find(
+            (p) => p.id === input.propertyId && p.account_id === acctCheck.data,
+          );
+          if (!property) return err(appError('not_found'));
+          const today = manilaToday(clock);
+          const nowIso = nowIsoFromClock(clock);
+          // Imitates the table rules: ends on or after it starts, at most 31 days, closed has no
+          // times and different hours have 1 to 3; past days are dropped (D95).
+          for (const day of input.days) {
+            const span = nightsBetween(day.starts_on, day.ends_on) + 1;
+            const timesOk = day.kind === 'closed' ? day.ranges.length === 0 : day.ranges.length > 0;
+            if (day.ends_on < day.starts_on || span > 31 || !timesOk) {
+              return err(
+                reasonError('not_allowed', 'invalid_input', {
+                  fields: {
+                    days: 'Each special day needs a first and last day, at most 31 days apart.',
+                  },
+                }),
+              );
+            }
+          }
+          for (let i = world.special_days.length - 1; i >= 0; i -= 1) {
+            if (world.special_days[i]?.property_id === property.id) world.special_days.splice(i, 1);
+          }
+          const rows = input.days
+            .filter((day) => day.ends_on >= today)
+            .sort((a, b) => a.starts_on.localeCompare(b.starts_on))
+            .map((day) => ({
+              ...day,
+              id: ids.next('0042'),
+              account_id: acctCheck.data,
+              property_id: property.id,
+              created_at: nowIso,
+              updated_at: nowIso,
+            }));
+          world.special_days.push(...rows);
+          return ok(rows);
         },
       );
     },

@@ -34,6 +34,7 @@ export function useHoursQuery(propertyId: string | null = null) {
         updatedAt: data.property.updated_at,
         replyHours: data.property.reply_hours,
         viewingHours: data.property.viewing_hours,
+        specialDays: data.special_days,
       };
     },
   });

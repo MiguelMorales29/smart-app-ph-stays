@@ -26,6 +26,7 @@ import {
   unitOccupancyRow,
   unitStayTermsRow,
   roomsRow,
+  specialDaysRow,
   unitsRow,
   weekdayRatesRow,
 } from '../tables/index.js';
@@ -203,6 +204,16 @@ export const publicReviewSummarySchema = z.object({
 });
 export type PublicReviewSummary = z.infer<typeof publicReviewSummarySchema>;
 
+export const publicSpecialDayViewSchema = z.object(specialDaysRow.shape).pick({
+  starts_on: true,
+  ends_on: true,
+  kind: true,
+  ranges: true,
+  applies_to: true,
+  reason: true,
+});
+export type PublicSpecialDayView = z.infer<typeof publicSpecialDayViewSchema>;
+
 export const propertyViewSchema = z.object({
   property: publicPropertySummarySchema,
   page: propertyPagesRow.pick({ version: true, published: true }),
@@ -217,6 +228,8 @@ export const propertyViewSchema = z.object({
   amenities: z.array(publicAmenityViewSchema),
   house_rules: z.array(publicHouseRuleViewSchema),
   reviews: publicReviewSummarySchema,
+  /** Upcoming special days for the Times section (R-2b, D95). */
+  special_days: z.array(publicSpecialDayViewSchema),
 });
 export type PropertyView = z.infer<typeof propertyViewSchema>;
 

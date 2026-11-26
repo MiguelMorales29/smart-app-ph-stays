@@ -31,6 +31,7 @@ import {
   type PropertyView,
   type PublicPagePhoto,
   type PublicRoomView,
+  type PublicSpecialDayView,
   type PublicUnitCardView,
   type PublicUnitView,
   type Result,
@@ -272,6 +273,25 @@ export function calculatePaidAndBalance(
     paidCentavos: centavos(paidClamped),
     balanceCentavos: centavos(balanceClamped),
   };
+}
+
+/** Special days that end today or later, soonest first (R-2b, D95). */
+export function upcomingSpecialDays(
+  world: DemoWorld,
+  propertyId: string,
+  today: CalendarDate,
+): PublicSpecialDayView[] {
+  return world.special_days
+    .filter((day) => day.property_id === propertyId && day.ends_on >= today)
+    .sort((a, b) => a.starts_on.localeCompare(b.starts_on))
+    .map((day) => ({
+      starts_on: day.starts_on,
+      ends_on: day.ends_on,
+      kind: day.kind,
+      ranges: day.ranges,
+      applies_to: day.applies_to,
+      reason: day.reason,
+    }));
 }
 
 /** A unit's amenities plus the property's "At the property" ones, without repeats (R-3, D93). */
@@ -991,6 +1011,7 @@ export function buildPropertyView(
       photos: propertyPhotos,
       amenities,
       house_rules: houseRules,
+      special_days: upcomingSpecialDays(world, property.id, today),
       reviews: {
         average_stars: averageStars,
         review_count: reviews.length,

@@ -405,7 +405,7 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     ).toBe(true);
   });
 
-  test('R-2 house rules: a long own rule wraps in the list, can move and be removed; closed dates come from the calendar (FIX-1 F, A15, A16)', async ({
+  test('R-2 house rules: a long own rule wraps in the list, can move and be removed; special days and PH holidays (FIX-1 F, A15, A16, R-2b)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 360, height: 800 });
@@ -438,13 +438,19 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await page.goto(`${DASHBOARD_ORIGIN}/settings/hours?clock=golden`, {
       waitUntil: 'networkidle',
     });
-    await page.getByRole('switch', { name: /Set reply hours/ }).click();
-    await page.getByRole('button', { name: /Add closed dates/ }).click();
+    // Special days (R-2b): a range from our calendar, then the PH holidays in one tap.
+    await page.getByRole('button', { name: 'Add a special day' }).click();
     const days = page.locator('[data-slot=calendar] button[data-day]:not([disabled])');
     await days.nth(8).click();
     await days.nth(10).click();
-    await page.getByRole('button', { name: 'Close 3 days' }).click();
-    await expect(page.getByRole('button', { name: /^Remove .+ – .+/ })).toBeVisible();
+    await page.getByLabel('Reason (optional)').fill('Family event');
+    await page.getByRole('button', { name: 'Done' }).click();
+    await expect(page.getByText(/Closed · Replies and viewings · Family event/)).toBeVisible();
+    await page.getByRole('button', { name: /Add PH holidays/ }).click();
+    await page.getByRole('button', { name: /^Add \d+ holidays$/ }).click();
+    await expect(page.getByText(/Rizal Day/)).toBeVisible();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeHidden();
   });
 
   test('calendar prices and check-out-only labels do not touch neighbours at 360 px (FIX-1 I)', async ({

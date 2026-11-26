@@ -48,7 +48,7 @@ export function PropertyPageView({
   wrap = passthrough,
   showBanner,
 }: PropertyPageViewProps) {
-  const { property, page, host, trust, units, amenities, house_rules } = propertyView;
+  const { property, page, host, trust, units, amenities, house_rules, special_days } = propertyView;
   const published = page.published;
   if (!published) return null;
 
@@ -142,7 +142,9 @@ export function PropertyPageView({
         ? wrap('location', <LocationContactSection property={property} />)
         : null}
 
-      {visibility.times ? wrap('times', <TimesSection property={property} />) : null}
+      {visibility.times
+        ? wrap('times', <TimesSection property={property} specialDays={special_days} />)
+        : null}
 
       {visibility.faq ? wrap('faq', <FaqSection items={published.faq} />) : null}
 

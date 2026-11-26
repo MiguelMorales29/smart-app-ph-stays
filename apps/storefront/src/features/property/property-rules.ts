@@ -11,6 +11,7 @@ import {
   type PublicUnitCardView,
   type UnitMode,
   type UnitType,
+  type PublicSpecialDayView,
   type WeeklyHours,
 } from '@smartapp/core';
 
@@ -794,6 +795,57 @@ function formatDayRanges(
         `${formatWallTime12h(range.start, { compact: true })}–${formatWallTime12h(range.end, { compact: true })}`,
     )
     .join(', ');
+}
+
+const SHORT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const SHORT_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+function shortDay(date: string, withMonth = true): string {
+  const value = new Date(`${date}T00:00:00Z`);
+  const base = `${SHORT_WEEKDAYS[value.getUTCDay()] ?? ''}, ${value.getUTCDate()}`;
+  return withMonth ? `${base} ${SHORT_MONTHS[value.getUTCMonth()] ?? ''}` : base;
+}
+
+/**
+ * One line per special day for the Times section (R-2b, D95):
+ * `{ when: "Thu, 24 – Fri, 25 Dec", what: "Replies and viewings 9 AM–12 PM · Christmas" }`.
+ * Shows the next 6, soonest first.
+ */
+export function formatSpecialDays(
+  days: readonly PublicSpecialDayView[],
+): { readonly key: string; readonly when: string; readonly what: string }[] {
+  return days.slice(0, 6).map((day) => {
+    const sameMonth = day.starts_on.slice(0, 7) === day.ends_on.slice(0, 7);
+    const when =
+      day.starts_on === day.ends_on
+        ? shortDay(day.starts_on)
+        : `${shortDay(day.starts_on, !sameMonth)} – ${shortDay(day.ends_on)}`;
+    const scope =
+      day.applies_to === 'both'
+        ? 'Replies and viewings'
+        : day.applies_to === 'replies'
+          ? 'Replies'
+          : 'Viewings';
+    const hours = day.kind === 'closed' ? 'closed' : formatDayRanges(day.ranges);
+    return {
+      key: `${day.starts_on}-${day.ends_on}-${day.applies_to}`,
+      when,
+      what: [`${scope} ${hours}`, day.reason].filter(Boolean).join(' · '),
+    };
+  });
 }
 
 function formatDaySpan(indices: readonly number[]): string {

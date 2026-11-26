@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { calendarDateSchema } from './index.js';
-import { easterSunday, phHolidayChips, phHolidays } from './ph-holidays.js';
+import { easterSunday, phHolidayChips, phHolidays, upcomingPhHolidays } from './ph-holidays.js';
 
 const d = (value: string) => calendarDateSchema.parse(value);
 
@@ -90,5 +90,18 @@ describe('phHolidayChips', () => {
 
   it('leaves out chips that have already passed', () => {
     expect(chips.some((chip) => chip.key === 'holy-week-2026')).toBe(false);
+  });
+});
+
+describe('upcomingPhHolidays (R-2b)', () => {
+  it('lists single holidays from today for the next year, soonest first', () => {
+    const upcoming = upcomingPhHolidays(calendarDateSchema.parse('2026-12-10'));
+    expect(upcoming[0]).toMatchObject({
+      date: '2026-12-24',
+      name: 'Christmas Eve',
+      proclaimed: true,
+    });
+    expect(upcoming.at(-1)?.date).toBe('2027-12-08');
+    expect(upcoming.map((holiday) => holiday.date)).not.toContain('2027-02-25');
   });
 });

@@ -11,6 +11,8 @@ import {
   propertyStatusSchema,
   roomBathroomSchema,
   roomGuestsSchema,
+  specialDayKindSchema,
+  specialDayScopeSchema,
   unitModeSchema,
   unitSlugSchema,
   unitStatusSchema,
@@ -19,6 +21,7 @@ import {
 import { centavosSchema } from '../../money/index.js';
 import { calendarDateSchema } from '../../time/index.js';
 import {
+  dailyTimeRangeSchema,
   isoTimestampSchema,
   positiveCentavosSchema,
   propertyContactSchema,
@@ -93,6 +96,36 @@ export const propertyPagesRow = z.object({
   updated_at: isoTimestampSchema,
 });
 export type PropertyPagesRow = z.infer<typeof propertyPagesRow>;
+
+/**
+ * A special day or range for the reply and viewing hours (R-2b, D95): closed all day, or open at
+ * different hours, with an optional reason ("Christmas"). Up to 60 per property; past days drop
+ * off. It does not block bookings: Calendar → Block dates does (Phase 6).
+ */
+export const specialDaysRow = z
+  .object({
+    id: uuidSchema,
+    account_id: uuidSchema,
+    property_id: uuidSchema,
+    starts_on: calendarDateSchema,
+    ends_on: calendarDateSchema,
+    kind: specialDayKindSchema,
+    /** Open times on each day of the range, when `kind` is `hours`. */
+    ranges: z.array(dailyTimeRangeSchema).max(3),
+    applies_to: specialDayScopeSchema,
+    reason: z.string().trim().min(1).max(80).nullable(),
+    created_at: isoTimestampSchema,
+    updated_at: isoTimestampSchema,
+  })
+  .refine((row) => row.ends_on >= row.starts_on, {
+    message: 'The last day must be on or after the first day.',
+    path: ['ends_on'],
+  })
+  .refine((row) => (row.kind === 'closed' ? row.ranges.length === 0 : row.ranges.length > 0), {
+    message: 'Different hours need at least one time range; a closed day has none.',
+    path: ['ranges'],
+  });
+export type SpecialDaysRow = z.infer<typeof specialDaysRow>;
 
 /**
  * A shared room whose beds are rented one by one (R-1b, D92). The room holds what every bed shares

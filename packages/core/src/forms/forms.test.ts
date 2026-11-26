@@ -288,7 +288,6 @@ describe('Phase 4 form schemas', () => {
       fri: [],
       sat: [],
       sun: [],
-      closed_dates: ['2026-12-25'],
     };
     expect(hoursFormSchema.safeParse({ reply_hours: emptyWeek, viewing_hours: null }).success).toBe(
       true,

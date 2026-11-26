@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { CheckIcon } from 'lucide-react';
 import { cn } from 'cn';
 import { Button } from '@smartapp/ui/components/button';
@@ -53,6 +53,15 @@ export function SaveBar({
   const formFactor = useFormFactor();
   useBeforeUnloadGuard(dirty);
   const visible = dirty || state !== 'idle';
+  // Lets toasts rise above the pill instead of covering it (R-2b, see toast.tsx).
+  useEffect(() => {
+    if (!visible) return undefined;
+    const root = document.documentElement;
+    root.dataset.saveBar = 'visible';
+    return () => {
+      delete root.dataset.saveBar;
+    };
+  }, [visible]);
   const desktop = formFactor === 'desktop';
   const saved = state === 'done';
   const text =

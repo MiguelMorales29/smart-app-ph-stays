@@ -6,6 +6,7 @@ import {
   buildUnitDisplayCards,
   computeStartingPrice,
   formatAreaLabel,
+  formatSpecialDays,
   formatWallTime12h,
   formatWeeklyHoursSummary,
   groupDisplayCardsByMode,
@@ -267,7 +268,6 @@ describe('property-rules', () => {
       fri: [{ start: '09:00', end: '18:00' }],
       sat: [{ start: '09:00', end: '18:00' }],
       sun: [],
-      closed_dates: [],
     };
     expect(formatWeeklyHoursSummary(hours, 'reply')).toBe('Replies 9 AM–6 PM, Mon–Sat');
     expect(formatWeeklyHoursSummary(null, 'reply')).toBe('Replies any time');
@@ -322,5 +322,33 @@ describe('property-rules', () => {
     expect(
       resolveDemoWorld({ pack: 'marketing', clock: fixedClock('2026-12-10T10:00:00+08:00') }),
     ).toBeDefined();
+  });
+});
+
+describe('formatSpecialDays (R-2b)', () => {
+  it('says when, what and why in one line', () => {
+    expect(
+      formatSpecialDays([
+        {
+          starts_on: calendarDate('2026-12-24'),
+          ends_on: calendarDate('2026-12-25'),
+          kind: 'hours',
+          ranges: [{ start: '09:00', end: '12:00' }],
+          applies_to: 'both',
+          reason: 'Christmas',
+        },
+        {
+          starts_on: calendarDate('2027-01-01'),
+          ends_on: calendarDate('2027-01-01'),
+          kind: 'closed',
+          ranges: [],
+          applies_to: 'viewings',
+          reason: null,
+        },
+      ]).map(({ when, what }) => ({ when, what })),
+    ).toEqual([
+      { when: 'Thu, 24 – Fri, 25 Dec', what: 'Replies and viewings 9 AM–12 PM · Christmas' },
+      { when: 'Fri, 1 Jan', what: 'Viewings closed' },
+    ]);
   });
 });
