@@ -120,6 +120,8 @@ export function buildBusyPack(clock: Clock): DemoWorld {
       weekly_discount_percent: 10,
       monthly_discount_percent: 20,
       down_payment_percent: 30,
+      down_payment_kind: 'percent',
+      down_payment_centavos: null,
       hold_minutes: 60,
       advance_notice_days: 0,
       booking_window_days: 365,

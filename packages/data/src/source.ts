@@ -412,6 +412,21 @@ export function createValidatedDataSource(
       operations.deleteUnit.output,
       handlers.deleteUnit,
     ),
+    saveAmenity: wrapOp(
+      operations.saveAmenity.input,
+      operations.saveAmenity.output,
+      handlers.saveAmenity,
+    ),
+    removeAmenity: wrapOp(
+      operations.removeAmenity.input,
+      operations.removeAmenity.output,
+      handlers.removeAmenity,
+    ),
+    setPropertyAmenities: wrapOp(
+      operations.setPropertyAmenities.input,
+      operations.setPropertyAmenities.output,
+      handlers.setPropertyAmenities,
+    ),
     listAmenities: wrapOp(
       operations.listAmenities.input,
       operations.listAmenities.output,

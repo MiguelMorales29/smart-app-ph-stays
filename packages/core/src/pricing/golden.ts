@@ -42,6 +42,8 @@ const BASE_TERMS: QuoteStayTerms = {
   weekly_discount_percent: 10,
   monthly_discount_percent: 25,
   down_payment_percent: 50,
+  down_payment_kind: 'percent',
+  down_payment_centavos: null,
   advance_notice_days: 1,
   booking_window_days: 365,
 };
@@ -372,6 +374,63 @@ export const GOLDEN_QUOTE_CASES: readonly GoldenQuoteCase[] = [
     // - Down payment (100%): 550,000 (₱5,500.00)
     input: {
       terms: { ...BASE_TERMS, down_payment_percent: 100 },
+      weekdayRates: WEEKEND_RATES,
+      rateOverrides: HOLIDAY_OVERRIDES,
+      fees: STANDARD_FEES,
+      checkIn: calendarDate('2026-12-14'),
+      checkOut: calendarDate('2026-12-16'),
+      adults: 2,
+      children: 0,
+      today: TODAY,
+    },
+    expected: {
+      ok: true,
+      nights: 2,
+      nightsSubtotalCentavos: 500000,
+      discountCentavos: 0,
+      feesSubtotalCentavos: 50000,
+      totalCentavos: 550000,
+      requiredCentavos: 550000,
+    },
+  },
+  {
+    id: 'G10b_fixed_down_payment',
+    description: '2 weeknights with a fixed ₱1,000 down payment (D93)',
+    // Hand math: total 550,000; fixed 100,000 is below the total, so the guest pays 100,000.
+    input: {
+      terms: {
+        ...BASE_TERMS,
+        down_payment_kind: 'fixed',
+        down_payment_centavos: centavos(100_000),
+      },
+      weekdayRates: WEEKEND_RATES,
+      rateOverrides: HOLIDAY_OVERRIDES,
+      fees: STANDARD_FEES,
+      checkIn: calendarDate('2026-12-14'),
+      checkOut: calendarDate('2026-12-16'),
+      adults: 2,
+      children: 0,
+      today: TODAY,
+    },
+    expected: {
+      ok: true,
+      nights: 2,
+      nightsSubtotalCentavos: 500000,
+      discountCentavos: 0,
+      feesSubtotalCentavos: 50000,
+      totalCentavos: 550000,
+      requiredCentavos: 100000,
+    },
+  },
+  {
+    id: 'G10c_fixed_down_payment_above_total',
+    description: 'A fixed ₱9,000 down payment on a ₱5,500 stay asks for the full stay only (D93)',
+    input: {
+      terms: {
+        ...BASE_TERMS,
+        down_payment_kind: 'fixed',
+        down_payment_centavos: centavos(900_000),
+      },
       weekdayRates: WEEKEND_RATES,
       rateOverrides: HOLIDAY_OVERRIDES,
       fees: STANDARD_FEES,

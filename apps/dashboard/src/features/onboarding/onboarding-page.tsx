@@ -1068,6 +1068,8 @@ function PriceStep({
                 weeklyDiscountPercent: terms?.weekly_discount_percent ?? 0,
                 monthlyDiscountPercent: terms?.monthly_discount_percent ?? 0,
                 downPaymentPercent: terms?.down_payment_percent ?? 50,
+                downPaymentKind: terms?.down_payment_kind ?? 'percent',
+                downPaymentCentavos: terms?.down_payment_centavos ?? null,
                 holdMinutes: terms?.hold_minutes ?? 60,
                 advanceNoticeDays: terms?.advance_notice_days ?? 0,
                 bookingWindowDays: terms?.booking_window_days ?? 365,

@@ -53,8 +53,10 @@ import { SettingsList, type SettingsListRow } from '@smartapp/ui/compositions/se
 import { useFormDraft } from '@smartapp/ui/hooks/use-form-draft';
 import { notify } from '@smartapp/ui/lib/notify';
 import { useDashboard } from '@/app/dashboard-context';
+import { AmenitiesField, PROPERTY_AMENITIES_NOTE } from '@/app/amenities/amenities-field';
 import { usePhotoPipeline } from '@/app/photos/use-photo-pipeline';
 import { useSetUnitPhotosMutation } from '@/data/photos/upload';
+import { useOwnerPropertyQuery } from '@/data/property/reads';
 import { useSaveUnitPricesMutation } from '@/data/prices/writes';
 import { extractAppError } from '@/data/shared';
 import { saveUnitInputFromDetail } from '@/data/units/bulk';
@@ -63,7 +65,6 @@ import { useSaveUnitMutation, useSetUnitStatusMutation } from '@/data/units/writ
 import { applyAppErrorToForm } from '@/data/use-form-errors';
 import { UnitNotReadySheet, type NotReadyState } from './unit-not-ready-sheet';
 import {
-  AmenitiesField,
   BookingRulesFields,
   LeaseFields,
   leaseDraftFrom,
@@ -256,6 +257,7 @@ function UnitEditor({
   });
   const photos = usePhotoPipeline({ saved: detail.photos, altPrefix: photoLabel });
   const amenities = useAmenitiesQuery();
+  const propertyAmenityIds = useOwnerPropertyQuery().data?.amenity_ids ?? [];
   const { today } = useDashboard();
   const isLong = unit.mode === 'long_term';
   const [price, setPrice] = useState<PriceDraft>(() => priceDraftFrom(detail));
@@ -309,6 +311,9 @@ function UnitEditor({
       }
       if (rules.minNights > rules.maxNights) {
         nextRules.maxNights = 'Make the longest stay at least the shortest stay.';
+      }
+      if (rules.downPaymentKind === 'fixed' && (rules.downPaymentFixed ?? 0) <= 0) {
+        nextRules.downPaymentFixed = 'Enter the down payment amount.';
       }
     }
     setPriceErrors(nextPrice);
@@ -419,6 +424,11 @@ function UnitEditor({
           weeklyDiscountPercent: price.weeklyDiscount,
           monthlyDiscountPercent: price.monthlyDiscount,
           downPaymentPercent: rules.downPaymentPercent,
+          downPaymentKind: rules.downPaymentKind,
+          downPaymentCentavos:
+            rules.downPaymentKind === 'fixed' && rules.downPaymentFixed !== null
+              ? centavos(rules.downPaymentFixed)
+              : null,
           holdMinutes: rules.holdMinutes,
           advanceNoticeDays: rules.advanceNoticeDays,
           bookingWindowDays: rules.bookingWindowDays,
@@ -778,14 +788,25 @@ function UnitEditor({
     ) : isBed && room ? (
       <SetOnRoom room={room} what="amenities" count={amenityIds.length} />
     ) : (
-      <AmenitiesField catalogue={amenities.data} value={amenityIds} onChange={setAmenityIds} />
+      <AmenitiesField
+        catalogue={amenities.data}
+        value={amenityIds}
+        onChange={setAmenityIds}
+        locked={propertyAmenityIds}
+        lockedNote={PROPERTY_AMENITIES_NOTE}
+      />
     ),
     rules: isLong ? (
       <p className="text-sm text-muted-foreground">
         Monthly units use the lease rules under Price.
       </p>
     ) : (
-      <BookingRulesFields value={rules} onChange={setRules} errors={rulesErrors} />
+      <BookingRulesFields
+        value={rules}
+        onChange={setRules}
+        errors={rulesErrors}
+        nightlyPrice={price.baseNightly}
+      />
     ),
   };
 

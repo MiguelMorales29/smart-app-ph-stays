@@ -274,6 +274,18 @@ export function calculatePaidAndBalance(
   };
 }
 
+/** A unit's amenities plus the property's "At the property" ones, without repeats (R-3, D93). */
+export function withPropertyAmenities(
+  world: DemoWorld,
+  propertyId: string,
+  unitAmenityIds: readonly string[],
+): string[] {
+  const propertyIds = world.property_amenities
+    .filter((link) => link.property_id === propertyId)
+    .map((link) => link.amenity_id);
+  return [...new Set([...unitAmenityIds, ...propertyIds])];
+}
+
 /** The public part of a bed space's room (R-1b). */
 export function publicRoomFor(world: DemoWorld, roomId: string | null): PublicRoomView | null {
   if (roomId === null) return null;
@@ -308,6 +320,8 @@ export function quoteForUnit(params: {
       weekly_discount_percent: params.stayTerms.weekly_discount_percent,
       monthly_discount_percent: params.stayTerms.monthly_discount_percent,
       down_payment_percent: params.stayTerms.down_payment_percent,
+      down_payment_kind: params.stayTerms.down_payment_kind,
+      down_payment_centavos: params.stayTerms.down_payment_centavos,
       advance_notice_days: params.stayTerms.advance_notice_days,
       booking_window_days: params.stayTerms.booking_window_days,
       max_guests: params.unit.max_guests,
@@ -756,12 +770,14 @@ export function buildPropertyView(
       .filter((lp) => lp.property_id === property.id && lp.unit_id === unit.id)
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(mapPhoto);
-    const amenityIds = world.unit_amenities
-      .filter((ua) => ua.unit_id === unit.id)
-      .map((ua) => {
-        usedAmenityIds.add(ua.amenity_id);
-        return ua.amenity_id;
-      });
+    const amenityIds = withPropertyAmenities(
+      world,
+      unit.property_id,
+      world.unit_amenities.filter((ua) => ua.unit_id === unit.id).map((ua) => ua.amenity_id),
+    ).map((amenityId) => {
+      usedAmenityIds.add(amenityId);
+      return amenityId;
+    });
     const priceFrom = computeLowestNightlyPriceNext60Nights(world, unit, stayTerms, today);
 
     return {
@@ -788,6 +804,8 @@ export function buildPropertyView(
             weekly_discount_percent: stayTerms.weekly_discount_percent,
             monthly_discount_percent: stayTerms.monthly_discount_percent,
             down_payment_percent: stayTerms.down_payment_percent,
+            down_payment_kind: stayTerms.down_payment_kind,
+            down_payment_centavos: stayTerms.down_payment_centavos,
             hold_minutes: stayTerms.hold_minutes,
             advance_notice_days: stayTerms.advance_notice_days,
             booking_window_days: stayTerms.booking_window_days,
@@ -1045,9 +1063,11 @@ export function buildPublicUnitView(
     .filter((lp) => lp.property_id === property.id && lp.unit_id === unit.id)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map(mapPhoto);
-  const unitAmenityIds = world.unit_amenities
-    .filter((ua) => ua.unit_id === unit.id)
-    .map((ua) => ua.amenity_id);
+  const unitAmenityIds = withPropertyAmenities(
+    world,
+    unit.property_id,
+    world.unit_amenities.filter((ua) => ua.unit_id === unit.id).map((ua) => ua.amenity_id),
+  );
   const unitAmenitySet = new Set(unitAmenityIds);
   const amenities = world.amenities
     .filter((a) => a.is_active && unitAmenitySet.has(a.id))
@@ -1082,6 +1102,8 @@ export function buildPublicUnitView(
         weekly_discount_percent: stayTerms.weekly_discount_percent,
         monthly_discount_percent: stayTerms.monthly_discount_percent,
         down_payment_percent: stayTerms.down_payment_percent,
+        down_payment_kind: stayTerms.down_payment_kind,
+        down_payment_centavos: stayTerms.down_payment_centavos,
         hold_minutes: stayTerms.hold_minutes,
         advance_notice_days: stayTerms.advance_notice_days,
         booking_window_days: stayTerms.booking_window_days,

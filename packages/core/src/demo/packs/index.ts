@@ -85,6 +85,7 @@ export function summarizeDemoWorld(
     listing_photos: world.listing_photos.length,
     amenities: world.amenities.length,
     unit_amenities: world.unit_amenities.length,
+    property_amenities: world.property_amenities.length,
     house_rules: world.house_rules.length,
     payment_accounts: world.payment_accounts.length,
     page_reports: world.page_reports.length,

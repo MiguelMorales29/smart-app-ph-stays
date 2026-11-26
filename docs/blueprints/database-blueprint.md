@@ -268,7 +268,9 @@ Keys: unique `(property_id, slug)`; unique `(account_id, id)` for owner-safe for
 | `prep_nights` | smallint | 0 to 2. Nights kept empty after each stay for cleaning. Default 0 |
 | `weekly_discount_percent` | smallint | 0 to 90. Applied to stays of 7 nights or more |
 | `monthly_discount_percent` | smallint | 0 to 90. Applied to stays of 28 nights or more |
-| `down_payment_percent` | smallint | 10 to 100. 100 means full payment |
+| `down_payment_percent` | smallint | 10 to 100. 100 means full payment. Used when `down_payment_kind` is `percent` |
+| `down_payment_kind` | text | `percent` or `fixed` (D93) |
+| `down_payment_centavos` | bigint | Required when `fixed`; the guest never pays more than the stay total |
 | `hold_minutes` | integer | 15 to 1,440. Default 60 |
 | `advance_notice_days` | smallint | Earliest check-in from today. Default 0 |
 | `booking_window_days` | smallint | How far ahead dates open. Default 365 |
@@ -303,10 +305,11 @@ Keys: unique `(property_id, slug)`; unique `(account_id, id)` for owner-safe for
 | --- | --- | --- |
 | `amenities.account_id` | uuid | Empty for the platform's list; set for an owner's own entry |
 | `amenities.code` | text | Unique per list |
-| `amenities.label`, `icon` | text | The icon is a Lucide name |
+| `amenities.label`, `icon` | text | The icon is a Lucide name, or `emoji:` and an emoji for an owner's own entry (D93). Owners have up to 40 own entries; a label is unique per owner (case-insensitive) |
 | `amenities.grp` | text | `essentials`, `comfort`, `kitchen`, `bathroom`, `safety`, `outdoor`, `other` |
 | `amenities.sort_order`, `is_active` | integer, boolean |  |
 | `unit_amenities.unit_id`, `amenity_id` | uuid | Together they are the primary key |
+| `property_amenities.property_id`, `amenity_id` | uuid | "At the property" amenities set once (D93); every unit shows them. Together they are the primary key |
 
 **`house_rules`** One rule per row, per property.
 

@@ -56,6 +56,7 @@ export type { FileBucket, FilePurpose, FileStatus, FileUploaderKind } from './fi
 export {
   AMENITY_GROUPS,
   CANCELLATION_PRESETS,
+  DOWN_PAYMENT_KINDS,
   FONT_PAIRS,
   PROPERTY_STATUSES,
   ROOM_BATHROOMS,
@@ -65,6 +66,7 @@ export {
   UNIT_TYPES,
   amenityGroupSchema,
   cancellationPresetSchema,
+  downPaymentKindSchema,
   fontPairSchema,
   propertyStatusSchema,
   roomBathroomSchema,
@@ -76,6 +78,7 @@ export {
 export type {
   AmenityGroup,
   CancellationPreset,
+  DownPaymentKind,
   FontPair,
   PropertyStatus,
   RoomBathroom,

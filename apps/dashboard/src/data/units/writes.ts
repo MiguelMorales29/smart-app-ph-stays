@@ -265,3 +265,49 @@ export function useDeleteUnitMutation() {
     },
   });
 }
+
+/** Adds or edits one of the owner's own amenities (R-3, D93). */
+export function useSaveAmenityMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      input: Omit<OperationInput<'saveAmenity'>, 'accountId' | 'idempotencyKey'>,
+    ) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.saveAmenity(
+          { ...input, accountId, idempotencyKey: createIdempotencyKey('save-amenity') },
+          session,
+        ),
+      );
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: unitsKeys.all });
+    },
+  });
+}
+
+/** Removes one of the owner's own amenities from the list, every unit and the property. */
+export function useRemoveAmenityMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { readonly amenityId: string }) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.removeAmenity(
+          {
+            accountId,
+            idempotencyKey: createIdempotencyKey('remove-amenity'),
+            amenityId: input.amenityId,
+          },
+          session,
+        ),
+      );
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries();
+    },
+  });
+}

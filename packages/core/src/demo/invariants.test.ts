@@ -53,6 +53,7 @@ import {
   subscriptionsRow,
   threadsRow,
   unitAmenitiesRow,
+  propertyAmenitiesRow,
   unitFeesRow,
   unitLeaseTermsRow,
   unitOccupancyRow,
@@ -131,6 +132,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['listing_photos', listingPhotosRow],
     ['amenities', amenitiesRow],
     ['unit_amenities', unitAmenitiesRow],
+    ['property_amenities', propertyAmenitiesRow],
     ['house_rules', houseRulesRow],
     ['payment_accounts', paymentAccountsRow],
     ['page_reports', pageReportsRow],
@@ -158,7 +160,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['meta_capi_deliveries', metaCapiDeliveriesRow],
   ];
 
-  expect(tableValidators).toHaveLength(50);
+  expect(tableValidators).toHaveLength(51);
 
   const seenIds = new Set<string>();
   for (const [tableName, schema] of tableValidators) {
@@ -417,6 +419,8 @@ function assertWorldInvariants(world: DemoWorld): void {
         weekly_discount_percent: stayTerms.weekly_discount_percent,
         monthly_discount_percent: stayTerms.monthly_discount_percent,
         down_payment_percent: stayTerms.down_payment_percent,
+        down_payment_kind: stayTerms.down_payment_kind,
+        down_payment_centavos: stayTerms.down_payment_centavos,
         advance_notice_days: stayTerms.advance_notice_days,
         booking_window_days: stayTerms.booking_window_days,
         max_guests: unit.max_guests,

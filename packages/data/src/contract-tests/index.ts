@@ -239,6 +239,8 @@ export function runContractTests(makeSource: MakeContractSource): void {
             weekly_discount_percent: studio.stay_terms.weekly_discount_percent,
             monthly_discount_percent: studio.stay_terms.monthly_discount_percent,
             down_payment_percent: studio.stay_terms.down_payment_percent,
+            down_payment_kind: studio.stay_terms.down_payment_kind,
+            down_payment_centavos: studio.stay_terms.down_payment_centavos,
             advance_notice_days: studio.stay_terms.advance_notice_days,
             booking_window_days: studio.stay_terms.booking_window_days,
             max_guests: studio.max_guests,

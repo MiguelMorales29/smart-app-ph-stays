@@ -5,6 +5,7 @@ import {
   amenityGroupSchema,
   bankSchema,
   cancellationPresetSchema,
+  downPaymentKindSchema,
   paymentAccountMethodSchema,
   propertySlugSchema,
   propertyStatusSchema,
@@ -160,6 +161,9 @@ export const unitStayTermsRow = z
     weekly_discount_percent: z.int().min(0).max(90),
     monthly_discount_percent: z.int().min(0).max(90),
     down_payment_percent: z.int().min(10).max(100),
+    /** R-3 (D93): `fixed` uses `down_payment_centavos`, capped at the stay total. */
+    down_payment_kind: downPaymentKindSchema,
+    down_payment_centavos: positiveCentavosSchema.nullable(),
     hold_minutes: z.int().min(15).max(1440),
     advance_notice_days: z.int().min(0).max(365),
     booking_window_days: z.int().min(1).max(730),
@@ -168,6 +172,10 @@ export const unitStayTermsRow = z
   })
   .refine((row) => row.max_nights >= row.min_nights, {
     message: 'max_nights must be greater than or equal to min_nights.',
+  })
+  .refine((row) => row.down_payment_kind === 'percent' || row.down_payment_centavos !== null, {
+    message: 'A fixed down payment needs an amount.',
+    path: ['down_payment_centavos'],
   });
 export type UnitStayTermsRow = z.infer<typeof unitStayTermsRow>;
 
@@ -199,12 +207,21 @@ export const listingPhotosRow = z.object({
 });
 export type ListingPhotosRow = z.infer<typeof listingPhotosRow>;
 
+/**
+ * An amenity's icon (D93): a Lucide icon name ("wifi") or an emoji the owner picked ("emoji:🏓").
+ */
+export const amenityIconSchema = z
+  .string()
+  .min(1)
+  .max(60)
+  .regex(/^(emoji:.{1,16}|[a-z0-9-]{1,50})$/u, 'Pick an icon or an emoji.');
+
 export const amenitiesRow = z.object({
   id: uuidSchema,
   account_id: uuidSchema.nullable(),
   code: z.string().min(1).max(60),
   label: z.string().min(1).max(80),
-  icon: z.string().min(1).max(60),
+  icon: amenityIconSchema,
   grp: amenityGroupSchema,
   sort_order: z.int().min(0),
   is_active: z.boolean(),
@@ -220,6 +237,15 @@ export const unitAmenitiesRow = z.object({
   created_at: isoTimestampSchema,
 });
 export type UnitAmenitiesRow = z.infer<typeof unitAmenitiesRow>;
+
+/** Amenities set once for the whole property ("At the property", R-3, D93): every unit shows them. */
+export const propertyAmenitiesRow = z.object({
+  account_id: uuidSchema,
+  property_id: uuidSchema,
+  amenity_id: uuidSchema,
+  created_at: isoTimestampSchema,
+});
+export type PropertyAmenitiesRow = z.infer<typeof propertyAmenitiesRow>;
 
 export const houseRulesRow = z.object({
   id: uuidSchema,

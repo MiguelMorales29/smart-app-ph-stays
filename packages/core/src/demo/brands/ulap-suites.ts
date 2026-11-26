@@ -384,6 +384,8 @@ export function buildUlapSuitesBrand(
         weekly_discount_percent: 10,
         monthly_discount_percent: 20,
         down_payment_percent: 30,
+        down_payment_kind: 'percent',
+        down_payment_centavos: null,
         hold_minutes: 60,
         advance_notice_days: 0,
         booking_window_days: 365,
@@ -401,6 +403,8 @@ export function buildUlapSuitesBrand(
         weekly_discount_percent: 10,
         monthly_discount_percent: 20,
         down_payment_percent: 30,
+        down_payment_kind: 'percent',
+        down_payment_centavos: null,
         hold_minutes: 60,
         advance_notice_days: 0,
         booking_window_days: 365,
@@ -490,6 +494,15 @@ export function buildUlapSuitesBrand(
       },
     ],
     unitFees: [],
+    // "At the property" (R-3): the condo's shared pool and parking, set once for every unit.
+    propertyAmenities: [DEMO_IDS.amenities.sharedPool, DEMO_IDS.amenities.parking].map(
+      (amenityId) => ({
+        account_id: ids.account,
+        property_id: ids.property,
+        amenity_id: amenityId,
+        created_at: createdAt,
+      }),
+    ),
     unitAmenities: [
       ...studioAmenityIds.map((amenityId) => ({
         account_id: ids.account,
