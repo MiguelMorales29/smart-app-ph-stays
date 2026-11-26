@@ -353,7 +353,9 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     ).toBe(true);
   });
 
-  test('house rules long custom chip wraps cleanly at 360 px (FIX-1 F)', async ({ page }) => {
+  test('R-2 house rules: a long own rule wraps in the list, can move and be removed; closed dates come from the calendar (FIX-1 F, A15, A16)', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await page.goto(`${DASHBOARD_ORIGIN}/settings/policies?clock=golden`, {
       waitUntil: 'networkidle',
@@ -361,27 +363,36 @@ test.describe('Owner journeys (FIX-1 J)', () => {
 
     const longRule =
       'Please remember to turn off all air conditioners, lights, and water heaters before leaving the studio.';
-    const input = page.locator('#pol-own-rule');
-    await input.fill(longRule);
-    const addBtn = page.locator('main').getByRole('button', { name: 'Add', exact: true });
-    await addBtn.click();
+    await page.getByLabel('Add your own rule').fill(longRule);
+    await page.getByRole('button', { name: 'Add rule' }).click();
+    const list = page.getByRole('list', { name: /Your own rules/ });
+    const items = list.getByRole('listitem');
+    await expect(items.last()).toContainText(longRule);
+    const count = await items.count();
 
-    await expect(page.getByRole('button', { name: longRule })).toBeVisible();
-    const layout = await page.evaluate(() => {
-      const root = document.documentElement;
-      const btn = [...document.querySelectorAll('button')].find(
-        (b) => b.textContent?.trim() === 'Add',
-      );
-      const box = btn?.getBoundingClientRect();
-      return {
-        scrollWidth: root.scrollWidth,
-        clientWidth: root.clientWidth,
-        addRight: box ? box.right : -1,
-      };
+    // Wrapped, not cut: no sideways scroll at 360 px.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+
+    await page.getByRole('button', { name: `More for rule ${count}` }).click();
+    await page.getByRole('menuitem', { name: 'Move up' }).click();
+    await expect(items.nth(count - 2)).toContainText(longRule);
+    await page.getByRole('button', { name: `More for rule ${count - 1}` }).click();
+    await page.getByRole('menuitem', { name: 'Remove' }).click();
+    await expect(list).not.toContainText(longRule);
+
+    await page.goto(`${DASHBOARD_ORIGIN}/settings/hours?clock=golden`, {
+      waitUntil: 'networkidle',
     });
-    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
-    expect(layout.addRight).toBeGreaterThan(0);
-    expect(layout.addRight).toBeLessThanOrEqual(360);
+    await page.getByRole('switch', { name: /Set reply hours/ }).click();
+    await page.getByRole('button', { name: /Add closed dates/ }).click();
+    const days = page.locator('[data-slot=calendar] button[data-day]:not([disabled])');
+    await days.nth(8).click();
+    await days.nth(10).click();
+    await page.getByRole('button', { name: 'Close 3 days' }).click();
+    await expect(page.getByRole('button', { name: /^Remove .+ – .+/ })).toBeVisible();
   });
 
   test('calendar prices and check-out-only labels do not touch neighbours at 360 px (FIX-1 I)', async ({

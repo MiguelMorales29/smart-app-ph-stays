@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useBlocker } from '@tanstack/react-router';
 import { CopyIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import {
-  calendarDateSchema,
   formatWallTime12h,
   hoursFormSchema,
+  isCalendarDate,
+  manilaToday,
   type WeeklyHours,
 } from '@smartapp/core';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
-import { Input } from '@smartapp/ui/components/input';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { RowButton, RowGroup, RowSwitch } from '@smartapp/ui/compositions/grouped-rows';
@@ -21,6 +21,8 @@ import { notify } from '@smartapp/ui/lib/notify';
 import { useHoursQuery } from '@/data/settings/reads';
 import { useSaveHoursMutation } from '@/data/settings/writes';
 import { extractAppError } from '@/data/shared';
+import { useDashboard } from '@/app/dashboard-context';
+import { ClosedDatesEditor } from './closed-dates-editor';
 import { SettingsPane } from './settings-nav';
 import {
   same,
@@ -53,6 +55,9 @@ const EMPTY_WEEK: WeeklyHours = {
   sun: [],
   closed_dates: [],
 };
+
+const upcomingOnly = (week: WeeklyHours | null, today: string): WeeklyHours | null =>
+  week ? { ...week, closed_dates: week.closed_dates.filter((date) => date >= today) } : null;
 
 const time = (value: string) => formatWallTime12h(value) ?? value;
 const rangeText = (ranges: readonly Range[]) =>
@@ -104,7 +109,8 @@ function HoursForm({
   const [draft, setDraft] = useState(initial);
   const [kind, setKind] = useState<Kind>('reply');
   const [editing, setEditing] = useState<DayKey | null>(null);
-  const [closedDate, setClosedDate] = useState('');
+  const shared = useDashboard().today;
+  const today = shared && isCalendarDate(shared) ? shared : manilaToday();
   const [error, setError] = useState<string | null>(null);
   const dirty = !same(draft, saved);
   const week = draft[kind];
@@ -135,8 +141,9 @@ function HoursForm({
       await save.mutateAsync({
         propertyId,
         expectedUpdatedAt: updatedAt,
-        replyHours: draft.reply,
-        viewingHours: draft.viewing,
+        // Past closed dates are dropped here so the list stays short (AUDIT-1 A16).
+        replyHours: upcomingOnly(draft.reply, today),
+        viewingHours: upcomingOnly(draft.viewing, today),
       });
       setSaved(draft);
       setState('done');
@@ -215,52 +222,11 @@ function HoursForm({
             Copy Monday to all days
           </Button>
 
-          <RowGroup title="Closed dates" footer="No replies or viewings on these days.">
-            {week.closed_dates.map((date) => (
-              <div key={date} className="flex min-h-13 items-center gap-3 px-4 py-2">
-                <span className="flex-1 tabular">{date}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-11 pointer-fine:size-9"
-                  aria-label={`Remove ${date}`}
-                  onClick={() =>
-                    setWeek({
-                      ...week,
-                      closed_dates: week.closed_dates.filter((other) => other !== date),
-                    })
-                  }
-                >
-                  <Trash2Icon aria-hidden="true" />
-                </Button>
-              </div>
-            ))}
-            <form
-              className="flex items-center gap-2 px-4 py-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-                const parsed = calendarDateSchema.safeParse(closedDate);
-                if (!parsed.success || week.closed_dates.includes(parsed.data)) return;
-                setWeek({ ...week, closed_dates: [...week.closed_dates, parsed.data].sort() });
-                setClosedDate('');
-              }}
-            >
-              <label htmlFor="closed-date" className="sr-only">
-                Closed date
-              </label>
-              <Input
-                id="closed-date"
-                type="date"
-                className="flex-1"
-                value={closedDate}
-                onChange={(event) => setClosedDate(event.target.value)}
-              />
-              <Button type="submit" variant="outline" className="min-h-11 shrink-0">
-                <PlusIcon aria-hidden="true" />
-                Add
-              </Button>
-            </form>
-          </RowGroup>
+          <ClosedDatesEditor
+            dates={week.closed_dates}
+            today={today}
+            onChange={(closed_dates) => setWeek({ ...week, closed_dates })}
+          />
         </>
       ) : null}
 

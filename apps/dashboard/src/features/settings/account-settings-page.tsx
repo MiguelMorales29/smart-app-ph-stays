@@ -78,6 +78,8 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
   const { offline, message } = useOfflineSave();
   const { theme, setTheme } = useTheme();
   const [savedName, setSavedName] = useState(view.profile.full_name);
+  // The profile version this form was loaded at, so a save from another tab is caught (AUDIT-1 A12).
+  const [version, setVersion] = useState<string | null>(view.profile.updated_at);
   const [name, setName] = useState(savedName);
   const [avatar, setAvatar] = useState<ProfileAvatar | null>(view.profile.avatar);
   const [photoUrl, setPhotoUrl] = useState<string | null>(view.profile_photo_url);
@@ -95,14 +97,15 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
     setNameError(null);
     setState('busy');
     try {
-      await update.mutateAsync({
-        expectedUpdatedAt: null,
+      const saved = await update.mutateAsync({
+        expectedUpdatedAt: version,
         fullName: name.trim(),
         avatar,
         notifyEmail: view.account.notify_email,
         notify: view.member.notify,
       });
       setSavedName(name.trim());
+      setVersion(saved.profile.updated_at);
       setState('done');
     } catch (caught) {
       setState('idle');
@@ -131,11 +134,12 @@ function AccountForm({ view }: { readonly view: OwnerAccountView }) {
   async function handleSavePicture(nextAvatar: ProfileAvatar, nextPreviewUrl: string | null) {
     const photoFileId = nextAvatar.kind === 'photo' ? nextAvatar.file_id : null;
     const saved = await setPicture.mutateAsync({
-      expectedUpdatedAt: null,
+      expectedUpdatedAt: version,
       avatar: nextAvatar,
       photoFileId,
     });
     setAvatar(saved.profile.avatar);
+    setVersion(saved.profile.updated_at);
     setPhotoUrl(nextPreviewUrl ?? saved.photoUrl);
     notify.success('Picture saved');
   }

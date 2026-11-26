@@ -1,6 +1,13 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useBlocker } from '@tanstack/react-router';
-import { LinkIcon } from 'lucide-react';
+import {
+  ExternalLinkIcon,
+  LinkIcon,
+  MapPinIcon,
+  MessageCircleIcon,
+  StarIcon,
+  ThumbsUpIcon,
+} from 'lucide-react';
 import {
   isValidPhMobile,
   PH_PROVINCES,
@@ -10,9 +17,10 @@ import {
   type PropertyContact,
 } from '@smartapp/core';
 import { Alert, AlertDescription } from '@smartapp/ui/components/alert';
-import { Button } from '@smartapp/ui/components/button';
+import { Button, buttonVariants } from '@smartapp/ui/components/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@smartapp/ui/components/input-group';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
@@ -24,10 +32,83 @@ import { PhoneInput } from '@smartapp/ui/compositions/phone-input';
 import { LeaveGuardDialog, SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { SlugField } from '@smartapp/ui/compositions/slug-field';
 import { notify } from '@smartapp/ui/lib/notify';
+import { cn } from '@smartapp/ui/lib/utils';
 import { useOwnerPropertyQuery, useSlugChecker } from '@/data/property/reads';
 import { useChangeSlugMutation, useSavePropertyMutation } from '@/data/property/writes';
 import { extractAppError } from '@/data/shared';
 import { SettingsPane } from './settings-nav';
+
+/** "m.me/ulap" -> "https://m.me/ulap"; null when it can't be a web link yet. */
+export function linkHref(value: string): string | null {
+  const text = value.trim();
+  if (text.length === 0 || /\s/.test(text)) return null;
+  try {
+    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+    return url.hostname.includes('.') ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A link field with its icon inside and an Open button to test it (AUDIT-1 A17). */
+function LinkField({
+  id,
+  label,
+  icon,
+  value,
+  placeholder,
+  maxLength,
+  hint,
+  onChange,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly icon: ReactNode;
+  readonly value: string;
+  readonly placeholder?: string;
+  readonly maxLength: number;
+  readonly hint?: string;
+  readonly onChange: (value: string) => void;
+}) {
+  const href = linkHref(value);
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <InputGroup>
+        <InputGroupAddon aria-hidden="true">{icon}</InputGroupAddon>
+        <InputGroupInput
+          id={id}
+          type="text"
+          inputMode="url"
+          autoCapitalize="none"
+          spellCheck={false}
+          {...(placeholder ? { placeholder } : {})}
+          value={value}
+          maxLength={maxLength}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        {href ? (
+          <InputGroupAddon align="inline-end">
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${label}, in a new tab`}
+              className={cn(
+                buttonVariants({ variant: 'ghost', size: 'sm' }),
+                'h-8 gap-1.5 px-2.5 pointer-coarse:h-9',
+              )}
+            >
+              Open
+              <ExternalLinkIcon aria-hidden="true" />
+            </a>
+          </InputGroupAddon>
+        ) : null}
+      </InputGroup>
+      {hint ? <FieldDescription>{hint}</FieldDescription> : null}
+    </Field>
+  );
+}
 import {
   same,
   SettingsError,
@@ -217,39 +298,34 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
           />
           <FieldError>{errors.phone}</FieldError>
         </Field>
-        <Field>
-          <FieldLabel htmlFor="prop-messenger">Messenger link</FieldLabel>
-          <Input
-            id="prop-messenger"
-            inputMode="url"
-            placeholder="m.me/yourpage"
-            value={draft.messenger}
-            maxLength={200}
-            onChange={(event) => set({ messenger: event.target.value })}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="prop-facebook">Facebook page</FieldLabel>
-          <Input
-            id="prop-facebook"
-            inputMode="url"
-            placeholder="facebook.com/yourpage"
-            value={draft.facebook}
-            maxLength={200}
-            onChange={(event) => set({ facebook: event.target.value })}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="prop-review">Google review link</FieldLabel>
-          <Input
-            id="prop-review"
-            inputMode="url"
-            value={draft.reviewUrl}
-            maxLength={500}
-            onChange={(event) => set({ reviewUrl: event.target.value })}
-          />
-          <FieldDescription>We share it with guests after they check out.</FieldDescription>
-        </Field>
+        <LinkField
+          id="prop-messenger"
+          label="Messenger link"
+          icon={<MessageCircleIcon />}
+          placeholder="m.me/yourpage"
+          value={draft.messenger}
+          maxLength={200}
+          onChange={(messenger) => set({ messenger })}
+        />
+        <LinkField
+          id="prop-facebook"
+          label="Facebook page"
+          icon={<ThumbsUpIcon />}
+          placeholder="facebook.com/yourpage"
+          value={draft.facebook}
+          maxLength={200}
+          onChange={(facebook) => set({ facebook })}
+        />
+        <LinkField
+          id="prop-review"
+          label="Google review link"
+          icon={<StarIcon />}
+          placeholder="g.page/r/your-place/review"
+          value={draft.reviewUrl}
+          maxLength={500}
+          hint="We share it with guests after they check out. Tap Open to check it works."
+          onChange={(reviewUrl) => set({ reviewUrl })}
+        />
       </section>
 
       <section className="flex flex-col gap-4" aria-labelledby="prop-address">
@@ -258,14 +334,19 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
         </h2>
         <Field data-invalid={errors.addressLine ? true : undefined}>
           <FieldLabel htmlFor="prop-street">Street and number</FieldLabel>
-          <Input
-            id="prop-street"
-            autoComplete="street-address"
-            value={draft.addressLine}
-            maxLength={200}
-            aria-invalid={errors.addressLine ? true : undefined}
-            onChange={(event) => set({ addressLine: event.target.value })}
-          />
+          <InputGroup>
+            <InputGroupAddon aria-hidden="true">
+              <MapPinIcon />
+            </InputGroupAddon>
+            <InputGroupInput
+              id="prop-street"
+              autoComplete="street-address"
+              value={draft.addressLine}
+              maxLength={200}
+              aria-invalid={errors.addressLine ? true : undefined}
+              onChange={(event) => set({ addressLine: event.target.value })}
+            />
+          </InputGroup>
           <FieldError>{errors.addressLine}</FieldError>
         </Field>
         <Field>
