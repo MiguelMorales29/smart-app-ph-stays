@@ -187,13 +187,15 @@ test.describe('Owner journeys (FIX-1 J)', () => {
 
     await bedsDialog.getByLabel('Monthly rent for each bed').fill('3500');
     await bedsDialog.getByRole('button', { name: 'Add 2 beds' }).click();
-    await expect(page).toHaveURL(/\/units\/.+\/photos/);
+    // Beds share their room, so the room page opens with the new beds in its list (R-1b).
+    await expect(page).toHaveURL(/\/units\/rooms\//);
+    await expect(page.getByRole('link', { name: /Bed 7/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Bed 8/ })).toBeVisible();
 
-    // Return to /units and verify Bed 7 and Bed 8 appear under Room 3B without a duplicate Bed 1.
+    // Back in /units, Room 3B now has 8 beds and no duplicate Bed 1.
     await page.getByRole('link', { name: 'Units' }).first().click();
     const visibleRows = page.locator('tr:visible, article:visible');
     await expect(visibleRows.filter({ hasText: /Bed 7/ }).first()).toBeVisible();
-    await expect(visibleRows.filter({ hasText: /Bed 8/ }).first()).toBeVisible();
     await expect(
       visibleRows.filter({ hasText: 'Room 3B' }).filter({ hasText: '8 beds' }).first(),
     ).toBeVisible();
