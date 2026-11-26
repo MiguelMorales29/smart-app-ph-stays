@@ -92,7 +92,7 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [x] R-2 Settings and saving (A11, A12, A15–A17): house rules list, monthly move-in rules, closed dates calendar, link fields with Open, saves keep the owner in place
 - [ ] R-2b Special days (reason, different hours, PH holidays; needs a `special_days` table)
 - [x] R-3 Booking rules and amenities (A13, A14)
-- [ ] R-4 Shared pieces (A18, A19, A23, A24)
+- [x] R-4 Shared pieces (A18, A19, A23, A24)
 
 ## Later phases
 

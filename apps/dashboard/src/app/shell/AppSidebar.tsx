@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Building2Icon, ChevronRightIcon, PlusIcon, ShapesIcon } from 'lucide-react';
+import { ChevronRightIcon, PlusIcon, ShapesIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@smartapp/ui/components/sidebar';
+import { StatusAvatar } from '@smartapp/ui/compositions/status-avatar';
 import { useDashboard } from '@/app/dashboard-context';
 import {
   ACTIVE_WAVE,
@@ -49,13 +50,16 @@ export function AppSidebar() {
               className="pointer-coarse:min-h-11 tablet-rail:size-11! tablet-rail:p-1.5!"
               render={<Link to="/settings/property" />}
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Building2Icon className="size-4" aria-hidden="true" />
-              </span>
+              <StatusAvatar
+                name={propertyName}
+                shape="rounded"
+                status={client?.isPausedOwner ? 'paused' : 'open'}
+                statusLabel=""
+              />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{propertyName}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {client?.isPausedOwner ? 'Paused' : 'Property details'}
+                  {client?.isPausedOwner ? 'Paused · Property details' : 'Open · Property details'}
                 </span>
               </div>
               <ChevronRightIcon

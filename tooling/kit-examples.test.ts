@@ -35,6 +35,26 @@ describe('kit examples stay in the kit', () => {
   });
 });
 
+/**
+ * AUDIT-1 A23 decision (R-4, D94): `cmdk` brings in `@radix-ui/react-dialog`, against the Base UI
+ * rule (D34). Only the kit uses Command, Faceted and CommandStack today, so cmdk stays kit-only.
+ * The first screen that needs a searchable list uses ReUI Autocomplete (Base UI) instead, or Command
+ * is rebuilt on it first.
+ */
+const CMDK_BACKED =
+  /@smartapp\/ui\/components\/(command|command-stack|faceted)['"]|from ['"]cmdk['"]/;
+
+describe('cmdk stays in the kit (A23)', () => {
+  it('no screen imports Command, CommandStack, Faceted or cmdk', () => {
+    const offenders = ['apps/dashboard/src', 'apps/storefront/src']
+      .flatMap((dir) => walk(join(repoRoot, dir)))
+      .map((file) => relative(repoRoot, file))
+      .filter((file) => !KIT_FOLDERS.some((kit) => file.startsWith(kit)))
+      .filter((file) => CMDK_BACKED.test(readFileSync(join(repoRoot, file), 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('kit variant registry', () => {
   it('lists every raw example in packages/ui/src/variants, and nothing else', () => {
     const registry = readFileSync(

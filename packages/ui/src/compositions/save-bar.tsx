@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { CheckIcon } from 'lucide-react';
 import { cn } from 'cn';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -32,10 +33,10 @@ export interface SaveBarProps {
 }
 
 /**
- * The save pill (Pattern Guide §3.6). On phones and tablets a dark pill floats above the dock (and
- * above the keyboard); on desktop it floats under the top bar, at the right. It slides in when the
- * form changes, shows a spinner while saving and "Saved" for a moment. It also warns before the
- * tab closes.
+ * The save pill (Pattern Guide §3.6, R-4, AUDIT-1 A19). A dark raised pill at the bottom centre on
+ * every size: above the dock (and the keyboard) on phones and tablets, near the bottom edge on
+ * desktop. Unsaved changes → Saving… → ✓ Saved, then it fades; once saved there is nothing left to
+ * discard, so only the word stays. It also warns before the tab closes.
  */
 export function SaveBar({
   dirty,
@@ -53,6 +54,7 @@ export function SaveBar({
   useBeforeUnloadGuard(dirty);
   const visible = dirty || state !== 'idle';
   const desktop = formFactor === 'desktop';
+  const saved = state === 'done';
   const text =
     state === 'busy'
       ? 'Saving…'
@@ -65,53 +67,56 @@ export function SaveBar({
       data-slot="save-bar"
       data-visible={visible}
       aria-hidden={!visible}
-      style={
-        desktop
-          ? undefined
-          : {
-              bottom:
-                keyboard > 0
-                  ? `${keyboard + 8}px`
-                  : 'calc(env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2)',
-            }
-      }
+      style={{
+        bottom: desktop
+          ? '1.5rem'
+          : keyboard > 0
+            ? `${keyboard + 8}px`
+            : 'calc(env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2)',
+      }}
       className={cn(
-        'fixed z-40 flex items-center gap-1 rounded-full bg-foreground py-1.5 pr-1.5 pl-4 text-background shadow-lg',
+        // Light: navy pill. Dark: the raised layer with a hairline, never a white pill on a dark page.
+        'fixed inset-x-3 z-40 mx-auto flex min-h-13 max-w-md items-center gap-1 rounded-full py-1.5 pr-1.5 pl-4 shadow-lg max-sm:pl-3.5',
+        'bg-foreground text-background dark:border dark:border-border dark:bg-raised dark:text-foreground',
         'transition-[translate,opacity] duration-slow ease-spring',
-        desktop
-          ? 'top-[calc(var(--shell-header-height)+0.75rem)] right-6 min-w-80'
-          : 'inset-x-3 mx-auto max-w-md',
-        visible
-          ? 'translate-y-0 opacity-100'
-          : desktop
-            ? 'pointer-events-none -translate-y-3 opacity-0'
-            : 'pointer-events-none translate-y-6 opacity-0',
+        desktop && 'md:left-[var(--sidebar-width,0px)]',
+        saved && 'w-fit pr-4',
+        visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-6 opacity-0',
         className,
       )}
     >
-      <p className="min-w-0 flex-1 truncate text-sm font-medium" role="status" aria-live="polite">
+      <p
+        className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-sm font-medium"
+        role="status"
+        aria-live="polite"
+      >
+        {saved ? <CheckIcon aria-hidden="true" className="size-4 shrink-0" /> : null}
         {visible ? text : null}
       </p>
-      <Button
-        type="button"
-        variant="ghost"
-        className="min-h-10 rounded-full text-background hover:bg-background/15 hover:text-background"
-        onClick={onDiscard}
-        disabled={state === 'busy'}
-        tabIndex={visible ? 0 : -1}
-      >
-        Discard
-      </Button>
-      <AsyncButton
-        type="button"
-        state={state}
-        className="min-h-10 rounded-full px-5"
-        onClick={onSave}
-        disabled={!canSave}
-        tabIndex={visible ? 0 : -1}
-      >
-        {saveLabel}
-      </AsyncButton>
+      {saved ? null : (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            className="min-h-10 rounded-full px-3 text-current hover:bg-current/15 hover:text-current"
+            onClick={onDiscard}
+            disabled={state === 'busy'}
+            tabIndex={visible ? 0 : -1}
+          >
+            Discard
+          </Button>
+          <AsyncButton
+            type="button"
+            state={state}
+            className="min-h-10 rounded-full px-5 max-sm:px-4"
+            onClick={onSave}
+            disabled={!canSave}
+            tabIndex={visible ? 0 : -1}
+          >
+            {saveLabel}
+          </AsyncButton>
+        </>
+      )}
     </div>
   );
 }

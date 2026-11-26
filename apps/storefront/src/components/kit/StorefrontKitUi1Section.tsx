@@ -4,7 +4,7 @@ import { Button } from '@smartapp/ui/components/button';
 import { BrandLockup } from '@smartapp/ui/compositions/brand-lockup';
 import { HeartToggle } from '@smartapp/ui/compositions/heart-toggle';
 import { MessengerIcon } from '@smartapp/ui/compositions/messenger-icon';
-import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
+import { StatusAvatar } from '@smartapp/ui/compositions/status-avatar';
 import { confettiBurst, confettiSideCannons } from '@smartapp/ui/lib/celebration';
 import { PartyPopperIcon, SparklesIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -56,24 +56,24 @@ export function StorefrontKitUi1Section({
 
         <div className="space-y-3 rounded-xl border border-border bg-card p-4">
           <p className="text-xs font-medium text-muted-foreground">
-            StatusLogo (open, busy, paused)
+            StatusAvatar (open, busy, paused)
           </p>
           <div className="flex flex-wrap items-center gap-6 py-1">
-            <StatusLogo name={propertyName} src={logoSrc} state="open" logoShape="circle" />
-            <StatusLogo
+            <StatusAvatar
               name={propertyName}
               src={logoSrc}
-              state="busy"
-              stateLabel="Busy"
-              logoShape="rounded"
+              status="open"
+              size="lg"
+              shape="rounded"
             />
-            <StatusLogo
+            <StatusAvatar
               name={propertyName}
               src={logoSrc}
-              state="paused"
-              stateLabel="Paused"
-              logoShape="circle"
+              status="busy"
+              size="lg"
+              shape="rounded"
             />
+            <StatusAvatar name={propertyName} status="paused" size="lg" />
           </div>
         </div>
       </div>
