@@ -246,3 +246,177 @@ export function RowPicker<T extends string | number>({
     </>
   );
 }
+
+/** "Custom…" for a number picker (R-3): any whole number in the range the database allows. */
+export interface RowPickerCustom {
+  readonly min: number;
+  readonly max: number;
+  /** "nights", "days", "minutes" or "%" shown after the field. */
+  readonly unit: string;
+  /** Label for the field, such as "Nights". */
+  readonly inputLabel: string;
+}
+
+/**
+ * RowPicker for numbers with a "Custom…" row (R-3, AUDIT-1 A13): presets first, then any whole
+ * number in the range the database allows.
+ */
+export function RowNumberPicker({
+  label,
+  hint,
+  value,
+  options,
+  onValueChange,
+  sheetTitle,
+  custom,
+}: {
+  readonly label: ReactNode;
+  readonly hint?: ReactNode | undefined;
+  readonly value: number;
+  readonly options: readonly PickerOption<number>[];
+  readonly onValueChange: (value: number) => void;
+  readonly sheetTitle?: ReactNode | undefined;
+  readonly custom: RowPickerCustom;
+}) {
+  const [open, setOpen] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const inputId = useId();
+  const current = options.find((option) => option.value === value);
+  const isPreset = (candidate: number) => options.some((option) => option.value === candidate);
+
+  function openSheet(next: boolean) {
+    setOpen(next);
+    if (next) {
+      setTyping(false);
+      setError(null);
+      setDraft(String(value));
+    }
+  }
+
+  function applyCustom() {
+    const parsed = Number.parseInt(draft.replace(/[^\d]/g, ''), 10);
+    if (!Number.isFinite(parsed) || parsed < custom.min || parsed > custom.max) {
+      setError(`Enter a whole number from ${custom.min} to ${custom.max}.`);
+      return;
+    }
+    onValueChange(parsed);
+    setOpen(false);
+  }
+
+  return (
+    <>
+      <RowButton
+        label={label}
+        hint={hint}
+        value={current?.label ?? ''}
+        onClick={() => openSheet(true)}
+      />
+      <AppSheet
+        open={open}
+        onOpenChange={openSheet}
+        title={sheetTitle ?? label}
+
+        size="sm"
+      >
+        <div
+          role="listbox"
+          aria-label={typeof label === 'string' ? label : undefined}
+          className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card"
+        >
+          {options.map((option) => {
+            const selected = option.value === value && !typing;
+            return (
+              <button
+                key={String(option.value)}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onValueChange(option.value);
+                  setOpen(false);
+                }}
+                className={cn(
+                  ROW,
+                  'press outline-none hover-hover:hover:bg-muted/60 focus-visible:bg-muted',
+                  selected && 'font-semibold',
+                )}
+              >
+                <RowText label={option.label} hint={option.hint} />
+                {selected ? (
+                  <CheckIcon aria-hidden="true" className="size-5 shrink-0 text-primary" />
+                ) : null}
+              </button>
+            );
+          })}
+          {
+            <button
+              type="button"
+              role="option"
+              aria-selected={typing}
+              onClick={() => {
+                setTyping(true);
+                setError(null);
+                if (isPreset(value)) setDraft('');
+              }}
+              className={cn(
+                ROW,
+                'press outline-none hover-hover:hover:bg-muted/60 focus-visible:bg-muted',
+                typing && 'font-semibold',
+              )}
+            >
+              <RowText label="Custom…" hint={`Any number from ${custom.min} to ${custom.max}`} />
+              {typing ? (
+                <CheckIcon aria-hidden="true" className="size-5 shrink-0 text-primary" />
+              ) : null}
+            </button>
+          }
+        </div>
+        {typing ? (
+          <form
+            className="mt-4 flex flex-col gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              applyCustom();
+            }}
+          >
+            <label htmlFor={inputId} className="text-sm font-medium">
+              {custom.inputLabel}
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-input bg-transparent px-3 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+                <input
+                  id={inputId}
+                  autoFocus
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={draft}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? `${inputId}-error` : undefined}
+                  onChange={(event) => {
+                    setDraft(event.target.value);
+                    setError(null);
+                  }}
+                  className="min-w-0 flex-1 bg-transparent text-base tabular outline-none"
+                />
+                <span className="text-sm text-muted-foreground">{custom.unit}</span>
+              </div>
+              <button
+                type="submit"
+                className="press inline-flex min-h-11 shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-medium whitespace-nowrap text-primary-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                Use this
+              </button>
+            </div>
+            {error ? (
+              <p id={`${inputId}-error`} className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+          </form>
+        ) : null}
+      </AppSheet>
+    </>
+  );
+}

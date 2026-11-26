@@ -38,6 +38,8 @@ export const unitPricesFormSchema = z
     weekly_discount_percent: true,
     monthly_discount_percent: true,
     down_payment_percent: true,
+    down_payment_kind: true,
+    down_payment_centavos: true,
     hold_minutes: true,
     advance_notice_days: true,
     booking_window_days: true,

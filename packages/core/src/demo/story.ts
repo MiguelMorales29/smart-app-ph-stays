@@ -187,6 +187,8 @@ export class AccountStoryBuilder {
         weekly_discount_percent: stayTerms.weekly_discount_percent,
         monthly_discount_percent: stayTerms.monthly_discount_percent,
         down_payment_percent: stayTerms.down_payment_percent,
+        down_payment_kind: stayTerms.down_payment_kind,
+        down_payment_centavos: stayTerms.down_payment_centavos,
         advance_notice_days: stayTerms.advance_notice_days,
         booking_window_days: stayTerms.booking_window_days,
         max_guests: unit.max_guests,

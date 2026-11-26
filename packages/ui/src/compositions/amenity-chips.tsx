@@ -1,15 +1,17 @@
 import { useId, useMemo, useState } from 'react';
-import { CheckIcon, PlusIcon, SearchIcon } from 'lucide-react';
+import { Building2Icon, CheckIcon, PlusIcon, SearchIcon } from 'lucide-react';
 import { cn } from 'cn';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
-import { amenityIcon } from '@smartapp/ui/lib/amenity-icons';
+import { AmenityGlyph } from '@smartapp/ui/compositions/amenity-glyph';
 
 export interface AmenityOption {
   readonly id: string;
   readonly label: string;
-  /** Lucide icon name from the amenities catalogue. */
+  /** Lucide icon name, or "emoji:…" for an owner's own amenity (D93). */
   readonly icon: string;
+  /** Marks the owner's own amenity. */
+  readonly own?: boolean | undefined;
   /** Group heading ("Comfort", "Kitchen"). */
   readonly group: string;
 }
@@ -20,6 +22,10 @@ export interface AmenityChipsProps {
   readonly onValueChange: (ids: string[]) => void;
   /** Adds an owner's own amenity; omit to hide "Add your own". */
   readonly onAddOwn?: ((label: string) => void) | undefined;
+  /** Already given by the property ("At the property"): shown ticked and can't be changed here. */
+  readonly locked?: readonly string[] | undefined;
+  /** Why locked chips can't be changed, shown under the list. */
+  readonly lockedNote?: string | undefined;
   readonly className?: string | undefined;
 }
 
@@ -32,8 +38,11 @@ export function AmenityChips({
   value,
   onValueChange,
   onAddOwn,
+  locked,
+  lockedNote,
   className,
 }: AmenityChipsProps) {
+  const lockedSet = useMemo(() => new Set(locked ?? []), [locked]);
   const [query, setQuery] = useState('');
   const [own, setOwn] = useState('');
   const searchId = useId();
@@ -84,14 +93,15 @@ export function AmenityChips({
           <legend className="mb-1 text-sm font-medium text-foreground">{group}</legend>
           <div className="flex flex-wrap gap-2">
             {items.map((item) => {
-              const Icon = amenityIcon(item.icon);
-              const checked = selected.has(item.id);
+              const isLocked = lockedSet.has(item.id);
+              const checked = isLocked || selected.has(item.id);
               return (
                 <label
                   key={item.id}
                   className={cn(
                     // Pattern Guide §3.5: tint, a blue ring and a check when picked.
                     'press inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm transition-colors duration-fast pointer-coarse:min-h-11',
+                    isLocked && 'cursor-default border-dashed',
                     'has-focus-visible:ring-3 has-focus-visible:ring-ring/50',
                     checked
                       ? 'border-primary bg-primary-tint font-semibold text-foreground shadow-[inset_0_0_0_0.5px_var(--primary)]'
@@ -102,20 +112,27 @@ export function AmenityChips({
                     type="checkbox"
                     className="sr-only"
                     checked={checked}
+                    disabled={isLocked}
                     onChange={() => toggle(item.id)}
                   />
-                  {checked ? (
+                  {isLocked ? (
+                    <Building2Icon aria-hidden="true" className="size-4 text-primary" />
+                  ) : checked ? (
                     <CheckIcon aria-hidden="true" className="size-4 text-primary" />
                   ) : (
-                    <Icon aria-hidden="true" className="size-4 text-muted-foreground" />
+                    <AmenityGlyph icon={item.icon} className="text-muted-foreground" />
                   )}
                   {item.label}
+                  {isLocked ? <span className="sr-only">(at the property)</span> : null}
                 </label>
               );
             })}
           </div>
         </fieldset>
       ))}
+      {lockedSet.size > 0 && lockedNote ? (
+        <p className="text-sm text-muted-foreground">{lockedNote}</p>
+      ) : null}
       {onAddOwn ? (
         <form
           className="flex gap-2"

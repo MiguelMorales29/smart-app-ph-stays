@@ -205,6 +205,8 @@ describe('listing table schemas', () => {
       weekly_discount_percent: 10,
       monthly_discount_percent: 25,
       down_payment_percent: 50,
+      down_payment_kind: 'percent',
+      down_payment_centavos: null,
       hold_minutes: 60,
       advance_notice_days: 1,
       booking_window_days: 365,

@@ -22,6 +22,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/co
 import { Input } from '@smartapp/ui/components/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@smartapp/ui/components/input-group';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
+import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
@@ -34,8 +35,14 @@ import { SlugField } from '@smartapp/ui/compositions/slug-field';
 import { notify } from '@smartapp/ui/lib/notify';
 import { cn } from '@smartapp/ui/lib/utils';
 import { useOwnerPropertyQuery, useSlugChecker } from '@/data/property/reads';
-import { useChangeSlugMutation, useSavePropertyMutation } from '@/data/property/writes';
+import {
+  useChangeSlugMutation,
+  useSavePropertyMutation,
+  useSetPropertyAmenitiesMutation,
+} from '@/data/property/writes';
 import { extractAppError } from '@/data/shared';
+import { useAmenitiesQuery } from '@/data/units/reads';
+import { AmenitiesField } from '@/app/amenities/amenities-field';
 import { SettingsPane } from './settings-nav';
 
 /** "m.me/ulap" -> "https://m.me/ulap"; null when it can't be a web link yet. */
@@ -128,6 +135,8 @@ interface PropertyDraft {
   readonly city: string;
   readonly province: string;
   readonly showExactLocation: boolean;
+  /** "At the property" (R-3, D93), kept sorted so the same set compares equal. */
+  readonly amenityIds: readonly string[];
 }
 
 function draftFrom(view: OwnerPropertyView): PropertyDraft {
@@ -143,6 +152,7 @@ function draftFrom(view: OwnerPropertyView): PropertyDraft {
     city: property.city,
     province: property.province,
     showExactLocation: property.show_exact_location,
+    amenityIds: [...view.amenity_ids].sort(),
   };
 }
 
@@ -180,6 +190,8 @@ export function PropertySettingsPage() {
 
 function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
   const save = useSavePropertyMutation();
+  const saveAmenities = useSetPropertyAmenitiesMutation();
+  const amenities = useAmenitiesQuery();
   const [state, setState] = useSaveState();
   const { offline, message } = useOfflineSave();
   const [saved, setSaved] = useState(() => draftFrom(view));
@@ -215,7 +227,17 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
       facebook: orNull(draft.facebook),
       google_review_url: orNull(draft.reviewUrl),
     };
+    const detailsChanged = !same({ ...draft, amenityIds: [] }, { ...saved, amenityIds: [] });
+    const amenitiesChanged = !same(draft.amenityIds, saved.amenityIds);
     try {
+      if (amenitiesChanged) {
+        await saveAmenities.mutateAsync({ propertyId: property.id, amenityIds: draft.amenityIds });
+      }
+      if (!detailsChanged) {
+        setSaved(draft);
+        setState('done');
+        return;
+      }
       await save.mutateAsync({
         propertyId: property.id,
         expectedUpdatedAt: property.updated_at,
@@ -397,6 +419,28 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
             onCheckedChange={(hidden) => set({ showExactLocation: !hidden })}
           />
         </RowGroup>
+      </section>
+
+      <section className="flex flex-col gap-4" aria-labelledby="prop-amenities">
+        <div>
+          <h2 id="prop-amenities" className="text-sm font-medium text-muted-foreground">
+            At the property
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Shared by every unit, such as a pool, parking or a guard. Set them once here.
+          </p>
+        </div>
+        {amenities.isPending ? (
+          <Skeleton className="h-32 w-full" />
+        ) : amenities.isError ? (
+          <SettingsError error={amenities.error} onRetry={() => void amenities.refetch()} />
+        ) : (
+          <AmenitiesField
+            catalogue={amenities.data}
+            value={draft.amenityIds}
+            onChange={(ids) => set({ amenityIds: [...ids].sort() })}
+          />
+        )}
       </section>
 
       <ChangeLinkSheet

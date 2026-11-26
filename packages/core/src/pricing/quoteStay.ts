@@ -28,6 +28,8 @@ export const quoteStayTermsSchema = z
     weekly_discount_percent: true,
     monthly_discount_percent: true,
     down_payment_percent: true,
+    down_payment_kind: true,
+    down_payment_centavos: true,
     advance_notice_days: true,
     booking_window_days: true,
   })
@@ -240,7 +242,11 @@ export function quoteStay(input: QuoteStayInput): QuoteStayOutcome {
 
   const feesSubtotalCentavos = sum(feeAmounts);
   const totalCentavos = centavos(nightsSubtotalCentavos - discountCentavos + feesSubtotalCentavos);
-  const requiredCentavos = percentOf(totalCentavos, terms.down_payment_percent);
+  // D93: a fixed down payment never asks for more than the stay costs.
+  const requiredCentavos =
+    terms.down_payment_kind === 'fixed' && terms.down_payment_centavos !== null
+      ? centavos(Math.min(terms.down_payment_centavos, totalCentavos))
+      : percentOf(totalCentavos, terms.down_payment_percent);
 
   return {
     ok: true,

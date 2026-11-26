@@ -7,6 +7,7 @@ import type {
   OwnerApplicationsRow,
   PaymentAccountsRow,
   PropertiesRow,
+  PropertyAmenitiesRow,
   PropertyPagesRow,
   RateOverridesRow,
   SavedRepliesRow,
@@ -52,6 +53,7 @@ export interface BrandBundle {
   readonly rateOverrides: RateOverridesRow[];
   readonly unitFees: UnitFeesRow[];
   readonly unitAmenities: UnitAmenitiesRow[];
+  readonly propertyAmenities?: PropertyAmenitiesRow[];
   readonly houseRules: HouseRulesRow[];
   readonly paymentAccounts: PaymentAccountsRow[];
   readonly savedReplies: SavedRepliesRow[];

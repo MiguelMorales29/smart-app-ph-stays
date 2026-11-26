@@ -24,14 +24,16 @@ import { PhotoManager } from '@smartapp/ui/compositions/photo-manager';
 import { LeaveGuardDialog, SaveBar } from '@smartapp/ui/compositions/save-bar';
 import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import { notify } from '@smartapp/ui/lib/notify';
+import { AmenitiesField, PROPERTY_AMENITIES_NOTE } from '@/app/amenities/amenities-field';
 import { usePhotoPipeline } from '@/app/photos/use-photo-pipeline';
 import { useOfflineSave, useSaveState } from '@/app/save-state';
 import { useSetUnitPhotosMutation } from '@/data/photos/upload';
+import { useOwnerPropertyQuery } from '@/data/property/reads';
 import { extractAppError } from '@/data/shared';
 import { bedPartOfName } from '@/data/units/bulk';
 import { useAmenitiesQuery, useOwnerUnitQuery, useOwnerUnitsQuery } from '@/data/units/reads';
 import { useSaveRoomMutation, useSetRoomAmenitiesMutation } from '@/data/units/writes';
-import { AmenitiesField, sameDraft } from './unit-pricing';
+import { sameDraft } from './unit-pricing';
 import {
   ROOM_BATHROOM_LABEL,
   ROOM_GUESTS_LABEL,
@@ -118,6 +120,7 @@ function RoomEditor({
   const savePhotos = useSetUnitPhotosMutation();
   const saveAmenities = useSetRoomAmenitiesMutation();
   const amenities = useAmenitiesQuery();
+  const propertyAmenityIds = useOwnerPropertyQuery().data?.amenity_ids ?? [];
   const [savedRoom, setSavedRoom] = useState(room);
   const [form, setForm] = useState<RoomForm>(() => formFrom(room));
   const [savedAmenities, setSavedAmenities] = useState<readonly string[]>(shared.amenity_ids);
@@ -330,7 +333,13 @@ function RoomEditor({
             onRetry={() => void amenities.refetch()}
           />
         ) : (
-          <AmenitiesField catalogue={amenities.data} value={amenityIds} onChange={setAmenityIds} />
+          <AmenitiesField
+            catalogue={amenities.data}
+            value={amenityIds}
+            onChange={setAmenityIds}
+            locked={propertyAmenityIds}
+            lockedNote={PROPERTY_AMENITIES_NOTE}
+          />
         )}
       </section>
 

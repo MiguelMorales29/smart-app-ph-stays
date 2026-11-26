@@ -153,6 +153,8 @@ export function previewNights(
         weekly_discount_percent: 0,
         monthly_discount_percent: 0,
         down_payment_percent: 100,
+        down_payment_kind: 'percent',
+        down_payment_centavos: null,
         advance_notice_days: 0,
         booking_window_days: 730,
         max_guests: maxGuests,

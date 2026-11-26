@@ -33,6 +33,11 @@ export const ROOM_BATHROOMS = ['shared', 'in_room'] as const;
 export const roomBathroomSchema = z.enum(ROOM_BATHROOMS);
 export type RoomBathroom = z.infer<typeof roomBathroomSchema>;
 
+/** How the down payment is set (R-3, D93): a share of the total or a fixed peso amount. */
+export const DOWN_PAYMENT_KINDS = ['percent', 'fixed'] as const;
+export const downPaymentKindSchema = z.enum(DOWN_PAYMENT_KINDS);
+export type DownPaymentKind = z.infer<typeof downPaymentKindSchema>;
+
 export const UNIT_STATUSES = ['draft', 'listed', 'unlisted'] as const;
 export const unitStatusSchema = z.enum(UNIT_STATUSES);
 export type UnitStatus = z.infer<typeof unitStatusSchema>;

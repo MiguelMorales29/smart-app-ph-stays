@@ -710,6 +710,8 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         weeklyDiscountPercent: 10,
         monthlyDiscountPercent: 20,
         downPaymentPercent: 30,
+        downPaymentKind: 'percent' as const,
+        downPaymentCentavos: null,
         holdMinutes: 60,
         advanceNoticeDays: 0,
         bookingWindowDays: 365,
@@ -1246,6 +1248,74 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       expect(last.roomDeleted).toBe(true);
       const after = await list();
       expect(after.some((item) => item.unit.id === secondNew.id)).toBe(false);
+    });
+
+    it('24d. owner amenities, "At the property" amenities on every public unit, removeAmenity (R-3)', async () => {
+      const { source } = await makeSource();
+      const nextKey = createKeyMaker('r3-amenities');
+      const accountId = DEMO_IDS.ulapSuites.account;
+      const own = assertOk(
+        await source.saveAmenity(
+          {
+            idempotencyKey: nextKey(),
+            accountId,
+            amenityId: null,
+            label: 'Mahjong table',
+            grp: 'comfort',
+            icon: 'emoji:🀄',
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(own.account_id).toBe(accountId);
+      const listed = assertOk(await source.listAmenities({ accountId }, ULAP_OWNER_SESSION));
+      expect(listed.some((item) => item.id === own.id)).toBe(true);
+
+      const duplicate = assertErr(
+        await source.saveAmenity(
+          {
+            idempotencyKey: nextKey(),
+            accountId,
+            amenityId: null,
+            label: 'mahjong TABLE',
+            grp: 'comfort',
+            icon: 'dices',
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(duplicate.code).toBe('not_allowed');
+
+      assertOk(
+        await source.setPropertyAmenities(
+          {
+            idempotencyKey: nextKey(),
+            accountId,
+            propertyId: DEMO_IDS.ulapSuites.property,
+            amenityIds: [own.id, DEMO_IDS.amenities.parking],
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const owned = assertOk(
+        await source.getOwnerProperty({ accountId, propertyId: null }, ULAP_OWNER_SESSION),
+      );
+      expect(owned?.amenity_ids).toContain(own.id);
+      const publicUnit = assertOk(
+        await source.getPublicUnit({ slug: 'ulap-suites', unitSlug: 'studio-fog' }, GUEST_SESSION),
+      );
+      expect(publicUnit.unit.amenity_ids).toContain(own.id);
+
+      assertOk(
+        await source.removeAmenity(
+          { idempotencyKey: nextKey(), accountId, amenityId: own.id },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const afterRemove = assertOk(
+        await source.getOwnerProperty({ accountId, propertyId: null }, ULAP_OWNER_SESSION),
+      );
+      expect(afterRemove?.amenity_ids).not.toContain(own.id);
     });
 
     it('25. uploads (not_image, file_too_large, storage_full) and listing photo limits', async () => {

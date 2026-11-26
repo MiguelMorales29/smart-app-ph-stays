@@ -279,6 +279,8 @@ export const ownerPropertyViewSchema = z.object({
   page: propertyPagesRow.nullable(),
   photos: z.array(ownerPhotoViewSchema),
   house_rules: z.array(houseRulesRow),
+  /** "At the property" amenities (R-3, D93). */
+  amenity_ids: z.array(uuidSchema),
 });
 export type OwnerPropertyView = z.infer<typeof ownerPropertyViewSchema>;
 

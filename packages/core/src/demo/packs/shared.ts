@@ -34,6 +34,7 @@ import type {
   PlatformAdminsRow,
   ProfilesRow,
   PropertiesRow,
+  PropertyAmenitiesRow,
   PropertyPagesRow,
   PushSubscriptionsRow,
   RateOverridesRow,
@@ -85,6 +86,7 @@ export interface DemoWorld {
   readonly listing_photos: ListingPhotosRow[];
   readonly amenities: AmenitiesRow[];
   readonly unit_amenities: UnitAmenitiesRow[];
+  readonly property_amenities: PropertyAmenitiesRow[];
   readonly house_rules: HouseRulesRow[];
   readonly payment_accounts: PaymentAccountsRow[];
   readonly page_reports: PageReportsRow[];
@@ -139,6 +141,7 @@ export function createEmptyDemoWorld(): DemoWorld {
     listing_photos: [],
     amenities: [],
     unit_amenities: [],
+    property_amenities: [],
     house_rules: [],
     payment_accounts: [],
     page_reports: [],
@@ -303,6 +306,7 @@ export function appendBrandToWorld(
   world.unit_lease_terms.push(...brand.leaseTerms);
   world.listing_photos.push(...brand.listingPhotos);
   world.unit_amenities.push(...brand.unitAmenities);
+  world.property_amenities.push(...(brand.propertyAmenities ?? []));
   world.house_rules.push(...brand.houseRules);
   world.payment_accounts.push(...brand.paymentAccounts);
   world.weekday_rates.push(...brand.weekdayRates);

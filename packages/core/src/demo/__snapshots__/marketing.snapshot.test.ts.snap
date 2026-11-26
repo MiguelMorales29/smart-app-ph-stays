@@ -416,6 +416,7 @@ exports[`marketing pack snapshot at golden clock > matches snapshot for summary 
       "platform_admins": 1,
       "profiles": 7,
       "properties": 4,
+      "property_amenities": 2,
       "property_pages": 4,
       "push_subscriptions": 0,
       "rate_overrides": 6,

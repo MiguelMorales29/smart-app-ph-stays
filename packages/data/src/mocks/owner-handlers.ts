@@ -431,6 +431,9 @@ type P4OwnerOperationName =
   | 'saveRoom'
   | 'setRoomAmenities'
   | 'deleteUnit'
+  | 'saveAmenity'
+  | 'removeAmenity'
+  | 'setPropertyAmenities'
   | 'listAmenities'
   | 'saveUnitPrices'
   | 'requestUpload'
@@ -1036,6 +1039,9 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
         page,
         photos,
         house_rules: houseRules,
+        amenity_ids: world.property_amenities
+          .filter((link) => link.property_id === property.id)
+          .map((link) => link.amenity_id),
       });
     },
 
@@ -1720,6 +1726,8 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
                 weekly_discount_percent: 0,
                 monthly_discount_percent: 0,
                 down_payment_percent: 50,
+                down_payment_kind: 'percent',
+                down_payment_centavos: null,
                 hold_minutes: 60,
                 advance_notice_days: 0,
                 booking_window_days: 365,
@@ -2049,6 +2057,156 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
       );
     },
 
+    async saveAmenity(input, session) {
+      const guard = await beforeCall('saveAmenity', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'saveAmenity',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.saveAmenity.output,
+        async () => {
+          const label = input.label.trim();
+          const visible = world.amenities.filter(
+            (a) => a.is_active && (a.account_id === null || a.account_id === acctCheck.data),
+          );
+          // Imitates the unique (account, lower(label)) rule: one name, one amenity.
+          if (
+            visible.some(
+              (a) =>
+                a.id !== input.amenityId && a.label.trim().toLowerCase() === label.toLowerCase(),
+            )
+          ) {
+            return err(
+              reasonError('not_allowed', 'invalid_input', {
+                fields: { label: 'This amenity is already on the list. Pick it there.' },
+              }),
+            );
+          }
+          const own = world.amenities.filter((a) => a.account_id === acctCheck.data && a.is_active);
+          const nowIso = nowIsoFromClock(clock);
+          if (input.amenityId === null) {
+            // Imitates the database limit of 40 own amenities per account.
+            if (own.length >= 40) return err(appError('invalid_move'));
+            const row = {
+              id: ids.next('0041'),
+              account_id: acctCheck.data,
+              code: `own-${slugifyPropertyName(label).slice(0, 50) || 'amenity'}-${own.length + 1}`,
+              label,
+              icon: input.icon,
+              grp: input.grp,
+              sort_order: 1000 + own.length,
+              is_active: true,
+              created_at: nowIso,
+              updated_at: nowIso,
+            };
+            world.amenities.push(row);
+            return ok(row);
+          }
+          const index = world.amenities.findIndex(
+            (a) => a.id === input.amenityId && a.account_id === acctCheck.data,
+          );
+          const existing = world.amenities[index];
+          if (!existing) return err(appError('not_found'));
+          const updated = {
+            ...existing,
+            label,
+            icon: input.icon,
+            grp: input.grp,
+            updated_at: nowIso,
+          };
+          world.amenities[index] = updated;
+          return ok(updated);
+        },
+      );
+    },
+
+    async removeAmenity(input, session) {
+      const guard = await beforeCall('removeAmenity', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'removeAmenity',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.removeAmenity.output,
+        async () => {
+          const index = world.amenities.findIndex(
+            (a) => a.id === input.amenityId && a.account_id === acctCheck.data,
+          );
+          const existing = world.amenities[index];
+          if (!existing) return err(appError('not_found'));
+          world.amenities[index] = {
+            ...existing,
+            is_active: false,
+            updated_at: nowIsoFromClock(clock),
+          };
+          for (let i = world.unit_amenities.length - 1; i >= 0; i -= 1) {
+            if (world.unit_amenities[i]?.amenity_id === existing.id)
+              world.unit_amenities.splice(i, 1);
+          }
+          for (let i = world.property_amenities.length - 1; i >= 0; i -= 1) {
+            if (world.property_amenities[i]?.amenity_id === existing.id) {
+              world.property_amenities.splice(i, 1);
+            }
+          }
+          return ok({ amenityId: existing.id });
+        },
+      );
+    },
+
+    async setPropertyAmenities(input, session) {
+      const guard = await beforeCall('setPropertyAmenities', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'setPropertyAmenities',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.setPropertyAmenities.output,
+        async () => {
+          const property = world.properties.find(
+            (p) => p.id === input.propertyId && p.account_id === acctCheck.data,
+          );
+          if (!property) return err(appError('not_found'));
+          const allowed = new Set(
+            world.amenities
+              .filter(
+                (a) => a.is_active && (a.account_id === null || a.account_id === acctCheck.data),
+              )
+              .map((a) => a.id),
+          );
+          if (input.amenityIds.some((id) => !allowed.has(id))) return err(appError('not_found'));
+          for (let i = world.property_amenities.length - 1; i >= 0; i -= 1) {
+            if (world.property_amenities[i]?.property_id === property.id) {
+              world.property_amenities.splice(i, 1);
+            }
+          }
+          const unique = [...new Set(input.amenityIds)];
+          const nowIso = nowIsoFromClock(clock);
+          for (const amenityId of unique) {
+            world.property_amenities.push({
+              account_id: acctCheck.data,
+              property_id: property.id,
+              amenity_id: amenityId,
+              created_at: nowIso,
+            });
+          }
+          return ok(unique);
+        },
+      );
+    },
+
     async listAmenities(input, session) {
       const guard = await beforeCall('listAmenities', session);
       if (!guard.ok) return guard;
@@ -2074,6 +2232,14 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
         input,
         operations.saveUnitPrices.output,
         async () => {
+          // D93: a fixed down payment needs its amount.
+          if (input.downPaymentKind === 'fixed' && input.downPaymentCentavos === null) {
+            return err(
+              reasonError('not_allowed', 'invalid_input', {
+                fields: { downPaymentCentavos: 'Enter the down payment amount.' },
+              }),
+            );
+          }
           const unit = world.units.find(
             (u) => u.id === input.unitId && u.account_id === acctCheck.data,
           );
@@ -2107,6 +2273,8 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             weekly_discount_percent: input.weeklyDiscountPercent,
             monthly_discount_percent: input.monthlyDiscountPercent,
             down_payment_percent: input.downPaymentPercent,
+            down_payment_kind: input.downPaymentKind,
+            down_payment_centavos: input.downPaymentCentavos,
             hold_minutes: input.holdMinutes,
             advance_notice_days: input.advanceNoticeDays,
             booking_window_days: input.bookingWindowDays,

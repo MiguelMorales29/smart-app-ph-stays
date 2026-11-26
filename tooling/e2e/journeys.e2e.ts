@@ -254,6 +254,41 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await expect(page.getByRole('button', { name: 'More for Ladies dorm · Bed 1' })).toBeVisible();
   });
 
+  test('R-3 booking rules: fixed down payment, a custom longest stay, an own amenity with a picked icon', async ({
+    page,
+  }) => {
+    const fog = 'dec0de10-0005-4000-8000-000000000001';
+    await page.goto(`${DASHBOARD_ORIGIN}/units/${fog}/rules?clock=golden`, {
+      waitUntil: 'networkidle',
+    });
+    await page.getByRole('button', { name: /Down payment/ }).click();
+    await page.getByRole('button', { name: 'Fixed amount' }).click();
+    await page.getByLabel('Amount to confirm').fill('1000');
+    await expect(page.getByText('guests pay ₱1,000 to confirm')).toBeVisible();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    await page.getByRole('button', { name: /Longest stay/ }).click();
+    await page.getByRole('option', { name: /Custom/ }).click();
+    await page.getByRole('textbox', { name: 'Longest stay' }).fill('45');
+    await page.getByRole('button', { name: 'Use this' }).click();
+
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeHidden();
+    await expect(page.getByRole('button', { name: /Down payment.*₱1,000/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Longest stay.*45 nights/ })).toBeVisible();
+
+    // An amenity of the owner's own, picked in the same sheet.
+    await page
+      .getByRole('link', { name: /Amenities/ })
+      .first()
+      .click();
+    await page.getByLabel('Add your own amenity').fill('Mahjong table');
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await page.getByRole('button', { name: 'dice 5' }).click();
+    await page.getByRole('button', { name: 'Add amenity' }).click();
+    await expect(page.getByRole('checkbox', { name: 'Mahjong table' })).toBeChecked();
+  });
+
   test('upload a profile photo -> shows in Settings > Account, sidebar and account menu, survives navigation', async ({
     page,
   }) => {
