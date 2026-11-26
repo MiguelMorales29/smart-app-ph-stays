@@ -153,7 +153,7 @@ const inboxRoute = createRoute({
   component: () => <PlaceholderScreen title="Inbox" phase={7} />,
 });
 
-const UNITS_FILTERS = ['listed', 'hidden', 'drafts'] as const;
+const UNITS_FILTERS = ['listed', 'hidden', 'drafts', 'archived'] as const;
 
 function parseUnitsSearch(search: Record<string, unknown>): UnitsSearch {
   const filter = UNITS_FILTERS.find((value) => value === search.filter);

@@ -120,72 +120,187 @@ export function useBulkUnitStatusMutation() {
   });
 }
 
-/** One price for several units: nightly for short stays, monthly for long-term (OW-27). */
+export interface BulkPriceResult {
+  /** Units whose price changed, with the price they had (null when they had none yet). */
+  readonly changed: readonly {
+    readonly unitId: string;
+    readonly mode: 'short_stay' | 'long_term';
+    readonly previous: number | null;
+  }[];
+  readonly failed: number;
+}
+
+/**
+ * One price for several units (OW-27). Nightly and monthly units get their own amount, never the
+ * same number (AUDIT-1 A2). Keeps going after a failure, so Undo still covers every unit that
+ * changed (A9).
+ */
 export function useBulkUnitPriceMutation() {
   const active = useActiveDataClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
-      readonly units: readonly { readonly unitId: string; readonly centavos: number }[];
+      readonly units: readonly {
+        readonly unitId: string;
+        /** Nightly price for short stays, monthly rent for long-term units. */
+        readonly centavos: number;
+      }[];
       /** Manila date for a new long-term "available from". */
       readonly today: string;
-    }) => {
+    }): Promise<BulkPriceResult> => {
       const { source, session, accountId } = requireOwnerClient(active);
-      const previous: { unitId: string; centavos: number }[] = [];
+      const changed: {
+        unitId: string;
+        mode: 'short_stay' | 'long_term';
+        previous: number | null;
+      }[] = [];
+      let failed = 0;
       for (const target of input.units) {
-        const detail = unwrapResult(
-          await source.getOwnerUnit({ accountId, unitId: target.unitId }, session),
-        );
+        const read = await source.getOwnerUnit({ accountId, unitId: target.unitId }, session);
+        if (!read.ok) {
+          failed += 1;
+          continue;
+        }
+        const detail = read.data;
         const base = saveUnitInputFromDetail(detail);
         const long = detail.unit.mode === 'long_term';
         const old = long
-          ? detail.lease_terms?.monthly_rent_centavos
-          : detail.stay_terms?.base_nightly_centavos;
-        if (old !== undefined) previous.push({ unitId: target.unitId, centavos: old });
-        unwrapResult(
-          await source.saveUnit(
-            {
-              ...base,
-              accountId,
-              idempotencyKey: createIdempotencyKey('bulk-price'),
-              stayTerms: long
-                ? base.stayTerms
-                : {
-                    base_nightly_centavos: target.centavos,
-                    base_guests: base.stayTerms?.base_guests ?? Math.min(2, detail.unit.max_guests),
-                    min_nights: base.stayTerms?.min_nights ?? 1,
-                    max_nights: base.stayTerms?.max_nights ?? 30,
-                    prep_nights: base.stayTerms?.prep_nights ?? 0,
-                    weekly_discount_percent: base.stayTerms?.weekly_discount_percent ?? 0,
-                    monthly_discount_percent: base.stayTerms?.monthly_discount_percent ?? 0,
-                    down_payment_percent: base.stayTerms?.down_payment_percent ?? 50,
-                    hold_minutes: base.stayTerms?.hold_minutes ?? 120,
-                    advance_notice_days: base.stayTerms?.advance_notice_days ?? 0,
-                    booking_window_days: base.stayTerms?.booking_window_days ?? 365,
-                  },
-              leaseTerms: long
-                ? {
-                    monthly_rent_centavos: target.centavos,
-                    min_lease_months: base.leaseTerms?.min_lease_months ?? 1,
-                    advance_months: base.leaseTerms?.advance_months ?? 1,
-                    deposit_months: base.leaseTerms?.deposit_months ?? 1,
-                    reservation_fee_centavos: base.leaseTerms?.reservation_fee_centavos ?? 0,
-                    available_from: base.leaseTerms?.available_from ?? input.today,
-                    inclusions: base.leaseTerms?.inclusions ?? null,
-                  }
-                : base.leaseTerms,
-            },
-            session,
-          ),
+          ? (detail.lease_terms?.monthly_rent_centavos ?? null)
+          : (detail.stay_terms?.base_nightly_centavos ?? null);
+        if (old === target.centavos) continue;
+        const saved = await source.saveUnit(
+          {
+            ...base,
+            accountId,
+            idempotencyKey: createIdempotencyKey('bulk-price'),
+            stayTerms: long
+              ? base.stayTerms
+              : {
+                  base_nightly_centavos: target.centavos,
+                  base_guests: base.stayTerms?.base_guests ?? Math.min(2, detail.unit.max_guests),
+                  min_nights: base.stayTerms?.min_nights ?? 1,
+                  max_nights: base.stayTerms?.max_nights ?? 30,
+                  prep_nights: base.stayTerms?.prep_nights ?? 0,
+                  weekly_discount_percent: base.stayTerms?.weekly_discount_percent ?? 0,
+                  monthly_discount_percent: base.stayTerms?.monthly_discount_percent ?? 0,
+                  down_payment_percent: base.stayTerms?.down_payment_percent ?? 50,
+                  hold_minutes: base.stayTerms?.hold_minutes ?? 60,
+                  advance_notice_days: base.stayTerms?.advance_notice_days ?? 0,
+                  booking_window_days: base.stayTerms?.booking_window_days ?? 365,
+                },
+            leaseTerms: long
+              ? {
+                  monthly_rent_centavos: target.centavos,
+                  min_lease_months: base.leaseTerms?.min_lease_months ?? 1,
+                  advance_months: base.leaseTerms?.advance_months ?? 1,
+                  deposit_months: base.leaseTerms?.deposit_months ?? 1,
+                  reservation_fee_centavos: base.leaseTerms?.reservation_fee_centavos ?? 0,
+                  available_from: base.leaseTerms?.available_from ?? input.today,
+                  inclusions: base.leaseTerms?.inclusions ?? null,
+                }
+              : base.leaseTerms,
+          },
+          session,
         );
+        if (saved.ok) {
+          changed.push({ unitId: target.unitId, mode: detail.unit.mode, previous: old });
+        } else {
+          failed += 1;
+        }
       }
-      return { previous };
+      return { changed, failed };
     },
     onSettled: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: unitsKeys.all }),
         queryClient.invalidateQueries({ queryKey: setupKeys.all }),
       ]);
+    },
+  });
+}
+
+/** Archive or restore several units (F24); keeps going after a failure. */
+export function useBulkArchiveMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      readonly unitIds: readonly string[];
+      readonly archived: boolean;
+    }): Promise<{
+      readonly changed: readonly string[];
+      readonly failed: number;
+      readonly firstError: unknown;
+    }> => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      const changed: string[] = [];
+      let failed = 0;
+      let firstError: unknown = null;
+      for (const unitId of input.unitIds) {
+        const result = await source.archiveUnit(
+          {
+            idempotencyKey: createIdempotencyKey('archive-unit'),
+            accountId,
+            unitId,
+            archived: input.archived,
+            expectedUpdatedAt: null,
+          },
+          session,
+        );
+        if (result.ok) {
+          changed.push(unitId);
+        } else {
+          failed += 1;
+          firstError ??= result.error;
+        }
+      }
+      return { changed, failed, firstError };
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: unitsKeys.all }),
+        queryClient.invalidateQueries({ queryKey: setupKeys.all }),
+      ]);
+    },
+  });
+}
+
+/** The bed's own part of its name: "Room 2 · Bed 3" in room "Room 2" gives "Bed 3". */
+export function bedPartOfName(name: string, roomLabel: string): string {
+  const prefix = `${roomLabel} · `;
+  return name.startsWith(prefix) ? name.slice(prefix.length) : name;
+}
+
+/** Renames a room: every bed's room label and the room part of its name (verdict 4, A6). */
+export function useRenameRoomMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      readonly unitIds: readonly string[];
+      readonly from: string;
+      readonly to: string;
+    }) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      for (const unitId of input.unitIds) {
+        const detail = unwrapResult(await source.getOwnerUnit({ accountId, unitId }, session));
+        const base = saveUnitInputFromDetail(detail);
+        unwrapResult(
+          await source.saveUnit(
+            {
+              ...base,
+              accountId,
+              idempotencyKey: createIdempotencyKey('rename-room'),
+              groupLabel: input.to,
+              name: `${input.to} · ${bedPartOfName(detail.unit.name, input.from)}`.slice(0, 80),
+            },
+            session,
+          ),
+        );
+      }
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: unitsKeys.all });
     },
   });
 }

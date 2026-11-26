@@ -1,5 +1,7 @@
 import { useId } from 'react';
 import { AMENITY_GROUPS, type AmenitiesRow, type OwnerUnitDetailView } from '@smartapp/core';
+import { TriangleAlertIcon } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/alert';
 import { Field, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { RowControl, RowGroup, RowPicker } from '@smartapp/ui/compositions/grouped-rows';
@@ -62,7 +64,7 @@ export function rulesDraftFrom(detail: OwnerUnitDetailView): RulesDraft {
     minNights: stay?.min_nights ?? 1,
     maxNights: stay?.max_nights ?? 30,
     downPaymentPercent: stay?.down_payment_percent ?? 50,
-    holdMinutes: stay?.hold_minutes ?? 120,
+    holdMinutes: stay?.hold_minutes ?? 60,
     prepNights: stay?.prep_nights ?? 0,
     advanceNoticeDays: stay?.advance_notice_days ?? 0,
     bookingWindowDays: stay?.booking_window_days ?? 365,
@@ -275,6 +277,23 @@ export function LeaseFields({
           />
         </RowControl>
       </RowGroup>
+      {value.advanceMonths > 1 || value.depositMonths > 2 ? (
+        // Database blueprint: RA 9653 (Rent Control Act) warns, never blocks (AUDIT-1 A10).
+        <Alert role="status" className="border-warning/40 bg-warning-tint">
+          <TriangleAlertIcon aria-hidden="true" className="text-warning" />
+          <AlertTitle>Check the Rent Control Act</AlertTitle>
+          <AlertDescription>
+            For rents it covers, RA 9653 allows at most 1 month advance and 2 months deposit. If
+            this unit is covered, lower the{' '}
+            {value.advanceMonths > 1 && value.depositMonths > 2
+              ? 'advance and deposit'
+              : value.advanceMonths > 1
+                ? 'advance'
+                : 'deposit'}
+            .
+          </AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

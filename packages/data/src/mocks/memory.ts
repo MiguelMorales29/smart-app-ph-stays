@@ -2429,23 +2429,55 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
 
           const nowIso = nowIsoFromClock(clock);
           const newUnitId = ids.next('0005');
-          const copyCount = world.units.filter(
-            (u) => u.property_id === sourceUnit.property_id,
-          ).length;
+          const propertyUnits = world.units.filter((u) => u.property_id === sourceUnit.property_id);
+          const copyCount = propertyUnits.length;
           const copySlug = `${sourceUnit.slug.slice(0, 32)}-copy-${copyCount + 1}`;
+
+          // A bed space copies as the next bed in its room ("Room 1 · Bed 4"), other units as "(Copy)".
+          let copyName = `${sourceUnit.name.slice(0, 72)} (Copy)`;
+          if (sourceUnit.unit_type === 'bed_space' && sourceUnit.group_label !== null) {
+            const label = sourceUnit.group_label;
+            const roomBeds = propertyUnits.filter(
+              (u) =>
+                u.unit_type === 'bed_space' && u.group_label === label && u.archived_at === null,
+            );
+            const highest = roomBeds.reduce((max, bed) => {
+              const match = /(\d+)\s*$/.exec(bed.name.trim());
+              return Math.max(max, match?.[1] ? Number.parseInt(match[1], 10) : 0);
+            }, roomBeds.length);
+            copyName = `${label} · Bed ${highest + 1}`.slice(0, 80);
+          }
+
+          // The copy sits right after its source (after the last bed of the same room).
+          const sameRoom = (u: (typeof world.units)[number]) =>
+            sourceUnit.group_label !== null &&
+            u.group_label === sourceUnit.group_label &&
+            u.unit_type === 'bed_space';
+          const anchorOrder = propertyUnits
+            .filter((u) => u.id === sourceUnit.id || sameRoom(u))
+            .reduce((max, u) => Math.max(max, u.sort_order), sourceUnit.sort_order);
+          for (let i = 0; i < world.units.length; i += 1) {
+            const u = world.units[i];
+            if (u && u.property_id === sourceUnit.property_id && u.sort_order > anchorOrder) {
+              world.units[i] = { ...u, sort_order: u.sort_order + 1 };
+            }
+          }
+
           const clonedUnit = {
             ...sourceUnit,
             id: newUnitId,
             slug: copySlug,
-            name: `${sourceUnit.name.slice(0, 72)} (Copy)`,
+            name: copyName,
             status: 'unlisted' as const,
-            sort_order: copyCount,
+            sort_order: anchorOrder + 1,
             archived_at: null,
             created_at: nowIso,
             updated_at: nowIso,
           };
           world.units.push(clonedUnit);
 
+          // Copy every price and term (OW-27): stay or lease terms, weekday rates, dated prices,
+          // fees and amenities. Photos stay with the source; a room's beds share them anyway.
           const stayTerm = world.unit_stay_terms.find((t) => t.unit_id === sourceUnit.id);
           if (stayTerm) {
             world.unit_stay_terms.push({
@@ -2454,6 +2486,58 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
               created_at: nowIso,
               updated_at: nowIso,
             });
+          }
+          const leaseTerm = world.unit_lease_terms.find((t) => t.unit_id === sourceUnit.id);
+          if (leaseTerm) {
+            world.unit_lease_terms.push({
+              ...leaseTerm,
+              unit_id: newUnitId,
+              created_at: nowIso,
+              updated_at: nowIso,
+            });
+          }
+          for (const rate of world.weekday_rates.filter((r) => r.unit_id === sourceUnit.id)) {
+            world.weekday_rates.push({
+              ...rate,
+              id: ids.next('000a'),
+              unit_id: newUnitId,
+              created_at: nowIso,
+              updated_at: nowIso,
+            });
+          }
+          for (const override of world.rate_overrides.filter((r) => r.unit_id === sourceUnit.id)) {
+            world.rate_overrides.push({
+              ...override,
+              id: ids.next('000b'),
+              unit_id: newUnitId,
+              created_at: nowIso,
+              updated_at: nowIso,
+            });
+          }
+          for (const fee of world.unit_fees.filter((f) => f.unit_id === sourceUnit.id)) {
+            world.unit_fees.push({
+              ...fee,
+              id: ids.next('000c'),
+              unit_id: newUnitId,
+              created_at: nowIso,
+              updated_at: nowIso,
+            });
+          }
+          for (const link of world.unit_amenities.filter((a) => a.unit_id === sourceUnit.id)) {
+            world.unit_amenities.push({ ...link, unit_id: newUnitId, created_at: nowIso });
+          }
+          if (sourceUnit.unit_type === 'bed_space' && sourceUnit.group_label !== null) {
+            // Beds in a room share the room's photos (the editor saves them to every bed).
+            const roomPhotos = world.listing_photos.filter((p) => p.unit_id === sourceUnit.id);
+            for (const photo of roomPhotos) {
+              world.listing_photos.push({
+                ...photo,
+                id: ids.next('0007'),
+                unit_id: newUnitId,
+                created_at: nowIso,
+                updated_at: nowIso,
+              });
+            }
           }
 
           return ok(clonedUnit);

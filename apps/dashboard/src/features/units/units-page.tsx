@@ -1,72 +1,74 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
   ArrowDownIcon,
   ArrowUpIcon,
-  ArchiveIcon,
-  CopyIcon,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
-  ImageIcon,
+  LayoutGridIcon,
   ListChecksIcon,
   MoreHorizontalIcon,
-  PencilIcon,
   PlusIcon,
+  Rows3Icon,
+  TagIcon,
   XIcon,
 } from 'lucide-react';
-import { countPlanUnits, type OwnerUnitListItemView, type UnitStatus } from '@smartapp/core';
+import {
+  countPlanUnits,
+  readErrorDetails,
+  type OwnerUnitListItemView,
+  type UnitStatus,
+} from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
-import { Checkbox } from '@smartapp/ui/components/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
-import { Field, FieldLabel } from '@smartapp/ui/components/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
+import { Input } from '@smartapp/ui/components/input';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/sortable';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@smartapp/ui/components/table';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
-import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
+import { PageHeader } from '@smartapp/ui/compositions/page-header';
+import { SegmentedControl } from '@smartapp/ui/compositions/segmented-control';
 import { notify } from '@smartapp/ui/lib/notify';
 import { cn } from '@smartapp/ui/lib/utils';
 import { useDashboard } from '@/app/dashboard-context';
-import { useOwnerPropertyQuery } from '@/data/property/reads';
 import { useMyAccountQuery } from '@/data/auth/reads';
+import { useOwnerPropertyQuery } from '@/data/property/reads';
 import { extractAppError } from '@/data/shared';
-import { useBulkUnitPriceMutation, useBulkUnitStatusMutation } from '@/data/units/bulk';
-import { useOwnerUnitsQuery } from '@/data/units/reads';
 import {
-  useArchiveUnitMutation,
-  useDuplicateUnitMutation,
-  useReorderUnitsMutation,
-} from '@/data/units/writes';
+  useBulkArchiveMutation,
+  useBulkUnitPriceMutation,
+  useBulkUnitStatusMutation,
+  useRenameRoomMutation,
+} from '@/data/units/bulk';
+import { useOwnerUnitsQuery } from '@/data/units/reads';
+import { useDuplicateUnitMutation, useReorderUnitsMutation } from '@/data/units/writes';
 import { AddUnitSheet } from './add-unit-sheet';
 import { UnitNotReadySheet, type NotReadyState } from './unit-not-ready-sheet';
+import { UNIT_STATUS_META } from './unit-words';
 import {
-  UNIT_STATUS_META,
-  UNIT_TYPE_LABEL,
-  UnitStatusBadge,
-  unitPriceText,
-  unitSummaryText,
-} from './unit-words';
+  RoomCard,
+  UnitCard,
+  UnitsTable,
+  entryUnitIds,
+  toEntries,
+  type UnitEntry,
+  type UnitListActions,
+} from './units-list';
 
-export type UnitsFilter = 'listed' | 'hidden' | 'drafts';
+export type UnitsFilter = 'listed' | 'hidden' | 'drafts' | 'archived';
 
 export interface UnitsSearch {
   readonly filter?: UnitsFilter;
@@ -74,7 +76,9 @@ export interface UnitsSearch {
   readonly room?: string;
 }
 
-const FILTER_STATUS: Record<UnitsFilter, UnitStatus> = {
+type UnitsView = 'cards' | 'table';
+
+const FILTER_STATUS: Record<Exclude<UnitsFilter, 'archived'>, UnitStatus> = {
   listed: 'listed',
   hidden: 'unlisted',
   drafts: 'draft',
@@ -89,54 +93,78 @@ const FILTERS: readonly {
   { value: 'listed', label: 'Listed', status: 'listed' },
   { value: 'hidden', label: 'Hidden', status: 'unlisted' },
   { value: 'drafts', label: 'Drafts', status: 'draft' },
+  { value: 'archived', label: 'Archived' },
 ];
 
-type Entry =
-  | { readonly kind: 'unit'; readonly key: string; readonly item: OwnerUnitListItemView }
-  | {
-      readonly kind: 'room';
-      readonly key: string;
-      readonly label: string;
-      readonly beds: readonly OwnerUnitListItemView[];
-    };
+const VIEW_KEY = 'smartapp:units-view';
+/** Above this many units the table is the default (pattern guide §3.8); the owner's own pick wins. */
+const TABLE_DEFAULT_ABOVE = 8;
 
-/** Keeps the list order and puts bed spaces together under their room. */
-function toEntries(units: readonly OwnerUnitListItemView[]): Entry[] {
-  const entries: Entry[] = [];
-  const rooms = new Map<string, OwnerUnitListItemView[]>();
-  for (const item of units) {
-    const label = item.unit.group_label;
-    if (label === null) {
-      entries.push({ kind: 'unit', key: item.unit.id, item });
-      continue;
-    }
-    const beds = rooms.get(label);
-    if (beds) {
-      beds.push(item);
-    } else {
-      const list = [item];
-      rooms.set(label, list);
-      entries.push({ kind: 'room', key: `room:${label}`, label, beds: list });
-    }
+function readSavedView(): UnitsView | null {
+  try {
+    const saved = window.localStorage.getItem(VIEW_KEY);
+    return saved === 'cards' || saved === 'table' ? saved : null;
+  } catch {
+    return null;
   }
-  return entries;
 }
 
-function entryUnitIds(entry: Entry): string[] {
-  return entry.kind === 'unit' ? [entry.item.unit.id] : entry.beds.map((bed) => bed.unit.id);
+function saveView(view: UnitsView) {
+  try {
+    window.localStorage.setItem(VIEW_KEY, view);
+  } catch {
+    // Private mode or storage off: the switch still works for this visit.
+  }
 }
 
-/** /units (OW-08, OW-27): every unit and bed space, filters, bulk actions and reorder. */
+function matchesFilter(item: OwnerUnitListItemView, filter: UnitsFilter | null): boolean {
+  const archived = item.unit.archived_at !== null;
+  if (filter === 'archived') return archived;
+  if (archived) return false;
+  return filter === null || item.unit.status === FILTER_STATUS[filter];
+}
+
+/** Whole places and private rooms first, then shared rooms with their beds (verdict 4). */
+function toSections(entries: readonly UnitEntry[]) {
+  const places = entries.filter((entry) => entry.kind === 'unit');
+  const rooms = entries.filter((entry) => entry.kind === 'room');
+  const bedCount = rooms.reduce(
+    (sum, entry) => sum + (entry.kind === 'room' ? entry.beds.length : 0),
+    0,
+  );
+  return [
+    ...(places.length > 0
+      ? [
+          {
+            title: `Whole places and private rooms · ${places.length}`,
+            entries: places,
+          },
+        ]
+      : []),
+    ...(rooms.length > 0
+      ? [
+          {
+            title: `Shared rooms · ${rooms.length} ${rooms.length === 1 ? 'room' : 'rooms'}, ${bedCount} ${bedCount === 1 ? 'bed' : 'beds'}`,
+            entries: rooms,
+          },
+        ]
+      : []),
+  ];
+}
+
+/** /units (OW-08, OW-27, F24, R-1): every unit and bed space, grouped, with filters and bulk actions. */
 export function UnitsPage() {
   const search = useSearch({ from: '/app-frame/units' });
   const navigate = useNavigate();
   const { today, client } = useDashboard();
   const account = useMyAccountQuery();
   const property = useOwnerPropertyQuery();
-  const units = useOwnerUnitsQuery();
+  // Archived units are read too, so they can be found and restored (AUDIT-1 A1).
+  const units = useOwnerUnitsQuery(null, true);
   const bulkStatus = useBulkUnitStatusMutation();
   const bulkPrice = useBulkUnitPriceMutation();
-  const archive = useArchiveUnitMutation();
+  const bulkArchive = useBulkArchiveMutation();
+  const renameRoom = useRenameRoomMutation();
   const duplicate = useDuplicateUnitMutation();
   const reorder = useReorderUnitsMutation();
 
@@ -146,15 +174,27 @@ export function UnitsPage() {
   const [notReady, setNotReady] = useState<NotReadyState | null>(null);
   const [limitSheetOpen, setLimitSheetOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
+  const [nightlyPrice, setNightlyPrice] = useState<number | null>(null);
+  const [monthlyPrice, setMonthlyPrice] = useState<number | null>(null);
+  const [rename, setRename] = useState<{ from: string; ids: readonly string[] } | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [savedView, setSavedView] = useState<UnitsView | null>(readSavedView);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const all = useMemo(() => units.data ?? [], [units.data]);
-  const byId = useMemo(() => new Map(all.map((item) => [item.unit.id, item])), [all]);
+  const everything = useMemo(() => units.data ?? [], [units.data]);
+  const all = useMemo(
+    () => everything.filter((item) => item.unit.archived_at === null),
+    [everything],
+  );
+  const archivedCount = everything.length - all.length;
+  const byId = useMemo(() => new Map(everything.map((item) => [item.unit.id, item])), [everything]);
   const filter = search.filter ?? null;
-  const visible = filter ? all.filter((item) => item.unit.status === FILTER_STATUS[filter]) : all;
-  const entries = toEntries(visible);
+  const showingArchived = filter === 'archived';
+  const visible = everything.filter((item) => matchesFilter(item, filter));
+  const sections = toSections(toEntries(visible));
   const propertyId = property.data?.property.id ?? null;
+  const view: UnitsView = savedView ?? (all.length > TABLE_DEFAULT_ABOVE ? 'table' : 'cards');
 
   const planUnitsUsed = useMemo(() => countPlanUnits(all.map((item) => item.unit)), [all]);
   const planLimitTotal =
@@ -182,6 +222,7 @@ export function UnitsPage() {
   }
 
   function setFilter(next: UnitsFilter | 'all') {
+    setSelected(new Set());
     go({ filter: next === 'all' ? null : next });
   }
 
@@ -220,6 +261,11 @@ export function UnitsPage() {
     });
   }
 
+  function stopSelecting() {
+    setSelecting(false);
+    setSelected(new Set());
+  }
+
   function nameOf(id: string) {
     return byId.get(id)?.unit.name ?? 'This unit';
   }
@@ -230,20 +276,25 @@ export function UnitsPage() {
     return `${ids.length} ${noun}`;
   }
 
+  function doneWord(ids: readonly string[], word: string) {
+    return ids.length === 1 ? `${nameOf(ids[0] ?? '')} ${word}` : `${countWord(ids)} ${word}`;
+  }
+
   async function changeStatus(ids: readonly string[], to: UnitStatus) {
     const targets = ids.flatMap((id) => {
       const item = byId.get(id);
-      return item ? [{ unitId: id, from: item.unit.status, to }] : [];
+      return item && item.unit.status !== to ? [{ unitId: id, from: item.unit.status, to }] : [];
     });
+    if (targets.length === 0) return;
     try {
       const result = await bulkStatus.mutateAsync({ units: targets });
       if (result.changed.length > 0) {
         const word = to === 'unlisted' ? 'hidden' : 'shown on your page';
-        const ids2 = result.changed.map((change) => change.unitId);
         notify.success(
-          result.changed.length === 1
-            ? `${nameOf(ids2[0] ?? '')} ${word}`
-            : `${countWord(ids2)} ${word}`,
+          doneWord(
+            result.changed.map((change) => change.unitId),
+            word,
+          ),
           {
             onUndo: () => {
               void bulkStatus.mutateAsync({
@@ -269,29 +320,37 @@ export function UnitsPage() {
       if (result.otherErrors > 0) {
         notify.error(`${result.otherErrors} couldn't be changed. Try again.`);
       }
-      setSelected(new Set());
+      stopSelecting();
     } catch (caught) {
       notify.error(extractAppError(caught).message);
     }
   }
 
-  async function archiveUnits(ids: readonly string[]) {
+  async function setArchived(ids: readonly string[], archived: boolean) {
+    const targets = ids.filter((id) => {
+      const item = byId.get(id);
+      return item !== undefined && (item.unit.archived_at !== null) !== archived;
+    });
+    if (targets.length === 0) return;
     try {
-      for (const id of ids) {
-        await archive.mutateAsync({ unitId: id, archived: true, expectedUpdatedAt: null });
+      const result = await bulkArchive.mutateAsync({ unitIds: targets, archived });
+      if (result.changed.length > 0) {
+        notify.success(doneWord(result.changed, archived ? 'archived' : 'restored as hidden'), {
+          onUndo: () =>
+            void bulkArchive.mutateAsync({ unitIds: result.changed, archived: !archived }),
+        });
       }
-      notify.success(
-        ids.length === 1 ? `${nameOf(ids[0] ?? '')} archived` : `${countWord(ids)} archived`,
-        {
-          onUndo: () => {
-            void (async () => {
-              for (const id of ids) {
-                await archive.mutateAsync({ unitId: id, archived: false, expectedUpdatedAt: null });
-              }
-            })();
-          },
-        },
-      );
+      if (result.failed > 0) {
+        const details = readErrorDetails(extractAppError(result.firstError));
+        if (!archived && details.reason === 'unit_limit') {
+          setLimitSheetOpen(true);
+        } else {
+          notify.error(
+            `${result.failed} couldn't be ${archived ? 'archived' : 'restored'}. ${extractAppError(result.firstError).message}`,
+          );
+        }
+      }
+      stopSelecting();
     } catch (caught) {
       notify.error(extractAppError(caught).message);
     }
@@ -300,12 +359,15 @@ export function UnitsPage() {
   async function duplicateUnit(id: string) {
     try {
       const copy = await duplicate.mutateAsync({ unitId: id });
-      notify.success(`Copied as ${copy.name}`, {
-        onUndo: () =>
-          void archive.mutateAsync({ unitId: copy.id, archived: true, expectedUpdatedAt: null }),
+      notify.success(`Added ${copy.name}, hidden for now`, {
+        onUndo: () => void bulkArchive.mutateAsync({ unitIds: [copy.id], archived: true }),
       });
     } catch (caught) {
       const error = extractAppError(caught);
+      if (readErrorDetails(error).reason === 'unit_limit') {
+        setLimitSheetOpen(true);
+        return;
+      }
       notify.error(error.message);
     }
   }
@@ -336,6 +398,45 @@ export function UnitsPage() {
     );
   }
 
+  function openRename(from: string, ids: readonly string[]) {
+    setRename({ from, ids });
+    setRenameValue(from);
+    setRenameError(null);
+  }
+
+  async function submitRename() {
+    if (!rename) return;
+    const to = renameValue.trim();
+    if (to.length === 0) {
+      setRenameError('Enter a room name.');
+      return;
+    }
+    if (to === rename.from) {
+      setRename(null);
+      return;
+    }
+    const taken = all.some(
+      (item) =>
+        item.unit.unit_type === 'bed_space' &&
+        item.unit.group_label?.toLowerCase() === to.toLowerCase() &&
+        item.unit.group_label !== rename.from,
+    );
+    if (taken) {
+      setRenameError('Another room already has this name. Pick a different one.');
+      return;
+    }
+    const { from, ids } = rename;
+    try {
+      await renameRoom.mutateAsync({ unitIds: ids, from, to });
+      setRename(null);
+      notify.success(`Renamed to ${to}`, {
+        onUndo: () => void renameRoom.mutateAsync({ unitIds: ids, from: to, to: from }),
+      });
+    } catch (caught) {
+      setRenameError(extractAppError(caught).message);
+    }
+  }
+
   if (units.isPending || property.isPending) {
     return (
       <section className="space-y-4" aria-busy="true">
@@ -363,8 +464,32 @@ export function UnitsPage() {
   }
 
   const selectedIds = [...selected].filter((id) => byId.has(id));
+  const selectedItems = selectedIds.flatMap((id) => {
+    const item = byId.get(id);
+    return item ? [item] : [];
+  });
+  const selectedNightly = selectedItems.filter((item) => item.unit.mode === 'short_stay');
+  const selectedMonthly = selectedItems.filter((item) => item.unit.mode === 'long_term');
   // TopBar already shows "Units" at every size (D73).
   const srTitle = <PageHeader title="Units" />;
+
+  const actions: UnitListActions = {
+    selecting,
+    selected,
+    onToggle: toggle,
+    onStartSelecting: (ids) => {
+      setReordering(false);
+      setSelecting(true);
+      setSelected(new Set(ids));
+    },
+    onShow: (ids) => void changeStatus(ids, 'listed'),
+    onHide: (ids) => void changeStatus(ids, 'unlisted'),
+    onArchive: (ids) => void setArchived(ids, true),
+    onRestore: (ids) => void setArchived(ids, false),
+    onDuplicate: (id) => void duplicateUnit(id),
+    onAddBed: (label) => openAdd('beds', label),
+    onRenameRoom: openRename,
+  };
 
   const sheet = (
     <AddUnitSheet
@@ -395,6 +520,7 @@ export function UnitsPage() {
             className="min-h-11"
             onClick={() => {
               setLimitSheetOpen(false);
+              if (showingArchived) setFilter('all');
               listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
           >
@@ -417,7 +543,7 @@ export function UnitsPage() {
     </AppSheet>
   );
 
-  if (all.length === 0) {
+  if (everything.length === 0) {
     return (
       <section className="space-y-6">
         {srTitle}
@@ -453,39 +579,29 @@ export function UnitsPage() {
     );
   }
 
-  const menuFor = (item: OwnerUnitListItemView) => (
-    <UnitMenu
-      item={item}
-      onShow={() => void changeStatus([item.unit.id], 'listed')}
-      onHide={() => void changeStatus([item.unit.id], 'unlisted')}
-      onDuplicate={() => void duplicateUnit(item.unit.id)}
-      onArchive={() => void archiveUnits([item.unit.id])}
-    />
+  const filtersShown = FILTERS.filter(
+    (item) => item.value !== 'archived' || archivedCount > 0 || showingArchived,
   );
 
-  // Pattern guide §3.8: a table only when the list is long enough to need scanning.
-  const useTable = all.length > 8;
-
   return (
-    <section className={cn('space-y-4', selecting && selectedIds.length > 0 && 'pb-20 lg:pb-0')}>
+    <section className={cn('space-y-4', selecting && selectedIds.length > 0 && 'pb-24 lg:pb-0')}>
       {srTitle}
 
-      {/* D73: phones put [+ Add unit] (left) and ⋯ (right) above the chips; desktop puts them on the right of the chips row. */}
+      {/* D73: phones put [+ Add unit] (left) and the view switch and ⋯ (right) above the chips; desktop puts them right of the chips. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="order-1 flex flex-wrap items-center justify-between gap-2 sm:order-2 sm:shrink-0 sm:justify-end">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              className="min-h-11 sm:min-h-9"
-              disabled={propertyId === null}
-              onClick={() => openAdd('unit')}
-            >
-              <PlusIcon aria-hidden="true" />
-              Add unit
-            </Button>
-            <span className="text-xs text-muted-foreground tabular">
-              {planUnitsUsed} of {planLimitTotal} units on your plan
-            </span>
-          </div>
+        <div className="order-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:order-2 sm:shrink-0 sm:flex-nowrap sm:justify-end">
+          <Button
+            className="min-h-11 sm:min-h-9"
+            disabled={propertyId === null}
+            onClick={() => openAdd('unit')}
+          >
+            <PlusIcon aria-hidden="true" />
+            Add unit
+          </Button>
+          {/* Phones: this line wraps under the buttons; from 640px it sits beside Add unit. */}
+          <span className="order-3 basis-full text-xs text-muted-foreground tabular sm:order-none sm:mr-auto sm:basis-auto">
+            {planUnitsUsed} of {planLimitTotal} units on your plan
+          </span>
           <div className="flex items-center gap-2">
             {reordering ? (
               <Button
@@ -497,18 +613,34 @@ export function UnitsPage() {
               </Button>
             ) : null}
             {selecting ? (
-              <Button
-                variant="outline"
-                className="min-h-11 sm:min-h-9"
-                onClick={() => {
-                  setSelecting(false);
-                  setSelected(new Set());
-                }}
-              >
+              <Button variant="outline" className="min-h-11 sm:min-h-9" onClick={stopSelecting}>
                 <XIcon aria-hidden="true" />
                 Cancel
               </Button>
             ) : null}
+            {reordering ? null : (
+              <SegmentedControl<UnitsView>
+                aria-label="View"
+                size="sm"
+                value={view}
+                onValueChange={(next) => {
+                  setSavedView(next);
+                  saveView(next);
+                }}
+                options={[
+                  {
+                    value: 'cards',
+                    label: <span className="sr-only">Cards</span>,
+                    icon: <LayoutGridIcon aria-hidden="true" />,
+                  },
+                  {
+                    value: 'table',
+                    label: <span className="sr-only">Table</span>,
+                    icon: <Rows3Icon aria-hidden="true" />,
+                  },
+                ]}
+              />
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -524,9 +656,10 @@ export function UnitsPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
+                  disabled={showingArchived}
                   onClick={() => {
                     setReordering((on) => !on);
-                    setSelecting(false);
+                    stopSelecting();
                   }}
                 >
                   <GripVerticalIcon aria-hidden="true" />
@@ -534,9 +667,12 @@ export function UnitsPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelecting((on) => !on);
-                    setReordering(false);
-                    setSelected(new Set());
+                    if (selecting) {
+                      stopSelecting();
+                    } else {
+                      setSelecting(true);
+                      setReordering(false);
+                    }
                   }}
                 >
                   <ListChecksIcon aria-hidden="true" />
@@ -552,13 +688,15 @@ export function UnitsPage() {
           aria-label="Show"
           className="order-2 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:order-1 sm:pb-0"
         >
-          {FILTERS.map((item) => {
+          {filtersShown.map((item) => {
             const active = (filter ?? 'all') === item.value;
             const value = item.value;
             const count =
               value === 'all'
                 ? all.length
-                : all.filter((unit) => unit.unit.status === FILTER_STATUS[value]).length;
+                : value === 'archived'
+                  ? archivedCount
+                  : all.filter((unit) => unit.unit.status === FILTER_STATUS[value]).length;
             const statusMeta = item.status ? UNIT_STATUS_META[item.status] : null;
             const StatusIcon = statusMeta?.icon ?? null;
             return (
@@ -577,6 +715,9 @@ export function UnitsPage() {
                 {StatusIcon && statusMeta ? (
                   <StatusIcon aria-hidden="true" className={cn('size-3.5', statusMeta.iconTone)} />
                 ) : null}
+                {value === 'archived' ? (
+                  <ArchiveIcon aria-hidden="true" className="size-3.5" />
+                ) : null}
                 {item.label}
                 <span className="text-muted-foreground tabular">{count}</span>
               </Button>
@@ -584,6 +725,19 @@ export function UnitsPage() {
           })}
         </div>
       </div>
+
+      {selecting && selectedIds.length === 0 ? (
+        <p className="text-sm text-muted-foreground" role="status">
+          Tap units to select them.
+        </p>
+      ) : null}
+
+      {showingArchived && !selecting ? (
+        <p className="text-sm text-muted-foreground">
+          Archived units are off your page and don&rsquo;t count toward your plan. Restore one to
+          bring it back hidden, then show it when it&rsquo;s ready.
+        </p>
+      ) : null}
 
       {reordering ? (
         <ReorderList
@@ -596,7 +750,7 @@ export function UnitsPage() {
           }
           onMove={moveEntry}
         />
-      ) : entries.length === 0 ? (
+      ) : visible.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
           No units here.{' '}
           <button
@@ -607,152 +761,33 @@ export function UnitsPage() {
             Show all
           </button>
         </p>
-      ) : (
+      ) : view === 'table' ? (
         <div ref={listRef}>
-          {/* Cards: rows on phones (< 640px), auto-fill grid from 640px up (2 on tablet, 3 on 1280px, 4 from 1536px). */}
-          <ul
-            className={cn(
-              'grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]',
-              useTable && 'lg:hidden',
-            )}
-          >
-            {entries.map((entry) =>
-              entry.kind === 'unit' ? (
-                <li key={entry.key} className="flex">
-                  <UnitCard
-                    item={entry.item}
-                    selecting={selecting}
-                    checked={selected.has(entry.item.unit.id)}
-                    onCheck={(on) => toggle([entry.item.unit.id], on)}
-                    menu={menuFor(entry.item)}
-                  />
-                </li>
-              ) : (
-                <li key={entry.key} className="sm:col-span-full">
-                  <RoomCard
-                    label={entry.label}
-                    beds={entry.beds}
-                    selecting={selecting}
-                    selected={selected}
-                    onCheck={toggle}
-                    onAddBed={() => openAdd('beds', entry.label)}
-                    menuFor={menuFor}
-                  />
-                </li>
-              ),
-            )}
-          </ul>
-          {/* Desktop with more than 8 units: a plain table */}
-          <div
-            className={cn(
-              'hidden overflow-hidden rounded-xl border border-border bg-card',
-              useTable && 'lg:block',
-            )}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {selecting ? (
-                    <TableHead className="w-10">
-                      <span className="sr-only">Select</span>
-                    </TableHead>
-                  ) : null}
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-12">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.flatMap((entry) => {
-                  const rows: React.ReactNode[] = [];
-                  if (entry.kind === 'room') {
-                    const ids = entry.beds.map((bed) => bed.unit.id);
-                    const listed = entry.beds.filter((bed) => bed.unit.status === 'listed').length;
-                    rows.push(
-                      <TableRow key={entry.key} className="bg-muted/50 hover:bg-muted/50">
-                        {selecting ? (
-                          <TableCell>
-                            <Checkbox
-                              aria-label={`Select every bed in ${entry.label}`}
-                              checked={ids.every((id) => selected.has(id))}
-                              onCheckedChange={(on) => toggle(ids, on)}
-                            />
-                          </TableCell>
-                        ) : null}
-                        <TableCell colSpan={5} className="font-medium">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span>
-                              {entry.label}
-                              <span className="text-muted-foreground">
-                                {' '}
-                                · {entry.beds.length} {entry.beds.length === 1 ? 'bed' : 'beds'} ·{' '}
-                                {listed} listed
-                              </span>
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="min-h-9"
-                              onClick={() => openAdd('beds', entry.label)}
-                            >
-                              <PlusIcon aria-hidden="true" />
-                              Add a bed
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>,
-                    );
-                  }
-                  const items = entry.kind === 'unit' ? [entry.item] : entry.beds;
-                  for (const item of items) {
-                    rows.push(
-                      <TableRow key={item.unit.id}>
-                        {selecting ? (
-                          <TableCell>
-                            <Checkbox
-                              aria-label={`Select ${item.unit.name}`}
-                              checked={selected.has(item.unit.id)}
-                              onCheckedChange={(on) => toggle([item.unit.id], on)}
-                            />
-                          </TableCell>
-                        ) : null}
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Cover item={item} className="w-16 shrink-0 rounded-md" />
-                            <Link
-                              to="/units/$unitId"
-                              params={{ unitId: item.unit.id }}
-                              className="line-clamp-2 font-medium underline-offset-4 hover-hover:hover:underline"
-                            >
-                              {item.unit.name}
-                            </Link>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {UNIT_TYPE_LABEL[item.unit.unit_type]}
-                        </TableCell>
-                        <TableCell className="tabular">
-                          {unitPriceText(item) ?? (
-                            <span className="text-muted-foreground">No price yet</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <UnitStatusBadge status={item.unit.status} />
-                        </TableCell>
-                        <TableCell>{menuFor(item)}</TableCell>
-                      </TableRow>,
-                    );
-                  }
-                  return rows;
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <UnitsTable sections={sections} actions={actions} />
+        </div>
+      ) : (
+        <div ref={listRef} className="space-y-6">
+          {sections.map((section) => (
+            <section key={section.title} aria-label={section.title} className="space-y-3">
+              {sections.length > 1 ? (
+                <h2 className="text-sm font-medium text-muted-foreground">{section.title}</h2>
+              ) : null}
+              {/* Cards: rows on phones (< 640px), auto-fill grid from 640px up; rooms span the full row. */}
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
+                {section.entries.map((entry) =>
+                  entry.kind === 'unit' ? (
+                    <li key={entry.key} className="flex">
+                      <UnitCard item={entry.item} actions={actions} />
+                    </li>
+                  ) : (
+                    <li key={entry.key} className="sm:col-span-full">
+                      <RoomCard label={entry.label} beds={entry.beds} actions={actions} />
+                    </li>
+                  ),
+                )}
+              </ul>
+            </section>
+          ))}
         </div>
       )}
 
@@ -760,34 +795,59 @@ export function UnitsPage() {
         <div
           role="region"
           aria-label="Selected units"
-          className="dock-pill fixed inset-x-3 z-40 mx-auto flex -translate-y-[calc(100%+0.75rem)] items-center gap-2 rounded-2xl border border-border bg-popover px-3 shadow-lg lg:sticky lg:bottom-4 lg:h-auto lg:max-w-none lg:translate-y-0 lg:rounded-xl lg:py-2 lg:shadow-lg"
+          className="dock-pill fixed inset-x-3 z-40 mx-auto flex -translate-y-[calc(100%+0.75rem)] flex-wrap items-center gap-2 rounded-2xl border border-border bg-popover px-3 py-2 shadow-lg lg:sticky lg:bottom-4 lg:h-auto lg:max-w-none lg:translate-y-0 lg:rounded-xl lg:shadow-lg"
         >
           <span className="flex-1 text-sm font-medium tabular">{selectedIds.length} selected</span>
-          <Button
-            variant="outline"
-            className="min-h-11 lg:min-h-9"
-            onClick={() => void changeStatus(selectedIds, 'unlisted')}
-          >
-            <EyeOffIcon aria-hidden="true" />
-            Hide
-          </Button>
-          <Button
-            variant="outline"
-            className="min-h-11 lg:min-h-9"
-            onClick={() => void changeStatus(selectedIds, 'listed')}
-          >
-            <EyeIcon aria-hidden="true" />
-            Show
-          </Button>
-          <Button
-            className="min-h-11 lg:min-h-9"
-            onClick={() => {
-              setPrice(null);
-              setPriceOpen(true);
-            }}
-          >
-            Change price
-          </Button>
+          {showingArchived ? (
+            <Button
+              className="min-h-11 lg:min-h-9"
+              onClick={() => void setArchived(selectedIds, false)}
+            >
+              <ArchiveRestoreIcon aria-hidden="true" />
+              Restore
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-11 lg:size-9"
+                aria-label="Hide from page"
+                onClick={() => void changeStatus(selectedIds, 'unlisted')}
+              >
+                <EyeOffIcon aria-hidden="true" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-11 lg:size-9"
+                aria-label="Show on page"
+                onClick={() => void changeStatus(selectedIds, 'listed')}
+              >
+                <EyeIcon aria-hidden="true" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-11 lg:size-9"
+                aria-label="Archive"
+                onClick={() => void setArchived(selectedIds, true)}
+              >
+                <ArchiveIcon aria-hidden="true" />
+              </Button>
+              <Button
+                className="min-h-11 lg:min-h-9"
+                onClick={() => {
+                  setNightlyPrice(null);
+                  setMonthlyPrice(null);
+                  setPriceOpen(true);
+                }}
+              >
+                <TagIcon aria-hidden="true" />
+                Price
+              </Button>
+            </>
+          )}
         </div>
       ) : null}
 
@@ -796,7 +856,11 @@ export function UnitsPage() {
         onOpenChange={setPriceOpen}
         size="sm"
         title={`Change price for ${countWord(selectedIds)}`}
-        description="Nightly units get this price a night; monthly units get it a month."
+        description={
+          selectedNightly.length > 0 && selectedMonthly.length > 0
+            ? 'Nightly and monthly units get their own price. Leave one empty to keep those prices.'
+            : undefined
+        }
         footer={
           <>
             <Button
@@ -810,27 +874,53 @@ export function UnitsPage() {
             <AsyncButton
               className="min-h-11"
               state={bulkPrice.isPending ? 'busy' : 'idle'}
-              disabled={price === null || price <= 0}
+              disabled={
+                !((nightlyPrice ?? 0) > 0 && selectedNightly.length > 0) &&
+                !((monthlyPrice ?? 0) > 0 && selectedMonthly.length > 0)
+              }
               onClick={() => {
-                if (price === null || !today) return;
+                if (!today) return;
+                const targets = [
+                  ...((nightlyPrice ?? 0) > 0
+                    ? selectedNightly.map((item) => ({
+                        unitId: item.unit.id,
+                        centavos: nightlyPrice ?? 0,
+                      }))
+                    : []),
+                  ...((monthlyPrice ?? 0) > 0
+                    ? selectedMonthly.map((item) => ({
+                        unitId: item.unit.id,
+                        centavos: monthlyPrice ?? 0,
+                      }))
+                    : []),
+                ];
                 void bulkPrice
-                  .mutateAsync({
-                    units: selectedIds.map((unitId) => ({ unitId, centavos: price })),
-                    today,
-                  })
+                  .mutateAsync({ units: targets, today })
                   .then((result) => {
                     setPriceOpen(false);
-                    setSelected(new Set());
-                    notify.success(`Price changed for ${countWord(selectedIds)}`, {
-                      onUndo: () =>
-                        void bulkPrice.mutateAsync({
-                          units: result.previous.map((item) => ({
-                            unitId: item.unitId,
-                            centavos: item.centavos,
-                          })),
-                          today,
-                        }),
-                    });
+                    stopSelecting();
+                    const ids = result.changed.map((item) => item.unitId);
+                    const undoable = result.changed.filter((item) => item.previous !== null);
+                    if (ids.length > 0) {
+                      notify.success(
+                        `Price changed for ${countWord(ids)}`,
+                        undoable.length > 0
+                          ? {
+                              onUndo: () =>
+                                void bulkPrice.mutateAsync({
+                                  units: undoable.map((item) => ({
+                                    unitId: item.unitId,
+                                    centavos: item.previous ?? 0,
+                                  })),
+                                  today,
+                                }),
+                            }
+                          : undefined,
+                      );
+                    }
+                    if (result.failed > 0) {
+                      notify.error(`${result.failed} couldn't be changed. Try again.`);
+                    }
                   })
                   .catch((caught: unknown) => notify.error(extractAppError(caught).message));
               }}
@@ -840,10 +930,90 @@ export function UnitsPage() {
           </>
         }
       >
-        <Field>
-          <FieldLabel htmlFor="bulk-price">New price</FieldLabel>
-          <MoneyInput id="bulk-price" value={price} onValueChange={setPrice} per="each" />
-        </Field>
+        <div className="flex flex-col gap-5">
+          {selectedNightly.length > 0 ? (
+            <Field>
+              <FieldLabel htmlFor="bulk-price-nightly">
+                Nightly price · {selectedNightly.length}{' '}
+                {selectedNightly.length === 1 ? 'unit' : 'units'}
+              </FieldLabel>
+              <MoneyInput
+                id="bulk-price-nightly"
+                value={nightlyPrice}
+                onValueChange={setNightlyPrice}
+                per="a night"
+              />
+            </Field>
+          ) : null}
+          {selectedMonthly.length > 0 ? (
+            <Field>
+              <FieldLabel htmlFor="bulk-price-monthly">
+                Monthly rent · {selectedMonthly.length}{' '}
+                {selectedMonthly.length === 1 ? 'unit' : 'units'}
+              </FieldLabel>
+              <MoneyInput
+                id="bulk-price-monthly"
+                value={monthlyPrice}
+                onValueChange={setMonthlyPrice}
+                per="a month"
+              />
+            </Field>
+          ) : null}
+        </div>
+      </AppSheet>
+
+      <AppSheet
+        open={rename !== null}
+        onOpenChange={(open) => (open ? undefined : setRename(null))}
+        size="sm"
+        title="Rename room"
+        description="Every bed in this room gets the new name. Guests see it on your page."
+        footer={
+          <>
+            <Button
+              data-sheet-cancel=""
+              variant="outline"
+              className="min-h-11"
+              onClick={() => setRename(null)}
+            >
+              Cancel
+            </Button>
+            <AsyncButton
+              className="min-h-11"
+              state={renameRoom.isPending ? 'busy' : 'idle'}
+              onClick={() => void submitRename()}
+            >
+              Rename room
+            </AsyncButton>
+          </>
+        }
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submitRename();
+          }}
+        >
+          <Field data-invalid={renameError ? true : undefined}>
+            <FieldLabel htmlFor="room-name">Room name</FieldLabel>
+            <Input
+              id="room-name"
+              value={renameValue}
+              maxLength={40}
+              autoComplete="off"
+              aria-invalid={renameError ? true : undefined}
+              onChange={(event) => {
+                setRenameValue(event.target.value);
+                setRenameError(null);
+              }}
+            />
+            <FieldDescription>
+              {rename ? `${rename.ids.length} ${rename.ids.length === 1 ? 'bed' : 'beds'} · ` : ''}
+              Up to 40 characters, such as &ldquo;Room 2&rdquo; or &ldquo;Ladies&rsquo; dorm&rdquo;.
+            </FieldDescription>
+            <FieldError>{renameError}</FieldError>
+          </Field>
+        </form>
       </AppSheet>
 
       <UnitNotReadySheet notReady={notReady} onClose={() => setNotReady(null)} />
@@ -854,224 +1024,12 @@ export function UnitsPage() {
   );
 }
 
-function Cover({
-  item,
-  className,
-}: {
-  readonly item: OwnerUnitListItemView;
-  readonly className?: string;
-}) {
-  return (
-    <div className={cn('aspect-[4/3] overflow-hidden bg-muted', className)}>
-      {item.cover_photo ? (
-        <img src={item.cover_photo.url} alt="" loading="lazy" className="size-full object-cover" />
-      ) : (
-        <div className="flex size-full items-center justify-center text-muted-foreground">
-          <ImageIcon aria-hidden="true" className="size-5" />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function UnitMenu({
-  item,
-  onShow,
-  onHide,
-  onDuplicate,
-  onArchive,
-}: {
-  readonly item: OwnerUnitListItemView;
-  readonly onShow: () => void;
-  readonly onHide: () => void;
-  readonly onDuplicate: () => void;
-  readonly onArchive: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-11 sm:size-9"
-            aria-label={`More for ${item.unit.name}`}
-          />
-        }
-      >
-        <MoreHorizontalIcon aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem render={<Link to="/units/$unitId" params={{ unitId: item.unit.id }} />}>
-          <PencilIcon aria-hidden="true" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onDuplicate}>
-          <CopyIcon aria-hidden="true" />
-          Duplicate
-        </DropdownMenuItem>
-        {item.unit.status === 'listed' ? (
-          <DropdownMenuItem onClick={onHide}>
-            <EyeOffIcon aria-hidden="true" />
-            Hide from page
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem onClick={onShow}>
-            <EyeIcon aria-hidden="true" />
-            Show on page
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={onArchive}>
-          <ArchiveIcon aria-hidden="true" />
-          Archive
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function UnitCard({
-  item,
-  selecting,
-  checked,
-  onCheck,
-  menu,
-}: {
-  readonly item: OwnerUnitListItemView;
-  readonly selecting: boolean;
-  readonly checked: boolean;
-  readonly onCheck: (on: boolean) => void;
-  readonly menu: React.ReactNode;
-}) {
-  const price = unitPriceText(item);
-  return (
-    // D73: row card with an 88 px thumbnail on phones (< 640px), full-height photo card in the grid from 640px up.
-    <article className="relative flex h-full w-full items-center gap-3 overflow-hidden rounded-xl border border-border bg-card p-2.5 sm:flex-col sm:items-stretch sm:gap-0 sm:p-0">
-      <div className="relative w-[88px] shrink-0 overflow-hidden rounded-lg sm:w-full sm:rounded-none">
-        <Cover item={item} className="w-full" />
-        <UnitStatusBadge
-          status={item.unit.status}
-          overlay
-          className="pointer-events-none absolute top-1 left-1 z-10 max-sm:h-5 max-sm:px-1.5 max-sm:text-[11px] sm:top-2.5 sm:left-2.5"
-        />
-      </div>
-      {selecting ? (
-        <div className="absolute top-2 right-2 z-20 flex size-11 items-center justify-center rounded-lg bg-card/90 shadow-xs">
-          <Checkbox
-            aria-label={`Select ${item.unit.name}`}
-            checked={checked}
-            onCheckedChange={onCheck}
-          />
-        </div>
-      ) : null}
-      <div className="flex min-w-0 flex-1 flex-col justify-between gap-1 sm:p-3.5">
-        <div className="flex items-center justify-between gap-2">
-          <Link
-            to="/units/$unitId"
-            params={{ unitId: item.unit.id }}
-            className="min-w-0 flex-1 truncate font-medium after:absolute after:inset-0 after:content-['']"
-          >
-            {item.unit.name}
-          </Link>
-          <div className="relative z-10 -mr-1.5 shrink-0">{menu}</div>
-        </div>
-        <p className="truncate text-sm text-muted-foreground">{unitSummaryText(item.unit)}</p>
-        <p className="text-sm font-medium text-foreground tabular">
-          {price ?? <span className="font-normal text-muted-foreground">No price yet</span>}
-        </p>
-      </div>
-    </article>
-  );
-}
-
-function RoomCard({
-  label,
-  beds,
-  selecting,
-  selected,
-  onCheck,
-  onAddBed,
-  menuFor,
-}: {
-  readonly label: string;
-  readonly beds: readonly OwnerUnitListItemView[];
-  readonly selecting: boolean;
-  readonly selected: ReadonlySet<string>;
-  readonly onCheck: (ids: readonly string[], on: boolean) => void;
-  readonly onAddBed: () => void;
-  readonly menuFor: (item: OwnerUnitListItemView) => React.ReactNode;
-}) {
-  const listed = beds.filter((bed) => bed.unit.status === 'listed').length;
-  const ids = beds.map((bed) => bed.unit.id);
-  const first = beds[0];
-  const price = first ? unitPriceText(first) : null;
-  return (
-    <article className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
-        {first ? <Cover item={first} className="w-20 shrink-0 rounded-md" /> : null}
-        <div className="min-w-0 flex-1">
-          <h2 className="line-clamp-2 font-medium">{label}</h2>
-          <p className="text-sm text-muted-foreground tabular">
-            {beds.length} {beds.length === 1 ? 'bed' : 'beds'} · {listed} listed
-            {price ? ` · ${price}` : ''}
-          </p>
-        </div>
-        {selecting ? (
-          <div className="flex size-11 items-center justify-center">
-            <Checkbox
-              aria-label={`Select every bed in ${label}`}
-              checked={ids.every((id) => selected.has(id))}
-              onCheckedChange={(on) => onCheck(ids, on)}
-            />
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-11 shrink-0 sm:min-h-9"
-            onClick={onAddBed}
-          >
-            <PlusIcon aria-hidden="true" />
-            Add a bed
-          </Button>
-        )}
-      </div>
-      <ul className="divide-y divide-border">
-        {beds.map((bed) => (
-          <li key={bed.unit.id} className="flex items-center gap-2 px-3 py-1">
-            {selecting ? (
-              <div className="flex size-11 items-center justify-center">
-                <Checkbox
-                  aria-label={`Select ${bed.unit.name}`}
-                  checked={selected.has(bed.unit.id)}
-                  onCheckedChange={(on) => onCheck([bed.unit.id], on)}
-                />
-              </div>
-            ) : null}
-            <Link
-              to="/units/$unitId"
-              params={{ unitId: bed.unit.id }}
-              className="flex min-h-11 min-w-0 flex-1 items-center text-sm font-medium"
-            >
-              <span className="truncate">{bed.unit.name.replace(`${label} · `, '')}</span>
-            </Link>
-            <UnitStatusBadge status={bed.unit.status} />
-            {menuFor(bed)}
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
 function ReorderList({
   entries,
   onChange,
   onMove,
 }: {
-  readonly entries: readonly Entry[];
+  readonly entries: readonly UnitEntry[];
   readonly onChange: (unitIds: string[]) => void;
   readonly onMove: (index: number, by: -1 | 1) => void;
 }) {
