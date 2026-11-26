@@ -38,6 +38,9 @@ const KitPatternsUi4Section = lazy(() =>
 const KitPatternsUi5Section = lazy(() =>
   import('./kit-patterns-ui5-section').then((m) => ({ default: m.KitPatternsUi5Section })),
 );
+const KitPatternsUi6Section = lazy(() =>
+  import('./kit-patterns-ui6-section').then((m) => ({ default: m.KitPatternsUi6Section })),
+);
 
 type Section = 'basics' | 'price' | 'rules';
 
@@ -532,6 +535,9 @@ export function KitPatternsTab() {
       </Suspense>
       <Suspense fallback={null}>
         <KitPatternsUi5Section />
+      </Suspense>
+      <Suspense fallback={null}>
+        <KitPatternsUi6Section />
       </Suspense>
     </div>
   );

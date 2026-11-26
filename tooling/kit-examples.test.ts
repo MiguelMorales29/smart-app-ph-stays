@@ -2,6 +2,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { listExamples } from './scripts/kit-variants.js';
+
 /**
  * Raw ReUI and Dice UI examples (files named `c-*.tsx` under packages/ui/src/variants) are kit
  * samples: real screens use our compositions or a named variant instead. Importing a raw example
@@ -30,5 +32,22 @@ describe('kit examples stay in the kit', () => {
       .filter((file) => !file.endsWith('.test.ts') && !file.endsWith('.test.tsx'))
       .filter((file) => RAW_EXAMPLE.test(readFileSync(join(repoRoot, file), 'utf8')));
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('kit variant registry', () => {
+  it('lists every raw example in packages/ui/src/variants, and nothing else', () => {
+    const registry = readFileSync(
+      join(repoRoot, 'apps/dashboard/src/features/kit/kit-variants-registry.ts'),
+      'utf8',
+    );
+    const listed = [...registry.matchAll(/@smartapp\/ui\/variants\/([\w-]+\/c-[\w-]+)'/g)]
+      .map((match) => match[1])
+      .sort();
+    const onDisk = listExamples()
+      .map((item) => `${item.area}/${item.file}`)
+      .sort();
+    // Out of date? Run: pnpm --filter @smartapp/tooling kit-variants
+    expect(listed).toEqual(onDisk);
   });
 });

@@ -100,6 +100,9 @@ const KitFormsUi4Section = lazy(() =>
 const KitFormsUi5Section = lazy(() =>
   import('./kit-forms-ui5-section').then((m) => ({ default: m.KitFormsUi5Section })),
 );
+const KitFormsUi6Section = lazy(() =>
+  import('./kit-forms-ui6-section').then((m) => ({ default: m.KitFormsUi6Section })),
+);
 import { AmenityChips } from '@smartapp/ui/compositions/amenity-chips';
 import { AsyncButton, type AsyncButtonState } from '@smartapp/ui/compositions/async-button';
 import { celebrate, resetCelebration } from '@smartapp/ui/lib/celebration';
@@ -675,6 +678,9 @@ export function KitFormsTab() {
         </Suspense>
         <Suspense fallback={null}>
           <KitFormsUi5Section />
+        </Suspense>
+        <Suspense fallback={null}>
+          <KitFormsUi6Section />
         </Suspense>
       </div>
     </>

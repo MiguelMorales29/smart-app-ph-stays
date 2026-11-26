@@ -89,6 +89,9 @@ const KitBaseUi4Section = lazy(() =>
 const KitBaseUi5Section = lazy(() =>
   import('./kit-base-ui5-section').then((m) => ({ default: m.KitBaseUi5Section })),
 );
+const KitBaseUi6Section = lazy(() =>
+  import('./kit-base-ui6-section').then((m) => ({ default: m.KitBaseUi6Section })),
+);
 
 export function DualSurfaceShowcase({
   title,
@@ -537,6 +540,9 @@ export function KitBaseTab() {
           </Suspense>
           <Suspense fallback={null}>
             <KitBaseUi5Section />
+          </Suspense>
+          <Suspense fallback={null}>
+            <KitBaseUi6Section />
           </Suspense>
         </div>
       </TooltipProvider>

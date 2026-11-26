@@ -36,6 +36,9 @@ const HEAVY: readonly { readonly label: string; readonly pattern: RegExp }[] = [
   { label: 'recharts', pattern: /recharts-wrapper|recharts-surface/ },
   { label: 'emoji picker', pattern: /reui-emoji-picker-recent/ },
   { label: 'signature pad', pattern: /signature-pad-stroke/ },
+  { label: 'media player (media-chrome)', pattern: /media-chrome/ },
+  { label: 'presentation (@diceui/pptx)', pattern: /ppt\/slides/ },
+  { label: 'phone input (react-phone-number-input)', pattern: /react-phone-number-input/ },
 ];
 
 export interface BudgetReport {

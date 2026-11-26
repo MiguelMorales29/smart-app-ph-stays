@@ -1,0 +1,108 @@
+import { Button } from '@smartapp/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@smartapp/ui/components/card';
+import { Input } from '@smartapp/ui/components/input';
+import { Label } from '@smartapp/ui/components/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
+
+export function Pattern() {
+  return (
+    <div className="flex w-full max-w-2xl flex-col gap-6">
+      <Tabs defaultValue="account" orientation="vertical" className="gap-5">
+        <TabsList variant="line" className="w-40 shrink-0">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="password">Password</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="account">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Account</CardTitle>
+              <CardDescription className="text-sm">
+                Update your account information.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="underline-vertical-name" className="text-sm">
+                  Name
+                </Label>
+                <Input id="underline-vertical-name" defaultValue="Michael Brown" className="h-9" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="underline-vertical-email" className="text-sm">
+                  Email
+                </Label>
+                <Input
+                  id="underline-vertical-email"
+                  type="email"
+                  defaultValue="michael.brown@example.com"
+                  className="h-9"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="pt-3">
+              <Button size="sm">Save changes</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="password">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Password</CardTitle>
+              <CardDescription className="text-sm">Change your password here.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="underline-vertical-current" className="text-sm">
+                  Current password
+                </Label>
+                <Input id="underline-vertical-current" type="password" className="h-9" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="underline-vertical-new" className="text-sm">
+                  New password
+                </Label>
+                <Input id="underline-vertical-new" type="password" className="h-9" />
+              </div>
+            </CardContent>
+            <CardFooter className="pt-3">
+              <Button size="sm">Update password</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Settings</CardTitle>
+              <CardDescription className="text-sm">Manage your preferences.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="underline-vertical-theme" className="text-sm">
+                  Theme
+                </Label>
+                <Input id="underline-vertical-theme" defaultValue="Light" className="h-9" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="underline-vertical-language" className="text-sm">
+                  Language
+                </Label>
+                <Input id="underline-vertical-language" defaultValue="English" className="h-9" />
+              </div>
+            </CardContent>
+            <CardFooter className="pt-3">
+              <Button size="sm">Save settings</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

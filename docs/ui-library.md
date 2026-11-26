@@ -20,6 +20,11 @@ Live interactive previews and dark/light/brand checks live in the development-on
 | `motion`                   | `14.3.0`  | MIT                 | Magic UI effects and evilcharts reveals, lazy pieces only (O15 = b, enforced by `pnpm budget`, UI-5) |
 | `@shadcn/react`            | `0.3.1`   | MIT                 | `MessageScroller` primitive (UI-5)                                                                   |
 | `emojibase-data`           | `17.0.0`  | MIT                 | Emoji data for `EmojiPicker`, self-hosted at `/emojibase/17.0.0` (tooling devDependency, UI-5)       |
+| `react-resizable-panels`   | `4.24.1`  | MIT                 | `Resizable` split panes (UI-6)                                                                       |
+| `react-phone-number-input` | `3.4.18`  | MIT                 | ReUI `PhoneInput` for any country (UI-6); our `PhoneInput` composition stays for +63 numbers         |
+| `media-chrome`             | `4.19.5`  | MIT                 | Dice UI `MediaPlayer` (UI-6, lazy)                                                                   |
+| `@diceui/mention`          | `1.0.2`   | MIT                 | Dice UI `Mention` (UI-6)                                                                             |
+| `@diceui/pptx`             | `0.6.0`   | MIT                 | Dice UI `Presentation` (.pptx preview, UI-6, lazy)                                                   |
 | `@dicebear/adventurer`     | `9.4.3`   | MIT / CC-BY-4.0 art | Adventure face style & `AvatarMaker` (credited on screen, D84, UI-2)                                 |
 | `@dicebear/big-smile`      | `9.4.3`   | MIT / CC-BY-4.0 art | Guest/member pre-made Big Smile faces by Ashley Seo (credited on screen, D84, UI-3)                  |
 | `@dicebear/core`           | `9.4.3`   | MIT                 | Local DiceBear SVG avatar engine (lazy-loaded on customiser open)                                    |
@@ -160,6 +165,11 @@ Installed in P3-A and P4-2 with `pnpm dlx shadcn@4.23.0 add` (`base-nova` preset
 | `Marquee` | `marquee.tsx` | Dice UI via food app (MIT, UI-5) | Short guest-notice strip on the property page |
 | `Message`, `Bubble`, `Attachment`, `Marker` | `message.tsx`, `bubble.tsx`, `attachment.tsx`, `marker.tsx` | ReUI via food app (MIT, UI-5) | Booking conversation, payment proof files, day separators |
 | `MessageScroller` | `message-scroller.tsx` | shadcn `base-nova` (MIT, offline install, UI-5) | Conversation list that keeps the newest message in view, with a jump button |
+| `Combobox`, `Kbd`, `Menubar`, `NavigationMenu`, `Pagination`, `Resizable`, `Slider` | `combobox.tsx`, `kbd.tsx`, `menubar.tsx`, `navigation-menu.tsx`, `pagination.tsx`, `resizable.tsx`, `slider.tsx` | shadcn `base-nova` (MIT, offline install, UI-6) | Typed pickers, shortcut hints, desktop menus, long histories, split panes, price ranges |
+| `Autocomplete`, `PhoneInput` (any country) | `reui/autocomplete.tsx`, `reui/phone-input.tsx` | ReUI (MIT, offline install, UI-6) | Free text with suggestions; foreign guests' numbers (our `PhoneInput` composition stays for +63) |
+| `Alert`, `Badge` (ReUI) | `reui/alert.tsx`, `reui/badge.tsx` | ReUI via food app (MIT, UI-6) | Extra tones the ReUI examples use; screens keep shadcn `Alert`/`Badge` and the status badges |
+| `AngleSlider`, `CommandStack`, `MediaPlayer`, `Mention`, `SegmentedInput`, `SpeedDial`, `Swap`, `Tour`, `Presentation`, `QueryBuilder` | `angle-slider.tsx`, `command-stack.tsx`, `media-player.tsx`, `mention.tsx`, `segmented-input.tsx`, `speed-dial.tsx`, `swap.tsx`, `tour.tsx`, `presentation.tsx`, `query-builder.tsx` | Dice UI (MIT, offline install with Dice's own style map, UI-6) | Photo rotation, drill-down command menu, walk-through video, staff tags, split time entry, phone quick-add, two-state icons, first-visit tour, .pptx preview, saved filters |
+| ReUI example variants | `packages/ui/src/variants/<area>/c-*.tsx` (228) | ReUI (MIT, UI-6) | Kit-only reference rows (`/kit` → Variants, closed until opened); a screen turns one into a named variant or composition first (`tooling/kit-examples.test.ts`) |
 | `EmojiPicker` | `reui/emoji-picker.tsx` | ReUI via food app (MIT, UI-5) | Icons for owner-made amenity groups and unit categories |
 | `SignaturePad` | `reui/signature-pad.tsx` | ReUI (MIT, offline install, UI-5) | Tenant/guest signature on agreements and house-rules acknowledgement |
 | Magic UI effects | `animated-list`, `animated-shiny-text`, `blur-fade`, `border-beam`, `grid-pattern`, `number-ticker`, `progressive-blur`, `pulsating-button`, `shine-border`, `word-rotate` | Magic UI via food app (MIT, UI-5) | One moment per screen (sidebar Smart App launcher, rewards, Home totals); `motion` ones lazy only |
@@ -306,6 +316,13 @@ _(No other installed files were modified.)_
 | `packages/ui/src/components/reui/signature-pad.tsx` | UI-5 | `noUncheckedIndexedAccess` guards (`at` helper), optional props widened to `\| undefined`; canvas export defaults (`#000000` ink, white JPEG background) marked `brand-guard-ignore`. |
 | `packages/ui/src/components/evilcharts/**` | UI-5 | Type-only imports, optional props widened to `\| undefined`, and `defined()` (`evilcharts/defined.tsx`) drops `undefined` before props reach recharts' own types (`exactOptionalPropertyTypes`). No runtime change. |
 | `packages/ui/src/compositions/stamp-card.tsx` | UI-5 | Ported from the food app for stays: prize photo is a plain `string \| null` with a gift icon fallback (no `ShopImage`), `shop-10` → `property-10`, shine colours `var(--property-10)` → `var(--brand-accent)`. |
+| `packages/ui/src/components/command.tsx` | UI-6 | `data-selected:` → `data-[selected=true]:` (and the group variant). cmdk always writes `data-selected="true|false"`, so the presence-only variant highlighted every item. |
+| `packages/ui/src/components/{dropdown-menu,tooltip}.tsx` | UI-6 | Optional `container` prop passed to the Portal (Dice UI pattern), so the media player's menus and tooltips work in fullscreen. |
+| `packages/ui/src/components/slider.tsx` | UI-6 | Thumb `bg-white` → `bg-card`; the root `aria-label` is passed to each thumb's range input ("from"/"to" for ranges), because Base UI names the thumbs, not the root. |
+| `packages/ui/src/components/{media-player,mention,presentation}.tsx` | UI-6 | Raw colours mapped to `scrim`/`on-scrim`, `primary-tint`, `primary`, `card`, `destructive`; media seek/volume names and value text moved from the slider root (not allowed on `role=group`) to the thumbs; label/description spans `sr-only`. |
+| `packages/ui/src/components/{angle-slider,command-stack,query-builder,segmented-input,tour}.tsx` | UI-6 | Strict-TS fixes (`| undefined` on optional props, conditional `value`/`pages` props), angle-slider import path, tour option arrays as plain types, segmented-input drops `aria-orientation` (not allowed on `role=group`). |
+| `packages/ui/src/components/{combobox,reui/phone-input,reui/autocomplete}.tsx` | UI-6 | Trigger buttons get names ("Show options", "Country"); autocomplete input `pointer-coarse:text-base` (16 px on phones, no iOS zoom). |
+| `packages/ui/src/variants/**/c-*.tsx` | UI-6 | Type-only imports, `String()`/`Number()` instead of `as`, `!` on bounded demo-data indexes, raw colours → tokens (stepper, table, data-grid, message, carousel, file-upload, button-group), imports of ReUI `stepper`/`sortable`/`number-field` pointed at our existing root files. |
 
 ## Credits
 

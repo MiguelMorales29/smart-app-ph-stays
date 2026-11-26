@@ -22,6 +22,8 @@
     "src/compositions/**/*.ts",
     "src/compositions/**/*.tsx",
     "src/vendor/**/*.ts",
+    "src/variants/**/*.ts",
+    "src/variants/**/*.tsx",
     "src/vendor/**/*.tsx",
     "test/**/*.ts"
   ]

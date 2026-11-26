@@ -10,7 +10,8 @@
     "art": "node scripts/fluent-art.ts",
     "ui-scan": "playwright test -c e2e/playwright.config.ts ui-scan",
     "budget": "cd .. && APP_ENV=preview DATA_SOURCE=memory VITE_APP_ENV=preview VITE_DATA_SOURCE=memory pnpm --filter @smartapp/dashboard build && node tooling/check-budget.ts",
-    "emojibase": "node scripts/copy-emojibase.ts"
+    "emojibase": "node scripts/copy-emojibase.ts",
+    "kit-variants": "node scripts/kit-variants.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
