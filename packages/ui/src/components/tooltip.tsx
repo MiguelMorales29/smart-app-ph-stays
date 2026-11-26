@@ -20,11 +20,15 @@ function TooltipContent({
   align = 'center',
   alignOffset = 0,
   children,
+  container,
   ...props
 }: TooltipPrimitive.Popup.Props &
-  Pick<TooltipPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>) {
+  Pick<TooltipPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'> & {
+    /** Portal target, e.g. the media player in fullscreen (Dice UI pattern, UI-6). */
+    container?: TooltipPrimitive.Portal.Props['container'] | undefined;
+  }) {
   return (
-    <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Portal container={container}>
       <TooltipPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

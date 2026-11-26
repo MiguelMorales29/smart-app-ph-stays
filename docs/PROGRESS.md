@@ -82,7 +82,7 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [x] UI-4 Dates, calendars and time
 - [x] FIX-1 Urgent audit fixes (custom style variants, Your picture sheet, memory uploads, bed spaces, mode defaults & lock, unit readiness card, house rules wrap, O4 plan limit, mobile calendar prices, Playwright journeys)
 - [x] UI-5 Conversation, charts and stats (plus step 0 tooling: turbo TUI, `pnpm ui-scan`, `pnpm e2e`, `pnpm budget`, scan warm-up, kit-examples guard)
-- [ ] UI-6 Missing primitives and variants
+- [x] UI-6 Missing primitives and variants (19 primitives, 228 ReUI example variants in lazy kit rows)
 
 ## Later phases
 
