@@ -84,6 +84,14 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 - [x] UI-5 Conversation, charts and stats (plus step 0 tooling: turbo TUI, `pnpm ui-scan`, `pnpm e2e`, `pnpm budget`, scan warm-up, kit-examples guard)
 - [x] UI-6 Missing primitives and variants (19 primitives, 228 ReUI example variants in lazy kit rows)
 
+### Audit and restructure (Claude, from 26 Nov 2026)
+
+- [x] AUDIT-1 Code audit of Phase 3–5 against the blueprints: `docs/audits/AUDIT-1.md` (24 findings)
+- [x] R-1 Units: rooms as groups with a room menu, Cards/Table switch, Archived with Restore, bulk archive, price split by nightly and monthly, duplicate copies everything, hold default 60, Rent Control Act warning
+- [ ] R-2 Settings and saving (A11, A12, A15–A17)
+- [ ] R-3 Booking rules and amenities (A13, A14)
+- [ ] R-4 Shared pieces (A18, A19, A23, A24)
+
 ## Later phases
 
 - [x] 2 Data shapes, demo data and the mock layer

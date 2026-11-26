@@ -287,7 +287,7 @@ function AddUnitForm({
                 weekly_discount_percent: 0,
                 monthly_discount_percent: 0,
                 down_payment_percent: 50,
-                hold_minutes: 120,
+                hold_minutes: 60,
                 advance_notice_days: 0,
                 booking_window_days: 365,
               }

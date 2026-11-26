@@ -1050,6 +1050,52 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       ).toBe('not_allowed');
     });
 
+    it('24b. duplicateUnit copies the lease and every price, and a bed copies as the next bed in its room (R-1)', async () => {
+      const { source } = await makeSource();
+      const nextKey = createKeyMaker('r1-duplicate');
+      const list = async () =>
+        assertOk(
+          await source.listOwnerUnits(
+            {
+              accountId: DEMO_IDS.titaLornaDorm.account,
+              propertyId: null,
+              includeArchived: false,
+            },
+            TITA_OWNER_SESSION,
+          ),
+        );
+      const before = await list();
+      const bed = before.find(
+        (item) => item.unit.unit_type === 'bed_space' && item.lease_terms !== null,
+      );
+      if (!bed) throw new Error('Expected a bed space with lease terms in the dorm');
+      const label = bed.unit.group_label ?? '';
+      const roomBeds = before.filter((item) => item.unit.group_label === label);
+
+      const copy = assertOk(
+        await source.duplicateUnit(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            unitId: bed.unit.id,
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect(copy.name).toBe(`${label} · Bed ${roomBeds.length + 1}`);
+      expect(copy.status).toBe('unlisted');
+
+      const after = await list();
+      const copied = after.find((item) => item.unit.id === copy.id);
+      expect(copied?.lease_terms?.monthly_rent_centavos).toBe(
+        bed.lease_terms?.monthly_rent_centavos,
+      );
+      // The copy sits with its room, right after the room's last bed.
+      const order = after.map((item) => item.unit.id);
+      const lastBedIndex = Math.max(...roomBeds.map((item) => order.indexOf(item.unit.id)));
+      expect(order.indexOf(copy.id)).toBe(lastBedIndex + 1);
+    });
+
     it('25. uploads (not_image, file_too_large, storage_full) and listing photo limits', async () => {
       const { source } = await makeSource();
       const nextKey = createKeyMaker('p4-upload');

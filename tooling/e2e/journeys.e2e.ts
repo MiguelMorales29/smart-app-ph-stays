@@ -199,6 +199,44 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     ).toBeVisible();
   });
 
+  test('R-1 units: archive -> Archived filter -> Restore, rename a room, table view remembered', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`${DASHBOARD_ORIGIN}/units?clock=golden`, { waitUntil: 'networkidle' });
+
+    // Archive one unit; it leaves the list and the Archived filter appears.
+    await page.getByRole('button', { name: 'More for Studio Fog', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Archive' }).click();
+    await expect(page.getByText('Studio Fog archived')).toBeVisible();
+    await page.getByRole('button', { name: /^Archived/ }).click();
+    await expect(page).toHaveURL(/filter=archived/);
+    await expect(page.getByRole('link', { name: 'Studio Fog' })).toBeVisible();
+
+    // Restore brings it back hidden.
+    await page.getByRole('button', { name: 'More for Studio Fog', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Restore' }).click();
+    await expect(page.getByText('Studio Fog restored as hidden')).toBeVisible();
+    await page.getByRole('button', { name: /^Hidden/ }).click();
+    await expect(page.getByRole('link', { name: 'Studio Fog' })).toBeVisible();
+
+    // Table view is remembered after a reload.
+    await page.getByRole('button', { name: 'Table' }).click();
+    await page.reload({ waitUntil: 'networkidle' });
+    await expect(page.locator('table:visible')).toBeVisible();
+
+    // Rename a room in the dorm: every bed follows.
+    await page.goto(`${DASHBOARD_ORIGIN}/units?as=owner:tita-lorna-dorm&clock=golden`, {
+      waitUntil: 'networkidle',
+    });
+    await page.getByRole('button', { name: 'More for Room 2A', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Rename room' }).click();
+    await page.getByLabel('Room name').fill('Ladies dorm');
+    await page.getByRole('dialog').getByRole('button', { name: 'Rename room' }).click();
+    await expect(page.getByText('Renamed to Ladies dorm')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'More for Ladies dorm · Bed 1' })).toBeVisible();
+  });
+
   test('upload a profile photo -> shows in Settings > Account, sidebar and account menu, survives navigation', async ({
     page,
   }) => {
