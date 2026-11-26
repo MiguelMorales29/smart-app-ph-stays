@@ -192,3 +192,76 @@ export function useDuplicateUnitMutation() {
     },
   });
 }
+
+export type SaveRoomVariables = Omit<OperationInput<'saveRoom'>, 'accountId' | 'idempotencyKey'>;
+
+/** Edit room (R-1b): name, who may stay, bathroom, description. Renaming renames the beds too. */
+export function useSaveRoomMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: SaveRoomVariables) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.saveRoom(
+          { ...input, accountId, idempotencyKey: createIdempotencyKey('save-room') },
+          session,
+        ),
+      );
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: unitsKeys.all });
+    },
+  });
+}
+
+/** Gives every bed of a room the same amenities (R-1b). */
+export function useSetRoomAmenitiesMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      readonly roomId: string;
+      readonly amenityIds: readonly string[];
+    }) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.setRoomAmenities(
+          {
+            accountId,
+            idempotencyKey: createIdempotencyKey('room-amenities'),
+            roomId: input.roomId,
+            amenityIds: [...input.amenityIds],
+          },
+          session,
+        ),
+      );
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: unitsKeys.all });
+    },
+  });
+}
+
+/** Deletes a unit that never had a booking or lease (F24, AUDIT-1 A20). */
+export function useDeleteUnitMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { readonly unitId: string }) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.deleteUnit(
+          { accountId, idempotencyKey: createIdempotencyKey('delete-unit'), unitId: input.unitId },
+          session,
+        ),
+      );
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: unitsKeys.all }),
+        queryClient.invalidateQueries({ queryKey: setupKeys.all }),
+      ]);
+    },
+  });
+}

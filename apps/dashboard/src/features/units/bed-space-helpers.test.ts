@@ -9,10 +9,34 @@ import {
   summarizeBedSpaceRooms,
 } from './bed-space-helpers';
 
-type StubUnit = Pick<OwnerUnitListItemView, 'unit'>;
+type StubUnit = Pick<OwnerUnitListItemView, 'unit' | 'room'>;
 
-function stub(overrides: Partial<OwnerUnitListItemView['unit']>): StubUnit {
+const ROOM_IDS: Record<string, string> = {
+  'Room 2A': '00000000-0000-4000-8000-0000000002a0',
+  'Room 3B': '00000000-0000-4000-8000-0000000003b0',
+  'Room 2': '00000000-0000-4000-8000-000000000020',
+};
+
+function stub(
+  overrides: Partial<OwnerUnitListItemView['unit']> & { readonly roomName?: string },
+): StubUnit {
+  const { roomName, ...unitOverrides } = overrides;
+  const roomId = roomName ? (ROOM_IDS[roomName] ?? null) : null;
   return {
+    room:
+      roomName && roomId
+        ? {
+            id: roomId,
+            account_id: '00000000-0000-4000-8000-000000000002',
+            property_id: '00000000-0000-4000-8000-000000000003',
+            name: roomName,
+            guests: 'anyone',
+            bathroom: 'shared',
+            description: null,
+            created_at: '2026-12-01T00:00:00Z',
+            updated_at: '2026-12-01T00:00:00Z',
+          }
+        : null,
     unit: {
       id: '00000000-0000-4000-8000-000000000001',
       account_id: '00000000-0000-4000-8000-000000000002',
@@ -21,7 +45,7 @@ function stub(overrides: Partial<OwnerUnitListItemView['unit']>): StubUnit {
       name: 'Unit 1',
       mode: 'short_stay',
       unit_type: 'entire_place',
-      group_label: null,
+      room_id: roomId,
       description: null,
       max_guests: 2,
       bedrooms: 1,
@@ -34,7 +58,7 @@ function stub(overrides: Partial<OwnerUnitListItemView['unit']>): StubUnit {
       archived_at: null,
       created_at: '2026-12-01T00:00:00Z',
       updated_at: '2026-12-01T00:00:00Z',
-      ...overrides,
+      ...unitOverrides,
     },
   };
 }
@@ -51,44 +75,44 @@ describe('bed-space-helpers (FIX-1 C & D)', () => {
       stub({
         unit_type: 'bed_space',
         mode: 'long_term',
-        group_label: 'Room 2A',
+        roomName: 'Room 2A',
         name: 'Room 2A · Bed 1',
       }),
       stub({
         unit_type: 'bed_space',
         mode: 'long_term',
-        group_label: 'Room 2A',
+        roomName: 'Room 2A',
         name: 'Room 2A · Bed 4',
       }),
       stub({
         unit_type: 'bed_space',
         mode: 'long_term',
-        group_label: 'Room 3B',
+        roomName: 'Room 3B',
         name: 'Room 3B · Bed 1',
       }),
       stub({
         unit_type: 'bed_space',
         mode: 'long_term',
-        group_label: 'Room 3B',
+        roomName: 'Room 3B',
         name: 'Room 3B · Bed 2',
       }),
       stub({
         unit_type: 'bed_space',
         mode: 'long_term',
-        group_label: 'Room 3B',
+        roomName: 'Room 3B',
         name: 'Room 3B · Bed 6',
       }),
-      stub({ unit_type: 'entire_place', mode: 'short_stay', group_label: null, name: 'Studio A' }),
+      stub({ unit_type: 'entire_place', mode: 'short_stay', name: 'Studio A' }),
     ];
 
     const rooms = summarizeBedSpaceRooms(units);
     expect(rooms).toEqual([
-      { label: 'Room 2A', count: 2, maxBedNumber: 4 },
-      { label: 'Room 3B', count: 3, maxBedNumber: 6 },
+      { id: ROOM_IDS['Room 2A'], label: 'Room 2A', count: 2, maxBedNumber: 4 },
+      { id: ROOM_IDS['Room 3B'], label: 'Room 3B', count: 3, maxBedNumber: 6 },
     ]);
-    expect(nextBedNumberForRoom(rooms, 'Room 2A')).toBe(5);
-    expect(nextBedNumberForRoom(rooms, 'room 3b')).toBe(7);
-    expect(nextBedNumberForRoom(rooms, 'Room 4C')).toBe(1);
+    expect(nextBedNumberForRoom(rooms, ROOM_IDS['Room 2A'] ?? null)).toBe(5);
+    expect(nextBedNumberForRoom(rooms, ROOM_IDS['Room 3B'] ?? null)).toBe(7);
+    expect(nextBedNumberForRoom(rooms, null)).toBe(1);
     // Counts rooms (2), not beds (5) or total units (6)
     expect(nextNewRoomName(units)).toBe('Room 3');
   });
@@ -98,7 +122,7 @@ describe('bed-space-helpers (FIX-1 C & D)', () => {
       stub({
         unit_type: 'bed_space',
         mode: 'long_term',
-        group_label: 'Room 2',
+        roomName: 'Room 2',
         name: 'Room 2 · Bed 1',
       }),
     ];

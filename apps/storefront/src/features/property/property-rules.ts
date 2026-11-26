@@ -247,12 +247,8 @@ function toResolvedPhoto(
 }
 
 function unitPhotoGroupKey(unit: PublicUnitCardView): { id: string; label: string } {
-  const trimmedGroup = unit.unit_type === 'bed_space' ? unit.group_label?.trim() : null;
-  if (trimmedGroup) {
-    return {
-      id: `room-${trimmedGroup.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-      label: trimmedGroup,
-    };
+  if (unit.unit_type === 'bed_space' && unit.room) {
+    return { id: `room-${unit.room.id}`, label: unit.room.name };
   }
   return {
     id: `unit-${unit.id}`,
@@ -499,13 +495,10 @@ export function resolveUnitHighlightChip(
   return matched[0]?.label ?? null;
 }
 
-function inferRoomQualifier(units: readonly PublicUnitCardView[]): string | null {
-  for (const unit of units) {
-    const desc = unit.description?.trim() ?? '';
-    if (/\bladies\b|\bfemale\b|\bwomen\b/i.test(desc)) return 'Ladies';
-    if (/\bgents\b|\bmale\b|\bmen\b/i.test(desc)) return 'Gents';
-    if (/\bco-?ed\b|\bmixed\b/i.test(desc)) return 'Co-ed';
-  }
+/** "Ladies" / "Gents" from the room the owner set up (R-1b); null for rooms open to anyone. */
+function roomQualifier(room: PublicUnitCardView['room']): string | null {
+  if (room?.guests === 'ladies') return 'Ladies';
+  if (room?.guests === 'gents') return 'Gents';
   return null;
 }
 
@@ -576,7 +569,7 @@ export function pickNextAutoplayCardId(
 
 /**
  * Turns ordered units into display cards (D81):
- * - Bed spaces sharing a non-empty `group_label` collapse into one room card
+ * - Bed spaces in the same room (`room`, R-1b) collapse into one room card
  *   (e.g. "Room 2A · Ladies · 4 beds", no unbacked "free" count), linking to the room's first bed.
  * - Other units stay one card each ("Whole place · 2 guests · 1 bed").
  */
@@ -600,9 +593,9 @@ export function buildUnitDisplayCards(
   const roomIndex = new Map<string, Extract<PendingEntry, { readonly kind: 'room' }>>();
 
   for (const unit of orderedUnits) {
-    const trimmedGroup = unit.unit_type === 'bed_space' ? unit.group_label?.trim() : null;
-    if (trimmedGroup) {
-      const key = `${unit.mode}::${trimmedGroup.toLowerCase()}`;
+    const room = unit.unit_type === 'bed_space' ? unit.room : null;
+    if (room) {
+      const key = `${unit.mode}::${room.id}`;
       const existing = roomIndex.get(key);
       if (existing) {
         existing.units.push(unit);
@@ -610,7 +603,7 @@ export function buildUnitDisplayCards(
         const created: Extract<PendingEntry, { readonly kind: 'room' }> = {
           kind: 'room',
           key,
-          label: trimmedGroup,
+          label: room.name,
           units: [unit],
         };
         roomIndex.set(key, created);
@@ -683,9 +676,19 @@ export function buildUnitDisplayCards(
     }
     const cover = photos[0] ?? null;
 
-    const qualifier = inferRoomQualifier(entry.units);
+    const qualifier = roomQualifier(first.room);
     const bedCount = entry.units.length;
-    const factParts = [...(qualifier ? [qualifier] : ['Shared room']), formatBedCount(bedCount)];
+    const bathroom =
+      first.room?.bathroom === 'in_room'
+        ? 'Bathroom in the room'
+        : first.room
+          ? 'Shared bathroom'
+          : null;
+    const factParts = [
+      ...(qualifier ? [qualifier] : ['Shared room']),
+      formatBedCount(bedCount),
+      ...(bathroom ? [bathroom] : []),
+    ];
 
     return {
       id: `room-${entry.key}`,
@@ -713,7 +716,7 @@ export function buildUnitDisplayCards(
       bedCount,
       bathrooms: first.bathrooms,
       floorAreaSqm: first.floor_area_sqm,
-      description: first.description,
+      description: first.room?.description ?? first.description,
       topAmenities: resolveUnitTopAmenities(first.amenity_ids, amenitiesById, propertyHighlightIds),
     };
   });

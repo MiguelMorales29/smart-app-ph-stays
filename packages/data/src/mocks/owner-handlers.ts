@@ -36,6 +36,7 @@ import {
   type PropertyPageDraft,
   type RateOverridesRow,
   type Result,
+  type RoomsRow,
   type SetupChecklistItemView,
   type UnitFeesRow,
   type UnitStayTermsRow,
@@ -302,6 +303,7 @@ function buildUnitDetailView(
 
   return {
     unit,
+    room: roomFor(world, unit),
     stay_terms: stayTerms,
     lease_terms: leaseTerms,
     weekday_rates: weekdayRates,
@@ -310,6 +312,54 @@ function buildUnitDetailView(
     photos,
     amenity_ids: amenityIds,
   };
+}
+
+const ROOM_NAME_TAKEN = reasonError('not_allowed', 'invalid_input', {
+  fields: { name: 'You already have a room with this name.' },
+});
+
+function roomFor(world: DemoWorld, unit: UnitsRow): RoomsRow | null {
+  return unit.room_id === null ? null : (world.rooms.find((r) => r.id === unit.room_id) ?? null);
+}
+
+/** Imitates the database rule (F24, AUDIT-1 A20): a unit with any booking, hold or lease is kept. */
+function unitWasEverBooked(world: DemoWorld, unitId: string): boolean {
+  return (
+    world.bookings.some((b) => b.unit_id === unitId) ||
+    world.unit_occupancy.some(
+      (o) =>
+        o.unit_id === unitId && (o.kind === 'booking' || o.kind === 'lease' || o.kind === 'hold'),
+    )
+  );
+}
+
+/** Imitates the database rule (R-1b): a bed space sits in a room of the same property. */
+function checkRoomForUnit(
+  world: DemoWorld,
+  accountId: string,
+  propertyId: string,
+  unitType: UnitsRow['unit_type'],
+  roomId: string | null,
+): Result<void> {
+  if (unitType !== 'bed_space') {
+    return roomId === null
+      ? ok(undefined)
+      : err(
+          reasonError('not_allowed', 'invalid_input', {
+            fields: { roomId: 'Only beds sit in a room.' },
+          }),
+        );
+  }
+  if (roomId === null) {
+    return err(
+      reasonError('not_allowed', 'invalid_input', {
+        fields: { roomId: 'Pick the room for this bed.' },
+      }),
+    );
+  }
+  const room = world.rooms.find((r) => r.id === roomId && r.account_id === accountId);
+  if (!room || room.property_id !== propertyId) return err(appError('not_found'));
+  return ok(undefined);
 }
 
 function verifyOwnerPassword(
@@ -378,6 +428,9 @@ type P4OwnerOperationName =
   | 'setUnitStatus'
   | 'reorderUnits'
   | 'archiveUnit'
+  | 'saveRoom'
+  | 'setRoomAmenities'
+  | 'deleteUnit'
   | 'listAmenities'
   | 'saveUnitPrices'
   | 'requestUpload'
@@ -1246,6 +1299,8 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
         const firstPhoto = photos[0];
         return {
           unit,
+          room: roomFor(world, unit),
+          can_delete: !unitWasEverBooked(world, unit.id),
           cover_photo: firstPhoto ? toOwnerPhotoView(firstPhoto, world, mediaConfig) : null,
           photo_count: photos.length,
           stay_terms: world.unit_stay_terms.find((t) => t.unit_id === unit.id) ?? null,
@@ -1287,6 +1342,15 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             (p) => p.id === input.propertyId && p.account_id === acctCheck.data,
           );
           if (!property) return err(appError('not_found'));
+
+          const roomCheck = checkRoomForUnit(
+            world,
+            acctCheck.data,
+            property.id,
+            input.unitType,
+            input.roomId,
+          );
+          if (!roomCheck.ok) return roomCheck;
 
           const unitSlugFormat = checkSlugFormat(input.slug);
           if (unitSlugFormat === 'invalid') {
@@ -1352,7 +1416,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
               name: input.name,
               mode: input.mode,
               unit_type: input.unitType,
-              group_label: input.groupLabel,
+              room_id: input.roomId,
               description: input.description,
               max_guests: input.maxGuests,
               bedrooms: input.bedrooms,
@@ -1402,7 +1466,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
                 {
                   property_id: property.id,
                   unit_type: input.unitType,
-                  group_label: input.groupLabel,
+                  room_id: input.roomId,
                   archived_at: null,
                 },
               ],
@@ -1419,7 +1483,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
               name: input.name,
               mode: input.mode,
               unit_type: input.unitType,
-              group_label: input.groupLabel,
+              room_id: input.roomId,
               description: input.description,
               max_guests: input.maxGuests,
               bedrooms: input.bedrooms,
@@ -1508,6 +1572,28 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           );
           if (!property) return err(appError('not_found'));
 
+          const nowIso = nowIsoFromClock(clock);
+          let room: RoomsRow | undefined;
+          if (input.room.kind === 'existing') {
+            const roomId = input.room.roomId;
+            room = world.rooms.find(
+              (r) =>
+                r.id === roomId && r.account_id === acctCheck.data && r.property_id === property.id,
+            );
+            if (!room) return err(appError('not_found'));
+          } else {
+            const wanted = input.room.name.trim().toLowerCase();
+            // Imitates the unique (property_id, lower(name)) index on rooms.
+            if (
+              world.rooms.some(
+                (r) => r.property_id === property.id && r.name.trim().toLowerCase() === wanted,
+              )
+            ) {
+              return err(ROOM_NAME_TAKEN);
+            }
+          }
+          const roomId = room?.id ?? ids.next('0040');
+
           // Imitates unit limit check across all beds being created in one bulk operation (O4/D24).
           const limitCheck = checkUnitLimitForAccount(
             world,
@@ -1515,14 +1601,39 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             Array.from({ length: input.count }, () => ({
               property_id: property.id,
               unit_type: 'bed_space' as const,
-              group_label: input.groupLabel,
+              room_id: roomId,
               archived_at: null,
             })),
             enforcePlanLimit,
           );
           if (!limitCheck.ok) return limitCheck;
 
-          const nowIso = nowIsoFromClock(clock);
+          if (!room && input.room.kind === 'new') {
+            room = {
+              id: roomId,
+              account_id: acctCheck.data,
+              property_id: property.id,
+              name: input.room.name.trim(),
+              guests: input.room.guests,
+              bathroom: input.room.bathroom,
+              description: input.description,
+              created_at: nowIso,
+              updated_at: nowIso,
+            };
+            world.rooms.push(room);
+          }
+          const roomName = room?.name ?? '';
+          // New beds in an existing room get the room's photos and amenities (R-1b).
+          const sourceBed = world.units.find((u) => u.room_id === roomId);
+          const roomAmenityIds =
+            input.amenityIds.length > 0 || !sourceBed
+              ? input.amenityIds
+              : world.unit_amenities
+                  .filter((a) => a.unit_id === sourceBed.id)
+                  .map((a) => a.amenity_id);
+          const roomPhotos = sourceBed
+            ? world.listing_photos.filter((p) => p.unit_id === sourceBed.id)
+            : [];
           const today = manilaToday(clock);
           const baseOrder = world.units.filter((u) => u.property_id === property.id).length;
           const created: UnitsRow[] = [];
@@ -1530,8 +1641,8 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           for (let i = 0; i < input.count; i += 1) {
             const num = input.startNumber + i;
             const unitId = ids.next('0005');
-            const name = `${input.groupLabel} · ${input.namePrefix} ${num}`.slice(0, 80);
-            let slug = slugifyPropertyName(`${input.groupLabel}-${input.namePrefix}-${num}`);
+            const name = `${roomName} · ${input.namePrefix} ${num}`.slice(0, 80);
+            let slug = slugifyPropertyName(`${roomName}-${input.namePrefix}-${num}`);
             if (slug.length < 3) slug = `bed-${num}`;
             // Ensure unique slug inside property
             let suffix = 1;
@@ -1548,7 +1659,7 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
               name,
               mode: input.mode,
               unit_type: 'bed_space',
-              group_label: input.groupLabel,
+              room_id: roomId,
               description: input.description,
               max_guests: 1,
               bedrooms: 1,
@@ -1565,12 +1676,21 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
             world.units.push(unit);
             created.push(unit);
 
-            for (const amenityId of input.amenityIds) {
+            for (const amenityId of roomAmenityIds) {
               world.unit_amenities.push({
                 account_id: acctCheck.data,
                 unit_id: unitId,
                 amenity_id: amenityId,
                 created_at: nowIso,
+              });
+            }
+            for (const photo of roomPhotos) {
+              world.listing_photos.push({
+                ...photo,
+                id: ids.next('0007'),
+                unit_id: unitId,
+                created_at: nowIso,
+                updated_at: nowIso,
               });
             }
 
@@ -1771,6 +1891,160 @@ export function createOwnerHandlers(ctx: OwnerHandlerContext): P4OwnerHandlers {
           };
           world.units[unitIdx] = updated;
           return ok(updated);
+        },
+      );
+    },
+
+    async saveRoom(input, session) {
+      const guard = await beforeCall('saveRoom', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'saveRoom',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.saveRoom.output,
+        async () => {
+          const roomIdx = world.rooms.findIndex(
+            (r) => r.id === input.roomId && r.account_id === acctCheck.data,
+          );
+          const existing = world.rooms[roomIdx];
+          if (!existing) return err(appError('not_found'));
+          const stale = checkNotStale(input.expectedUpdatedAt, existing.updated_at);
+          if (!stale.ok) return stale;
+
+          const name = input.name.trim();
+          // Imitates the unique (property_id, lower(name)) index on rooms.
+          if (
+            world.rooms.some(
+              (r) =>
+                r.id !== existing.id &&
+                r.property_id === existing.property_id &&
+                r.name.trim().toLowerCase() === name.toLowerCase(),
+            )
+          ) {
+            return err(ROOM_NAME_TAKEN);
+          }
+
+          const nowIso = nowIsoFromClock(clock);
+          const room: RoomsRow = {
+            ...existing,
+            name,
+            guests: input.guests,
+            bathroom: input.bathroom,
+            description: input.description,
+            updated_at: nowIso,
+          };
+          world.rooms[roomIdx] = room;
+
+          // Beds keep their own number: "Room 2A · Bed 1" becomes "<new name> · Bed 1".
+          const beds: UnitsRow[] = [];
+          world.units.forEach((unit, index) => {
+            if (unit.room_id !== room.id) return;
+            const prefix = `${existing.name} · `;
+            const bedPart = unit.name.startsWith(prefix)
+              ? unit.name.slice(prefix.length)
+              : unit.name;
+            const renamed: UnitsRow =
+              existing.name === name
+                ? unit
+                : { ...unit, name: `${name} · ${bedPart}`.slice(0, 80), updated_at: nowIso };
+            world.units[index] = renamed;
+            beds.push(renamed);
+          });
+          return ok({ room, beds });
+        },
+      );
+    },
+
+    async setRoomAmenities(input, session) {
+      const guard = await beforeCall('setRoomAmenities', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'setRoomAmenities',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.setRoomAmenities.output,
+        async () => {
+          const room = world.rooms.find(
+            (r) => r.id === input.roomId && r.account_id === acctCheck.data,
+          );
+          if (!room) return err(appError('not_found'));
+          const allowed = new Set(
+            world.amenities
+              .filter((a) => a.account_id === null || a.account_id === acctCheck.data)
+              .map((a) => a.id),
+          );
+          if (input.amenityIds.some((id) => !allowed.has(id))) return err(appError('not_found'));
+          const nowIso = nowIsoFromClock(clock);
+          const bedIds = new Set(world.units.filter((u) => u.room_id === room.id).map((u) => u.id));
+          for (let i = world.unit_amenities.length - 1; i >= 0; i -= 1) {
+            const link = world.unit_amenities[i];
+            if (link && bedIds.has(link.unit_id)) world.unit_amenities.splice(i, 1);
+          }
+          const unique = [...new Set(input.amenityIds)];
+          for (const unitId of bedIds) {
+            for (const amenityId of unique) {
+              world.unit_amenities.push({
+                account_id: acctCheck.data,
+                unit_id: unitId,
+                amenity_id: amenityId,
+                created_at: nowIso,
+              });
+            }
+          }
+          return ok(unique);
+        },
+      );
+    },
+
+    async deleteUnit(input, session) {
+      const guard = await beforeCall('deleteUnit', session);
+      if (!guard.ok) return guard;
+      const acctCheck = requireOwnerAccountMatch(session, input.accountId);
+      if (!acctCheck.ok) return acctCheck;
+
+      return runIdempotent(
+        'deleteUnit',
+        input.idempotencyKey,
+        acctCheck.data,
+        input,
+        operations.deleteUnit.output,
+        async () => {
+          const unit = world.units.find(
+            (u) => u.id === input.unitId && u.account_id === acctCheck.data,
+          );
+          if (!unit) return err(appError('not_found'));
+          if (unitWasEverBooked(world, unit.id)) return err(appError('invalid_move'));
+
+          const removeWhere = <T>(rows: T[], match: (row: T) => boolean) => {
+            for (let i = rows.length - 1; i >= 0; i -= 1) {
+              const row = rows[i];
+              if (row !== undefined && match(row)) rows.splice(i, 1);
+            }
+          };
+          removeWhere(world.units, (u) => u.id === unit.id);
+          removeWhere(world.unit_stay_terms, (t) => t.unit_id === unit.id);
+          removeWhere(world.unit_lease_terms, (t) => t.unit_id === unit.id);
+          removeWhere(world.weekday_rates, (r) => r.unit_id === unit.id);
+          removeWhere(world.rate_overrides, (r) => r.unit_id === unit.id);
+          removeWhere(world.unit_fees, (f) => f.unit_id === unit.id);
+          removeWhere(world.unit_amenities, (a) => a.unit_id === unit.id);
+          removeWhere(world.listing_photos, (p) => p.unit_id === unit.id);
+
+          let roomDeleted = false;
+          if (unit.room_id !== null && !world.units.some((u) => u.room_id === unit.room_id)) {
+            removeWhere(world.rooms, (r) => r.id === unit.room_id);
+            roomDeleted = true;
+          }
+          return ok({ unitId: unit.id, roomDeleted });
         },
       );
     },

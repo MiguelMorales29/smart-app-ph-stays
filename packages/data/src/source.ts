@@ -401,6 +401,17 @@ export function createValidatedDataSource(
       operations.archiveUnit.output,
       handlers.archiveUnit,
     ),
+    saveRoom: wrapOp(operations.saveRoom.input, operations.saveRoom.output, handlers.saveRoom),
+    setRoomAmenities: wrapOp(
+      operations.setRoomAmenities.input,
+      operations.setRoomAmenities.output,
+      handlers.setRoomAmenities,
+    ),
+    deleteUnit: wrapOp(
+      operations.deleteUnit.input,
+      operations.deleteUnit.output,
+      handlers.deleteUnit,
+    ),
     listAmenities: wrapOp(
       operations.listAmenities.input,
       operations.listAmenities.output,

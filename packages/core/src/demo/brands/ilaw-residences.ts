@@ -292,7 +292,7 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         name: 'Studio A',
         mode: 'long_term',
         unit_type: 'entire_place',
-        group_label: null,
+        room_id: null,
         description:
           '22 sqm sunny studio apartment with ink-blue accent wall, window work desk, induction kitchenette, water heater, and pet-friendly layout.',
         max_guests: 2,
@@ -315,7 +315,7 @@ export function buildIlawResidencesBrand(today: CalendarDate): BrandBundle {
         name: '1BR B',
         mode: 'long_term',
         unit_type: 'entire_place',
-        group_label: null,
+        room_id: null,
         description:
           '32 sqm 1-bedroom corner apartment with private balcony, built-in wardrobe, two-burner kitchen with range hood, and separate living area.',
         max_guests: 3,

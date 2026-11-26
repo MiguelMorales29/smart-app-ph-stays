@@ -57,6 +57,7 @@ import {
   unitLeaseTermsRow,
   unitOccupancyRow,
   unitStayTermsRow,
+  roomsRow,
   unitsRow,
   weekdayRatesRow,
 } from '../schemas/tables/index.js';
@@ -123,6 +124,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['data_exports', dataExportsRow],
     ['properties', propertiesRow],
     ['property_pages', propertyPagesRow],
+    ['rooms', roomsRow],
     ['units', unitsRow],
     ['unit_stay_terms', unitStayTermsRow],
     ['unit_lease_terms', unitLeaseTermsRow],
@@ -156,7 +158,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['meta_capi_deliveries', metaCapiDeliveriesRow],
   ];
 
-  expect(tableValidators).toHaveLength(49);
+  expect(tableValidators).toHaveLength(50);
 
   const seenIds = new Set<string>();
   for (const [tableName, schema] of tableValidators) {
@@ -294,6 +296,18 @@ function assertWorldInvariants(world: DemoWorld): void {
     const file = filesById.get(photo.file_id);
     expect(file?.account_id).toBe(photo.account_id);
     expect(file !== undefined && manifestPaths.has(file.path)).toBe(true);
+  }
+
+  // Imitates the database rule (R-1b): a bed space sits in a room of the same property; other
+  // unit types have no room.
+  const roomsById = new Map(world.rooms.map((room) => [room.id, room]));
+  for (const unit of world.units) {
+    if (unit.unit_type === 'bed_space') {
+      const room = unit.room_id === null ? undefined : roomsById.get(unit.room_id);
+      expect(room?.property_id).toBe(unit.property_id);
+    } else {
+      expect(unit.room_id).toBeNull();
+    }
   }
 
   for (const ua of world.unit_amenities) {

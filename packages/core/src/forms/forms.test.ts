@@ -133,7 +133,7 @@ describe('Phase 4 form schemas', () => {
       slug: 'studio-fog',
       mode: 'short_stay',
       unit_type: 'entire_place',
-      group_label: null,
+      room_id: null,
       description: 'Cozy studio',
       max_guests: 2,
       bedrooms: 0,
@@ -147,7 +147,7 @@ describe('Phase 4 form schemas', () => {
     expect(unitFormSchema.safeParse({ ...unit, max_guests: 0 }).success).toBe(false);
 
     const beds = {
-      group_label: 'Room 2A',
+      room_name: 'Room 2A',
       name_prefix: 'Bed',
       count: 4,
       start_number: 1,

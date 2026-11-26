@@ -23,6 +23,16 @@ export const UNIT_TYPES = ['entire_place', 'private_room', 'bed_space'] as const
 export const unitTypeSchema = z.enum(UNIT_TYPES);
 export type UnitType = z.infer<typeof unitTypeSchema>;
 
+/** Who may stay in a shared room (R-1b): PH bedspace listings lead with this. */
+export const ROOM_GUESTS = ['anyone', 'ladies', 'gents'] as const;
+export const roomGuestsSchema = z.enum(ROOM_GUESTS);
+export type RoomGuests = z.infer<typeof roomGuestsSchema>;
+
+/** Where the bathroom of a shared room is (R-1b). */
+export const ROOM_BATHROOMS = ['shared', 'in_room'] as const;
+export const roomBathroomSchema = z.enum(ROOM_BATHROOMS);
+export type RoomBathroom = z.infer<typeof roomBathroomSchema>;
+
 export const UNIT_STATUSES = ['draft', 'listed', 'unlisted'] as const;
 export const unitStatusSchema = z.enum(UNIT_STATUSES);
 export type UnitStatus = z.infer<typeof unitStatusSchema>;

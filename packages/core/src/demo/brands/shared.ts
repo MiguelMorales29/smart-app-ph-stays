@@ -16,6 +16,7 @@ import type {
   UnitFeesRow,
   UnitLeaseTermsRow,
   UnitStayTermsRow,
+  RoomsRow,
   UnitsRow,
   WeekdayRatesRow,
 } from '../../schemas/tables/index.js';
@@ -42,6 +43,8 @@ export interface BrandBundle {
   readonly subscriptionPayment: SubscriptionPaymentsRow;
   readonly property: PropertiesRow;
   readonly propertyPage: PropertyPagesRow;
+  /** Shared rooms whose beds are rented one by one (R-1b). */
+  readonly rooms?: RoomsRow[];
   readonly units: UnitsRow[];
   readonly stayTerms: UnitStayTermsRow[];
   readonly leaseTerms: UnitLeaseTermsRow[];

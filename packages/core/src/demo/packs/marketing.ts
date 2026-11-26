@@ -549,7 +549,7 @@ export function buildMarketingPack(clock: Clock): DemoWorld {
       name: spec.name,
       mode: 'short_stay',
       unit_type: spec.unit_type,
-      group_label: null,
+      room_id: null,
       description: spec.description,
       max_guests: spec.max_guests,
       bedrooms: spec.bedrooms,

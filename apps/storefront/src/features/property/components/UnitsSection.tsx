@@ -39,7 +39,7 @@ export interface UnitsSectionProps {
 
 /**
  * Units section (part 8, D80–D81):
- * - Bed spaces sharing `group_label` render as one room card linking to the room's first bed.
+ * - Bed spaces in the same room render as one room card linking to the room's first bed.
  * - When both Stays and Monthly rentals exist, switches between them with `SegmentedControl`.
  * - Each card's photo area is the installed `Carousel` (first photo eager, rest lazy on swipe,
  *   hover arrows on desktop, dots, `+N` count) with optional owner-controlled staggered autoplay.

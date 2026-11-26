@@ -286,7 +286,7 @@ export function buildBahayBatisBrand(today: CalendarDate): BrandBundle {
         name: 'Buong Bahay',
         mode: 'short_stay',
         unit_type: 'entire_place',
-        group_label: null,
+        room_id: null,
         description:
           'Whole private resort house (22-hour stay from 2:00 pm to 12:00 nn) with 4 air-conditioned bedrooms, warm spring adult & kiddie pools, videoke, billiards, ping pong, and half basketball court.',
         max_guests: 20,

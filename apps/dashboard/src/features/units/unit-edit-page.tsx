@@ -10,6 +10,8 @@ import {
 import {
   BedDoubleIcon,
   CalendarClockIcon,
+  ChevronRightIcon,
+  DoorOpenIcon,
   CheckCircle2Icon,
   CircleIcon,
   ImageIcon,
@@ -26,6 +28,7 @@ import {
   readErrorDetails,
   unitFormSchema,
   type OwnerUnitDetailView,
+  type RoomsRow,
 } from '@smartapp/core';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/alert';
 import { Button } from '@smartapp/ui/components/button';
@@ -71,7 +74,12 @@ import {
   type RulesDraft,
   type RulesErrors,
 } from './unit-pricing';
-import { UNIT_TYPE_LABEL, UnitStatusBadge } from './unit-words';
+import {
+  ROOM_BATHROOM_LABEL,
+  ROOM_GUESTS_LABEL,
+  UNIT_TYPE_LABEL,
+  UnitStatusBadge,
+} from './unit-words';
 
 export type UnitSection = 'basics' | 'photos' | 'price' | 'amenities' | 'rules';
 
@@ -111,7 +119,6 @@ function parseUnitSection(raw: string | undefined): UnitSection | null {
 const basicsSchema = unitFormSchema
   .pick({
     name: true,
-    group_label: true,
     description: true,
     max_guests: true,
     bedrooms: true,
@@ -132,7 +139,6 @@ function basicsFrom(detail: OwnerUnitDetailView): BasicsForm {
   const { unit } = detail;
   return {
     name: unit.name,
-    group_label: unit.group_label,
     description: unit.description,
     max_guests: unit.max_guests,
     bedrooms: unit.bedrooms,
@@ -170,10 +176,9 @@ export function UnitEditPage() {
     );
   }
 
+  const roomId = detail.data.unit.room_id;
   const roomBeds =
-    detail.data.unit.group_label === null
-      ? []
-      : (units.data ?? []).filter((item) => item.unit.group_label === detail.data.unit.group_label);
+    roomId === null ? [] : (units.data ?? []).filter((item) => item.unit.room_id === roomId);
 
   return (
     <UnitEditor
@@ -207,7 +212,8 @@ function UnitEditor({
   const [current, setCurrent] = useState(detail);
   const unit = current.unit;
   const isBed = unit.unit_type === 'bed_space';
-  const photoLabel = unit.group_label ?? unit.name;
+  const room = current.room;
+  const photoLabel = room?.name ?? unit.name;
 
   const prefix = `/units/${unit.id}/`;
   const pathSection = pathname.startsWith(prefix)
@@ -353,7 +359,6 @@ function UnitEditor({
         const basicsChange = form.formState.isDirty
           ? {
               name: values.name.trim(),
-              groupLabel: isBed ? emptyToNull(values.group_label ?? '') : null,
               description: values.description ? emptyToNull(values.description) : null,
               maxGuests: values.max_guests,
               bedrooms: values.bedrooms,
@@ -598,131 +603,123 @@ function UnitEditor({
         />
         <FieldError>{errors.name?.message}</FieldError>
       </Field>
-      {isBed ? (
-        <Field>
-          <FieldLabel htmlFor="unit-room">Room</FieldLabel>
-          <Input
-            id="unit-room"
-            maxLength={40}
-            {...form.register('group_label', { setValueAs: (value: string) => value })}
-          />
-          <FieldDescription>
-            Beds with the same room name are grouped and share photos.
-          </FieldDescription>
-        </Field>
-      ) : null}
-      <RowGroup
-        title="The space"
-        footer={
-          errors.floor_area_sqm ? (
-            <span className="text-destructive">{errors.floor_area_sqm.message}</span>
-          ) : undefined
-        }
-      >
-        <RowControl label="Guests" labelFor="unit-guests">
-          <Controller
-            control={form.control}
-            name="max_guests"
-            render={({ field }) => (
-              <InlineStepper
-                id="unit-guests"
-                label="Guests"
-                value={field.value}
-                onValueChange={field.onChange}
-                min={1}
-                max={30}
-              />
-            )}
-          />
-        </RowControl>
-        {!isBed ? (
-          <RowControl
-            label="Bedrooms"
-            hint={bedrooms === 0 ? 'Studio' : undefined}
-            labelFor="unit-bedrooms"
-          >
+      {isBed && room ? <RoomLinkCard room={room} bedCount={roomBeds.length} /> : null}
+      {isBed ? null : (
+        <RowGroup
+          title="The space"
+          footer={
+            errors.floor_area_sqm ? (
+              <span className="text-destructive">{errors.floor_area_sqm.message}</span>
+            ) : undefined
+          }
+        >
+          <RowControl label="Guests" labelFor="unit-guests">
             <Controller
               control={form.control}
-              name="bedrooms"
+              name="max_guests"
               render={({ field }) => (
                 <InlineStepper
-                  id="unit-bedrooms"
-                  label="Bedrooms"
+                  id="unit-guests"
+                  label="Guests"
                   value={field.value}
                   onValueChange={field.onChange}
-                  min={0}
-                  max={20}
+                  min={1}
+                  max={30}
                 />
               )}
             />
           </RowControl>
-        ) : null}
-        <RowControl label="Beds" labelFor="unit-beds">
-          <Controller
-            control={form.control}
-            name="beds"
-            render={({ field }) => (
-              <InlineStepper
-                id="unit-beds"
-                label="Beds"
-                value={field.value}
-                onValueChange={field.onChange}
-                min={0}
-                max={40}
+          {!isBed ? (
+            <RowControl
+              label="Bedrooms"
+              hint={bedrooms === 0 ? 'Studio' : undefined}
+              labelFor="unit-bedrooms"
+            >
+              <Controller
+                control={form.control}
+                name="bedrooms"
+                render={({ field }) => (
+                  <InlineStepper
+                    id="unit-bedrooms"
+                    label="Bedrooms"
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    min={0}
+                    max={20}
+                  />
+                )}
               />
-            )}
-          />
-        </RowControl>
-        <RowControl label="Bathrooms" hint="Half for a toilet only" labelFor="unit-baths">
-          <Controller
-            control={form.control}
-            name="bathrooms"
-            render={({ field }) => (
-              <InlineStepper
-                id="unit-baths"
-                label="Bathrooms"
-                value={field.value}
-                onValueChange={field.onChange}
-                min={0}
-                max={20}
-                step={0.5}
-              />
-            )}
-          />
-        </RowControl>
-        <RowControl label="Floor area" hint="Optional" labelFor="unit-area">
-          <Controller
-            control={form.control}
-            name="floor_area_sqm"
-            render={({ field }) => (
-              <span className="flex items-center gap-1.5">
-                <Input
-                  id="unit-area"
-                  inputMode="decimal"
-                  className="w-20 text-right tabular"
-                  aria-invalid={errors.floor_area_sqm ? true : undefined}
-                  value={field.value === null ? '' : String(field.value)}
-                  onChange={(event) => {
-                    const raw = event.target.value.replace(/[^\d.]/g, '');
-                    field.onChange(raw === '' ? null : Number(raw));
-                  }}
-                  onBlur={field.onBlur}
+            </RowControl>
+          ) : null}
+          <RowControl label="Beds" labelFor="unit-beds">
+            <Controller
+              control={form.control}
+              name="beds"
+              render={({ field }) => (
+                <InlineStepper
+                  id="unit-beds"
+                  label="Beds"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  min={0}
+                  max={40}
                 />
-                <span className="text-sm text-muted-foreground">m²</span>
-              </span>
-            )}
+              )}
+            />
+          </RowControl>
+          <RowControl label="Bathrooms" hint="Half for a toilet only" labelFor="unit-baths">
+            <Controller
+              control={form.control}
+              name="bathrooms"
+              render={({ field }) => (
+                <InlineStepper
+                  id="unit-baths"
+                  label="Bathrooms"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  min={0}
+                  max={20}
+                  step={0.5}
+                />
+              )}
+            />
+          </RowControl>
+          <RowControl label="Floor area" hint="Optional" labelFor="unit-area">
+            <Controller
+              control={form.control}
+              name="floor_area_sqm"
+              render={({ field }) => (
+                <span className="flex items-center gap-1.5">
+                  <Input
+                    id="unit-area"
+                    inputMode="decimal"
+                    className="w-20 text-right tabular"
+                    aria-invalid={errors.floor_area_sqm ? true : undefined}
+                    value={field.value === null ? '' : String(field.value)}
+                    onChange={(event) => {
+                      const raw = event.target.value.replace(/[^\d.]/g, '');
+                      field.onChange(raw === '' ? null : Number(raw));
+                    }}
+                    onBlur={field.onBlur}
+                  />
+                  <span className="text-sm text-muted-foreground">m²</span>
+                </span>
+              )}
+            />
+          </RowControl>
+        </RowGroup>
+      )}
+      {isBed ? null : (
+        <Field>
+          <FieldLabel htmlFor="unit-description">Description</FieldLabel>
+          <Textarea
+            id="unit-description"
+            rows={4}
+            maxLength={4000}
+            {...form.register('description')}
           />
-        </RowControl>
-      </RowGroup>
-      <Field>
-        <FieldLabel htmlFor="unit-description">Description</FieldLabel>
-        <Textarea
-          id="unit-description"
-          rows={4}
-          maxLength={4000}
-          {...form.register('description')}
-        />
-      </Field>
+        </Field>
+      )}
       <Field>
         <FieldLabel htmlFor="unit-arrival">Arrival details</FieldLabel>
         <Textarea
@@ -737,26 +734,24 @@ function UnitEditor({
     </div>
   );
 
-  const photoSection = (
-    <div className="flex flex-col gap-3">
-      {roomBeds.length > 1 ? (
-        <p className="text-sm text-muted-foreground">
-          These photos are shared by the {roomBeds.length} beds in {unit.group_label}.
-        </p>
-      ) : null}
-      <PhotoManager
-        tiles={photos.tiles}
-        max={20}
-        onAdd={photos.add}
-        onAdjust={photos.adjust}
-        onReorder={photos.reorder}
-        onAltChange={photos.setAlt}
-        onRemove={photos.remove}
-        onRetry={photos.retry}
-      />
-      <PhotoCropSheet {...photos.cropSheetProps} />
-    </div>
-  );
+  const photoSection =
+    isBed && room ? (
+      <SetOnRoom room={room} what="photos" count={photos.tiles.length} />
+    ) : (
+      <div className="flex flex-col gap-3">
+        <PhotoManager
+          tiles={photos.tiles}
+          max={20}
+          onAdd={photos.add}
+          onAdjust={photos.adjust}
+          onReorder={photos.reorder}
+          onAltChange={photos.setAlt}
+          onRemove={photos.remove}
+          onRetry={photos.retry}
+        />
+        <PhotoCropSheet {...photos.cropSheetProps} />
+      </div>
+    );
 
   const content: Record<UnitSection, ReactNode> = {
     basics,
@@ -780,6 +775,8 @@ function UnitEditor({
         message={extractAppError(amenities.error).message}
         onRetry={() => void amenities.refetch()}
       />
+    ) : isBed && room ? (
+      <SetOnRoom room={room} what="amenities" count={amenityIds.length} />
     ) : (
       <AmenitiesField catalogue={amenities.data} value={amenityIds} onChange={setAmenityIds} />
     ),
@@ -1005,6 +1002,63 @@ function UnitEditor({
         onStay={() => blocker.reset?.()}
         onLeave={() => blocker.proceed?.()}
       />
+    </div>
+  );
+}
+
+/** A bed's room, as a row that opens Edit room (R-1b). */
+function RoomLinkCard({ room, bedCount }: { readonly room: RoomsRow; readonly bedCount: number }) {
+  return (
+    <RowGroup
+      title="Room"
+      footer="Name, who may stay, photos and amenities are set once for every bed."
+    >
+      <Link
+        to="/units/rooms/$roomId"
+        params={{ roomId: room.id }}
+        className="press flex min-h-13 items-center gap-3 px-4 py-2.5 outline-none hover-hover:hover:bg-muted/60 focus-visible:bg-muted"
+      >
+        <DoorOpenIcon aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{room.name}</span>
+          <span className="block truncate text-sm text-muted-foreground">
+            {ROOM_GUESTS_LABEL[room.guests]} · {bedCount} {bedCount === 1 ? 'bed' : 'beds'} ·{' '}
+            {ROOM_BATHROOM_LABEL[room.bathroom]}
+          </span>
+        </span>
+        <span className="text-sm text-muted-foreground">Edit room</span>
+        <ChevronRightIcon aria-hidden="true" className="size-4 text-muted-foreground" />
+      </Link>
+    </RowGroup>
+  );
+}
+
+/** Photos and amenities of a bed come from its room (R-1b). */
+function SetOnRoom({
+  room,
+  what,
+  count,
+}: {
+  readonly room: RoomsRow;
+  readonly what: 'photos' | 'amenities';
+  readonly count: number;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4">
+      <p className="text-sm">
+        {what === 'photos'
+          ? `Every bed in ${room.name} shows the room's photos (${count} now).`
+          : `Every bed in ${room.name} has the room's amenities (${count} now).`}
+      </p>
+      <Button
+        variant="outline"
+        className="min-h-11 sm:min-h-9"
+        nativeButton={false}
+        render={<Link to="/units/rooms/$roomId" params={{ roomId: room.id }} hash={what} />}
+      >
+        {what === 'photos' ? <ImageIcon aria-hidden="true" /> : <SparklesIcon aria-hidden="true" />}
+        {what === 'photos' ? 'Change room photos' : 'Change room amenities'}
+      </Button>
     </div>
   );
 }

@@ -171,7 +171,7 @@ describe('PropertyPageView', () => {
         slug: 'sunrise-balcony-studio',
         mode: 'short_stay',
         unitType: 'entire_place',
-        groupLabel: null,
+        roomId: null,
         description: 'Morning sun over the ridge.',
         maxGuests: 2,
         bedrooms: 1,

@@ -164,6 +164,10 @@ export const DEMO_IDS = {
     subscriptionPayment: 'dec0de40-000e-4000-8000-000000000001',
     subscriptionProofFile: 'dec0de40-0006-4000-8000-000000000099',
     logoFile: 'dec0de40-0006-4000-8000-000000000090',
+    rooms: {
+      room2a: 'dec0de40-0040-4000-8000-000000000001',
+      room3b: 'dec0de40-0040-4000-8000-000000000002',
+    },
     units: {
       room2aBed1: 'dec0de40-0005-4000-8000-000000000001',
       room2aBed2: 'dec0de40-0005-4000-8000-000000000002',

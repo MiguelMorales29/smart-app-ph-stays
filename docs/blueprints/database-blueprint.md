@@ -223,6 +223,18 @@ The names follow Airbnb's, but the rules are simplified. Under any preset, the o
 - **Not stored here on purpose:** check-in and check-out times, house rules, prices, the cancellation preset, reply time and the Verified badge. The page reads them live from their own tables, so the page can never disagree with a booking.
 - **On `properties`:** `old_slugs text[]` (wave 1; old addresses keep redirecting; a GIN index lets `change_slug` check them). The slug is changed only through `change_slug`, never by a direct edit. Settings-owned facts the page shows: `contact jsonb` (phone, Messenger, Facebook, Instagram, TikTok, Viber, WhatsApp, Google review link), `show_exact_location boolean` default false, `reply_hours jsonb` and `viewing_hours jsonb` (up to 4 ranges a day, none past midnight, the same rules as the food app's Hours). `custom_domain text unique` and `domain_verified_at timestamptz` arrive in wave 3.
 
+**`rooms`** A shared room whose beds are rented one by one (R-1b, D92). It holds what every bed shares.
+
+| Column | Type | Rule |
+| --- | --- | --- |
+| `property_id` | uuid | To `properties` |
+| `name` | text | 1 to 40, unique per property (case-insensitive) |
+| `guests` | text | `anyone`, `ladies`, `gents` |
+| `bathroom` | text | `shared`, `in_room` |
+| `description` | text | Up to 2,000 |
+
+Photos and amenities of a room are saved once and shown on every bed (the memory adapter copies them to each bed today; the database stores them on the room). A room is deleted with its last never-booked bed.
+
 **`units`** One bookable space: a whole place, a room or a bed.
 
 | Column | Type | Rule |
@@ -231,7 +243,8 @@ The names follow Airbnb's, but the rules are simplified. Under any preset, the o
 | `slug` | text | Unique within the property |
 | `name` | text | 1 to 80 |
 | `mode` | text | `short_stay` or `long_term`. Fixed once the unit has a booking or lease |
-| `unit_type` | text | `entire_place`, `private_room`, `bed_space`. A bed space is stored as one unit per bed (e.g. "Room 2A · Bed 1") until O4 is settled (D24) |
+| `unit_type` | text | `entire_place`, `private_room`, `bed_space`. A bed space is stored as one unit per bed (e.g. "Room 2A · Bed 1") |
+| `room_id` | uuid | To `rooms`; required for a bed space, empty for every other type (D92) |
 | `description` | text | Up to 4,000 |
 | `max_guests` | smallint | At least 1 |
 | `bedrooms`, `beds` | smallint | Zero or more |
@@ -240,7 +253,7 @@ The names follow Airbnb's, but the rules are simplified. Under any preset, the o
 | `arrival_info` | text | Unit-specific arrival details. Shown only after a booking is confirmed |
 | `sort_order` | integer | Order on the property page |
 | `status` | text | `draft`, `listed`, `unlisted` |
-| `archived_at` | timestamptz | Archived instead of deleted |
+| `archived_at` | timestamptz | Archived once it has had a booking or lease; a never-booked unit may be deleted (`delete_unit`, F24) |
 
 Keys: unique `(property_id, slug)`; unique `(account_id, id)` for owner-safe foreign keys; unique `(id, mode)` so a terms table can require the right mode.
 

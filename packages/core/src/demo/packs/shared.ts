@@ -47,6 +47,7 @@ import type {
   UnitLeaseTermsRow,
   UnitOccupancyRow,
   UnitStayTermsRow,
+  RoomsRow,
   UnitsRow,
   WeekdayRatesRow,
 } from '../../schemas/tables/index.js';
@@ -77,6 +78,7 @@ export interface DemoWorld {
   readonly data_exports: DataExportsRow[];
   readonly properties: PropertiesRow[];
   readonly property_pages: PropertyPagesRow[];
+  readonly rooms: RoomsRow[];
   readonly units: UnitsRow[];
   readonly unit_stay_terms: UnitStayTermsRow[];
   readonly unit_lease_terms: UnitLeaseTermsRow[];
@@ -130,6 +132,7 @@ export function createEmptyDemoWorld(): DemoWorld {
     data_exports: [],
     properties: [],
     property_pages: [],
+    rooms: [],
     units: [],
     unit_stay_terms: [],
     unit_lease_terms: [],
@@ -294,6 +297,7 @@ export function appendBrandToWorld(
   world.subscription_payments.push(brand.subscriptionPayment);
   world.properties.push(brand.property);
   world.property_pages.push(brand.propertyPage);
+  world.rooms.push(...(brand.rooms ?? []));
   world.units.push(...brand.units);
   world.unit_stay_terms.push(...brand.stayTerms);
   world.unit_lease_terms.push(...brand.leaseTerms);

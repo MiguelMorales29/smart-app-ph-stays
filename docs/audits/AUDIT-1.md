@@ -47,6 +47,7 @@ Unit page (P5-3), install/share/offline (P5-4), editor (P5-5, P5-6), Calendar, B
 ## Status
 
 - **R-1 Units** fixed A1–A10 and A21 (PR #64).
+- **R-1b Units and rooms** fixed A20 (Delete for never-booked units) and replaced the room label with a room record (D92).
 - **R-2 Settings and saving** fixed A11, A15 and A17, and A16 apart from reasons and different hours (R-2b, needs `special_days`). A12: unit prices and account saves now send the loaded version; toggles, bulk actions and Undo stay last-writer-wins by decision (D91); onboarding creates new units and payment methods, and sets first prices on units it created moments before, so it keeps `null`.
 
 ## Restructure plan
