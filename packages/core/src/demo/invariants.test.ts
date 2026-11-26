@@ -54,6 +54,7 @@ import {
   threadsRow,
   unitAmenitiesRow,
   propertyAmenitiesRow,
+  specialDaysRow,
   unitFeesRow,
   unitLeaseTermsRow,
   unitOccupancyRow,
@@ -133,6 +134,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['amenities', amenitiesRow],
     ['unit_amenities', unitAmenitiesRow],
     ['property_amenities', propertyAmenitiesRow],
+    ['special_days', specialDaysRow],
     ['house_rules', houseRulesRow],
     ['payment_accounts', paymentAccountsRow],
     ['page_reports', pageReportsRow],
@@ -160,7 +162,7 @@ function assertWorldInvariants(world: DemoWorld): void {
     ['meta_capi_deliveries', metaCapiDeliveriesRow],
   ];
 
-  expect(tableValidators).toHaveLength(51);
+  expect(tableValidators).toHaveLength(52);
 
   const seenIds = new Set<string>();
   for (const [tableName, schema] of tableValidators) {

@@ -223,6 +223,19 @@ The names follow Airbnb's, but the rules are simplified. Under any preset, the o
 - **Not stored here on purpose:** check-in and check-out times, house rules, prices, the cancellation preset, reply time and the Verified badge. The page reads them live from their own tables, so the page can never disagree with a booking.
 - **On `properties`:** `old_slugs text[]` (wave 1; old addresses keep redirecting; a GIN index lets `change_slug` check them). The slug is changed only through `change_slug`, never by a direct edit. Settings-owned facts the page shows: `contact jsonb` (phone, Messenger, Facebook, Instagram, TikTok, Viber, WhatsApp, Google review link), `show_exact_location boolean` default false, `reply_hours jsonb` and `viewing_hours jsonb` (up to 4 ranges a day, none past midnight, the same rules as the food app's Hours). `custom_domain text unique` and `domain_verified_at timestamptz` arrive in wave 3.
 
+**`special_days`** A day or range when the reply or viewing hours change (R-2b, D95). It does not block bookings (that is Calendar → Block dates, Phase 6).
+
+| Column | Type | Rule |
+| --- | --- | --- |
+| `property_id` | uuid | To `properties`; up to 60 rows per property, past rows are deleted when the list is saved |
+| `starts_on`, `ends_on` | date | `ends_on` on or after `starts_on`, at most 31 days |
+| `kind` | text | `closed` (no times) or `hours` (1 to 3 time ranges) |
+| `ranges` | jsonb | Time ranges like the weekly hours, none past midnight |
+| `applies_to` | text | `replies`, `viewings`, `both` |
+| `reason` | text | Up to 80, optional; guests see it under Times |
+
+The old `closed_dates` list inside `reply_hours` and `viewing_hours` is gone; special days replace it.
+
 **`rooms`** A shared room whose beds are rented one by one (R-1b, D92). It holds what every bed shares.
 
 | Column | Type | Rule |

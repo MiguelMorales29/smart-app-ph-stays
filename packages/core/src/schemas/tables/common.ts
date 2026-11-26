@@ -60,7 +60,6 @@ export const weeklyHoursSchema = z.object({
   fri: z.array(dailyTimeRangeSchema).max(4),
   sat: z.array(dailyTimeRangeSchema).max(4),
   sun: z.array(dailyTimeRangeSchema).max(4),
-  closed_dates: z.array(calendarDateSchema),
 });
 
 export type WeeklyHours = z.infer<typeof weeklyHoursSchema>;

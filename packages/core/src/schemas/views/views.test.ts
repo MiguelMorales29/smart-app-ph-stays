@@ -89,6 +89,7 @@ describe('view schemas', () => {
       amenities: [],
       house_rules: [],
       reviews: { average_stars: 4.9, review_count: 5, recent_reviews: [] },
+      special_days: [],
     };
     expect(propertyViewSchema.safeParse(propertyView).success).toBe(true);
 

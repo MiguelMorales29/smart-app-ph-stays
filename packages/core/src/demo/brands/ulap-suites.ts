@@ -1,6 +1,6 @@
 import { centavos } from '../../money/index.js';
 import type { PropertyPageDraft } from '../../schemas/tables/index.js';
-import { addDays, manilaWallTime } from '../../time/index.js';
+import { addDays, calendarDate, manilaWallTime } from '../../time/index.js';
 import type { CalendarDate } from '../../time/index.js';
 import { DEMO_IDS, makeDemoUuid } from '../ids.js';
 import { buildBrandMediaFromManifest, resolveNextHolidayWindows } from './shared.js';
@@ -494,6 +494,22 @@ export function buildUlapSuitesBrand(
       },
     ],
     unitFees: [],
+    // R-2b: a Christmas special day, so the Hours page and the guest Times section show one.
+    specialDays: [
+      {
+        id: makeDemoUuid('10', '0042', 1),
+        account_id: ids.account,
+        property_id: ids.property,
+        starts_on: calendarDate('2026-12-24'),
+        ends_on: calendarDate('2026-12-25'),
+        kind: 'hours',
+        ranges: [{ start: '09:00', end: '12:00' }],
+        applies_to: 'both',
+        reason: 'Christmas',
+        created_at: createdAt,
+        updated_at: createdAt,
+      },
+    ],
     // "At the property" (R-3): the condo's shared pool and parking, set once for every unit.
     propertyAmenities: [DEMO_IDS.amenities.sharedPool, DEMO_IDS.amenities.parking].map(
       (amenityId) => ({

@@ -37,6 +37,7 @@ import {
   unitOccupancyRow,
   unitStayTermsRow,
   roomsRow,
+  specialDaysRow,
   unitsRow,
   weekdayRatesRow,
 } from '../tables/index.js';
@@ -281,6 +282,8 @@ export const ownerPropertyViewSchema = z.object({
   house_rules: z.array(houseRulesRow),
   /** "At the property" amenities (R-3, D93). */
   amenity_ids: z.array(uuidSchema),
+  /** Special days for the reply and viewing hours (R-2b, D95), soonest first. */
+  special_days: z.array(specialDaysRow),
 });
 export type OwnerPropertyView = z.infer<typeof ownerPropertyViewSchema>;
 

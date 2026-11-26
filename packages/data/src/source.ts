@@ -427,6 +427,11 @@ export function createValidatedDataSource(
       operations.setPropertyAmenities.output,
       handlers.setPropertyAmenities,
     ),
+    setSpecialDays: wrapOp(
+      operations.setSpecialDays.input,
+      operations.setSpecialDays.output,
+      handlers.setSpecialDays,
+    ),
     listAmenities: wrapOp(
       operations.listAmenities.input,
       operations.listAmenities.output,

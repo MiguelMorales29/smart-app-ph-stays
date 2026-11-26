@@ -65,6 +65,7 @@ import {
   unitOccupancyRow,
   unitStayTermsRow,
   roomsRow,
+  specialDaysRow,
   unitsRow,
   weekdayRatesRow,
 } from '../schemas/tables/index.js';
@@ -1275,6 +1276,32 @@ export const operations = {
     errors: ['not_allowed'],
     idempotent: false,
     featureIds: ['OW-08'],
+  },
+  setSpecialDays: {
+    name: 'setSpecialDays',
+    access: ['owner'],
+    input: z.object({
+      idempotencyKey: idempotencyKeySchema,
+      accountId: accountsRow.shape.id,
+      propertyId: propertiesRow.shape.id,
+      /** The whole list after the owner's edits; past days are dropped by the server. */
+      days: z
+        .array(
+          z.object(specialDaysRow.shape).pick({
+            starts_on: true,
+            ends_on: true,
+            kind: true,
+            ranges: true,
+            applies_to: true,
+            reason: true,
+          }),
+        )
+        .max(60),
+    }),
+    output: z.array(specialDaysRow),
+    errors: ['invalid_move', 'not_allowed', 'not_found'],
+    idempotent: true,
+    featureIds: ['OW-23', 'PA-01'],
   },
   saveAmenity: {
     name: 'saveAmenity',

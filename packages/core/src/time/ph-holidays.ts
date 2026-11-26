@@ -160,6 +160,28 @@ export function phHolidays(year: number): PhHolidayYear {
   return PROCLAIMED.get(year) ?? computedYear(year);
 }
 
+/**
+ * Single holidays from `today` through the next `days` days, soonest first, for "Add PH holidays"
+ * on the Hours page (R-2b, D95). `proclaimed` is false for dates computed before a proclamation.
+ */
+export function upcomingPhHolidays(
+  today: CalendarDate,
+  days = 365,
+): (PhHoliday & { readonly proclaimed: boolean })[] {
+  const last = addDays(today, days);
+  const firstYear = Number(today.slice(0, 4));
+  const out: (PhHoliday & { readonly proclaimed: boolean })[] = [];
+  for (let year = firstYear; year <= Number(last.slice(0, 4)); year += 1) {
+    const info = phHolidays(year);
+    for (const holiday of info.holidays) {
+      if (holiday.date >= today && holiday.date <= last) {
+        out.push({ ...holiday, proclaimed: info.proclaimed });
+      }
+    }
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export interface HolidayChip {
   readonly key: string;
   /** "Holy Week 2027", "Christmas 2026", "Long weekend · Araw ng Kagitingan". */

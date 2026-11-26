@@ -33,6 +33,16 @@ export const ROOM_BATHROOMS = ['shared', 'in_room'] as const;
 export const roomBathroomSchema = z.enum(ROOM_BATHROOMS);
 export type RoomBathroom = z.infer<typeof roomBathroomSchema>;
 
+/** A special day (R-2b, D95): closed all day, or open at different hours. */
+export const SPECIAL_DAY_KINDS = ['closed', 'hours'] as const;
+export const specialDayKindSchema = z.enum(SPECIAL_DAY_KINDS);
+export type SpecialDayKind = z.infer<typeof specialDayKindSchema>;
+
+/** Which hours a special day changes: replies, viewings or both. */
+export const SPECIAL_DAY_SCOPES = ['replies', 'viewings', 'both'] as const;
+export const specialDayScopeSchema = z.enum(SPECIAL_DAY_SCOPES);
+export type SpecialDayScope = z.infer<typeof specialDayScopeSchema>;
+
 /** How the down payment is set (R-3, D93): a share of the total or a fixed peso amount. */
 export const DOWN_PAYMENT_KINDS = ['percent', 'fixed'] as const;
 export const downPaymentKindSchema = z.enum(DOWN_PAYMENT_KINDS);

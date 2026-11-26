@@ -30,6 +30,8 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
       data-slot="toast-viewport"
       className={cn(
         'pointer-events-none fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-sm outline-none sm:right-4 sm:left-auto sm:mx-0 sm:w-full',
+        // R-2b: above the save pill while it shows.
+        'transition-[bottom] in-data-[save-bar=visible]:bottom-24 max-md:in-data-[save-bar=visible]:bottom-44',
         className,
       )}
       {...props}

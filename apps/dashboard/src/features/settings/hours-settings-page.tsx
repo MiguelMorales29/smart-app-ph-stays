@@ -19,10 +19,10 @@ import { TimeSelect } from '@smartapp/ui/compositions/time-select';
 import { useLastDefined } from '@smartapp/ui/hooks/use-last-defined';
 import { notify } from '@smartapp/ui/lib/notify';
 import { useHoursQuery } from '@/data/settings/reads';
-import { useSaveHoursMutation } from '@/data/settings/writes';
+import { useSaveHoursMutation, useSetSpecialDaysMutation } from '@/data/settings/writes';
 import { extractAppError } from '@/data/shared';
 import { useDashboard } from '@/app/dashboard-context';
-import { ClosedDatesEditor } from './closed-dates-editor';
+import { SpecialDaysEditor, type SpecialDayDraft } from './special-days-editor';
 import { SettingsPane } from './settings-nav';
 import {
   same,
@@ -53,11 +53,7 @@ const EMPTY_WEEK: WeeklyHours = {
   fri: [{ start: '09:00', end: '18:00' }],
   sat: [{ start: '09:00', end: '18:00' }],
   sun: [],
-  closed_dates: [],
 };
-
-const upcomingOnly = (week: WeeklyHours | null, today: string): WeeklyHours | null =>
-  week ? { ...week, closed_dates: week.closed_dates.filter((date) => date >= today) } : null;
 
 const time = (value: string) => formatWallTime12h(value) ?? value;
 const rangeText = (ranges: readonly Range[]) =>
@@ -68,9 +64,11 @@ const rangeText = (ranges: readonly Range[]) =>
 interface HoursDraft {
   readonly reply: WeeklyHours | null;
   readonly viewing: WeeklyHours | null;
+  /** R-2b (D95): one list for the page, each day says if it is for replies, viewings or both. */
+  readonly special: readonly SpecialDayDraft[];
 }
 
-/** /settings/hours (OW-24): reply and viewing hours, up to 4 ranges a day, and closed dates. */
+/** /settings/hours (OW-24): reply and viewing hours, up to 4 ranges a day, and special days. */
 export function HoursSettingsPage() {
   const hours = useHoursQuery();
   return (
@@ -86,7 +84,18 @@ export function HoursSettingsPage() {
           key={hours.data.propertyId}
           propertyId={hours.data.propertyId}
           updatedAt={hours.data.updatedAt}
-          initial={{ reply: hours.data.replyHours, viewing: hours.data.viewingHours }}
+          initial={{
+            reply: hours.data.replyHours,
+            viewing: hours.data.viewingHours,
+            special: hours.data.specialDays.map((day) => ({
+              starts_on: day.starts_on,
+              ends_on: day.ends_on,
+              kind: day.kind,
+              ranges: day.ranges,
+              applies_to: day.applies_to,
+              reason: day.reason,
+            })),
+          }}
         />
       )}
     </SettingsPane>
@@ -103,6 +112,7 @@ function HoursForm({
   readonly initial: HoursDraft;
 }) {
   const save = useSaveHoursMutation();
+  const saveSpecial = useSetSpecialDaysMutation();
   const [state, setState] = useSaveState();
   const { offline, message } = useOfflineSave();
   const [saved, setSaved] = useState(initial);
@@ -137,14 +147,26 @@ function HoursForm({
       return;
     }
     setState('busy');
+    const hoursChanged = !same(
+      { reply: draft.reply, viewing: draft.viewing },
+      { reply: saved.reply, viewing: saved.viewing },
+    );
     try {
-      await save.mutateAsync({
-        propertyId,
-        expectedUpdatedAt: updatedAt,
-        // Past closed dates are dropped here so the list stays short (AUDIT-1 A16).
-        replyHours: upcomingOnly(draft.reply, today),
-        viewingHours: upcomingOnly(draft.viewing, today),
-      });
+      if (hoursChanged) {
+        await save.mutateAsync({
+          propertyId,
+          expectedUpdatedAt: updatedAt,
+          replyHours: draft.reply,
+          viewingHours: draft.viewing,
+        });
+      }
+      if (!same(draft.special, saved.special)) {
+        // The server drops past days, so the list stays short (AUDIT-1 A16).
+        await saveSpecial.mutateAsync({
+          propertyId,
+          days: draft.special.map((day) => ({ ...day, ranges: [...day.ranges] })),
+        });
+      }
       setSaved(draft);
       setState('done');
     } catch (caught) {
@@ -221,14 +243,14 @@ function HoursForm({
             <CopyIcon aria-hidden="true" />
             Copy Monday to all days
           </Button>
-
-          <ClosedDatesEditor
-            dates={week.closed_dates}
-            today={today}
-            onChange={(closed_dates) => setWeek({ ...week, closed_dates })}
-          />
         </>
       ) : null}
+
+      <SpecialDaysEditor
+        days={draft.special}
+        today={today}
+        onChange={(special) => setDraft((current) => ({ ...current, special }))}
+      />
 
       <AppSheet
         open={editing !== null}

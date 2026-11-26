@@ -18,6 +18,7 @@ import type {
   UnitLeaseTermsRow,
   UnitStayTermsRow,
   RoomsRow,
+  SpecialDaysRow,
   UnitsRow,
   WeekdayRatesRow,
 } from '../../schemas/tables/index.js';
@@ -54,6 +55,8 @@ export interface BrandBundle {
   readonly unitFees: UnitFeesRow[];
   readonly unitAmenities: UnitAmenitiesRow[];
   readonly propertyAmenities?: PropertyAmenitiesRow[];
+  /** Special days for the hours (R-2b). */
+  readonly specialDays?: SpecialDaysRow[];
   readonly houseRules: HouseRulesRow[];
   readonly paymentAccounts: PaymentAccountsRow[];
   readonly savedReplies: SavedRepliesRow[];

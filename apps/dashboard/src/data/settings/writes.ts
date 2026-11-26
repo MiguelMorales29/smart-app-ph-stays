@@ -210,3 +210,28 @@ export function useSetProfilePictureMutation() {
     },
   });
 }
+
+/** Special days for the reply and viewing hours, saved as the whole list (R-2b, D95). */
+export function useSetSpecialDaysMutation() {
+  const active = useActiveDataClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      input: Omit<OperationInput<'setSpecialDays'>, 'accountId' | 'idempotencyKey'>,
+    ) => {
+      const { source, session, accountId } = requireOwnerClient(active);
+      return unwrapResult(
+        await source.setSpecialDays(
+          { ...input, accountId, idempotencyKey: createIdempotencyKey('special-days') },
+          session,
+        ),
+      );
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: settingsKeys.all }),
+        queryClient.invalidateQueries({ queryKey: propertyKeys.all }),
+      ]);
+    },
+  });
+}
