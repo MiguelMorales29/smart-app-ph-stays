@@ -653,7 +653,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         slug: 'cloud-loft',
         mode: 'short_stay' as const,
         unitType: 'entire_place' as const,
-        groupLabel: null,
+        roomId: null,
         description: 'Bright corner loft.',
         maxGuests: 3,
         bedrooms: 1,
@@ -852,7 +852,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
             idempotencyKey: bedsKey,
             accountId: DEMO_IDS.ulapSuites.account,
             propertyId: DEMO_IDS.ulapSuites.property,
-            groupLabel: 'Attic Room',
+            room: { kind: 'new', name: 'Attic Room', guests: 'anyone', bathroom: 'shared' },
             namePrefix: 'Bed',
             count: 2,
             startNumber: 1,
@@ -867,7 +867,8 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         ),
       );
       expect(beds).toHaveLength(2);
-      expect(beds[0]?.group_label).toBe('Attic Room');
+      expect(beds[0]?.room_id).not.toBeNull();
+      expect(beds[0]?.name).toBe('Attic Room · Bed 1');
 
       // Adding 10 more beds to the same room (12 total) still counts as 1 plan unit (4/5 total).
       const moreBeds = assertOk(
@@ -876,7 +877,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
             idempotencyKey: nextKey(),
             accountId: DEMO_IDS.ulapSuites.account,
             propertyId: DEMO_IDS.ulapSuites.property,
-            groupLabel: 'Attic Room',
+            room: { kind: 'existing', roomId: beds[0]?.room_id ?? '' },
             namePrefix: 'Bed',
             count: 10,
             startNumber: 3,
@@ -899,7 +900,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
             idempotencyKey: nextKey(),
             accountId: DEMO_IDS.ulapSuites.account,
             propertyId: DEMO_IDS.ulapSuites.property,
-            groupLabel: 'Attic Room',
+            room: { kind: 'existing', roomId: beds[0]?.room_id ?? '' },
             namePrefix: 'Bed',
             count: 1,
             startNumber: 13,
@@ -942,7 +943,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
             slug: 'studio-fog',
             mode: 'long_term',
             unitType: 'entire_place',
-            groupLabel: null,
+            roomId: null,
             description: 'Attempted mode switch on a unit with bookings.',
             maxGuests: 2,
             bedrooms: 1,
@@ -1069,8 +1070,8 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
         (item) => item.unit.unit_type === 'bed_space' && item.lease_terms !== null,
       );
       if (!bed) throw new Error('Expected a bed space with lease terms in the dorm');
-      const label = bed.unit.group_label ?? '';
-      const roomBeds = before.filter((item) => item.unit.group_label === label);
+      const label = bed.room?.name ?? '';
+      const roomBeds = before.filter((item) => item.unit.room_id === bed.unit.room_id);
 
       const copy = assertOk(
         await source.duplicateUnit(
@@ -1094,6 +1095,157 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
       const order = after.map((item) => item.unit.id);
       const lastBedIndex = Math.max(...roomBeds.map((item) => order.indexOf(item.unit.id)));
       expect(order.indexOf(copy.id)).toBe(lastBedIndex + 1);
+    });
+
+    it('24c. rooms: saveRoom renames beds and refuses a duplicate name, setRoomAmenities, deleteUnit only for never-booked units (R-1b)', async () => {
+      const { source } = await makeSource();
+      const nextKey = createKeyMaker('r1b-rooms');
+      const list = async () =>
+        assertOk(
+          await source.listOwnerUnits(
+            {
+              accountId: DEMO_IDS.titaLornaDorm.account,
+              propertyId: null,
+              includeArchived: false,
+            },
+            TITA_OWNER_SESSION,
+          ),
+        );
+      const before = await list();
+      const room2a = DEMO_IDS.titaLornaDorm.rooms.room2a;
+      const room2aBeds = before.filter((item) => item.unit.room_id === room2a);
+      expect(room2aBeds).toHaveLength(4);
+      expect(room2aBeds[0]?.room?.guests).toBe('ladies');
+      // Units with bookings are kept; the list says which units can be deleted.
+      const ulapUnits = assertOk(
+        await source.listOwnerUnits(
+          { accountId: DEMO_IDS.ulapSuites.account, propertyId: null, includeArchived: false },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      const bookedUnit = ulapUnits.find((item) => !item.can_delete);
+      if (!bookedUnit) throw new Error('Expected a booked unit at Ulap Suites');
+
+      const saved = assertOk(
+        await source.saveRoom(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            roomId: room2a,
+            expectedUpdatedAt: room2aBeds[0]?.room?.updated_at ?? null,
+            name: "Ladies' dorm",
+            guests: 'ladies',
+            bathroom: 'in_room',
+            description: 'Four beds with curtains.',
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect(saved.room.bathroom).toBe('in_room');
+      expect(saved.beds.map((bed) => bed.name)).toContain("Ladies' dorm · Bed 1");
+
+      const duplicate = assertErr(
+        await source.saveRoom(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            roomId: room2a,
+            expectedUpdatedAt: null,
+            name: 'room 3b',
+            guests: 'ladies',
+            bathroom: 'shared',
+            description: null,
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect(duplicate.code).toBe('not_allowed');
+
+      const amenityIds = assertOk(
+        await source.setRoomAmenities(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            roomId: room2a,
+            amenityIds: [DEMO_IDS.amenities.wifi, DEMO_IDS.amenities.aircon],
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect(amenityIds).toHaveLength(2);
+      const bedDetail = assertOk(
+        await source.getOwnerUnit(
+          {
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            unitId: room2aBeds[3]?.unit.id ?? '',
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect([...bedDetail.amenity_ids].sort()).toEqual(
+        [DEMO_IDS.amenities.wifi, DEMO_IDS.amenities.aircon].sort(),
+      );
+      expect(bedDetail.room?.name).toBe("Ladies' dorm");
+
+      // A booked bed is kept; a new room's never-booked beds can be deleted, and the empty room goes.
+      const booked = assertErr(
+        await source.deleteUnit(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.ulapSuites.account,
+            unitId: bookedUnit.unit.id,
+          },
+          ULAP_OWNER_SESSION,
+        ),
+      );
+      expect(booked.code).toBe('invalid_move');
+
+      const newBeds = assertOk(
+        await source.createBedSpaces(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            propertyId: DEMO_IDS.titaLornaDorm.property,
+            room: { kind: 'new', name: 'Room 4C', guests: 'anyone', bathroom: 'shared' },
+            namePrefix: 'Bed',
+            count: 2,
+            startNumber: 1,
+            mode: 'long_term',
+            bathrooms: 1,
+            description: null,
+            amenityIds: [],
+            monthlyRentCentavos: centavos(400_000),
+            baseNightlyCentavos: null,
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      const [firstNew, secondNew] = newBeds;
+      if (!firstNew || !secondNew) throw new Error('Expected two new beds');
+      const first = assertOk(
+        await source.deleteUnit(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            unitId: firstNew.id,
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect(first.roomDeleted).toBe(false);
+      const last = assertOk(
+        await source.deleteUnit(
+          {
+            idempotencyKey: nextKey(),
+            accountId: DEMO_IDS.titaLornaDorm.account,
+            unitId: secondNew.id,
+          },
+          TITA_OWNER_SESSION,
+        ),
+      );
+      expect(last.roomDeleted).toBe(true);
+      const after = await list();
+      expect(after.some((item) => item.unit.id === secondNew.id)).toBe(false);
     });
 
     it('25. uploads (not_image, file_too_large, storage_full) and listing photo limits', async () => {
@@ -2049,7 +2201,7 @@ export function runOwnerP4ContractTests(makeSource: MakeContractSource): void {
             name: 'Pine Cabin',
             mode: 'short_stay',
             unitType: 'entire_place',
-            groupLabel: null,
+            roomId: null,
             description: 'Cozy pine cabin.',
             maxGuests: 2,
             bedrooms: 1,

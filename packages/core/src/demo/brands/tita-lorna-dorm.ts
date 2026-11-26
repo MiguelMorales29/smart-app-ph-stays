@@ -3,6 +3,7 @@ import type {
   PropertyPageDraft,
   UnitAmenitiesRow,
   UnitLeaseTermsRow,
+  RoomsRow,
   UnitsRow,
 } from '../../schemas/tables/index.js';
 import { addDays, manilaWallTime } from '../../time/index.js';
@@ -123,6 +124,32 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
     },
   };
 
+  const rooms: RoomsRow[] = [
+    {
+      id: ids.rooms.room2a,
+      account_id: ids.account,
+      property_id: ids.property,
+      name: 'Room 2A',
+      guests: 'ladies',
+      bathroom: 'shared',
+      description:
+        'Air-conditioned 4-bed ladies room on the 2nd floor. Each bed has a privacy curtain, reading lamp, charging outlet, numbered locker and study desk. Two shared bathrooms on the floor.',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: ids.rooms.room3b,
+      account_id: ids.account,
+      property_id: ids.property,
+      name: 'Room 3B',
+      guests: 'gents',
+      bathroom: 'shared',
+      description:
+        'Air-conditioned 6-bed gents room on the 3rd floor. Each bed has a reading light, clip-on fan, charging outlet and locker, with a row of study desks. Two shared bathrooms on the floor.',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+  ];
   const units: UnitsRow[] = [];
   const leaseTerms: UnitLeaseTermsRow[] = [];
   const unitAmenities: UnitAmenitiesRow[] = [];
@@ -149,7 +176,7 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       name: `Room 2A · Bed ${bedNum}`,
       mode: 'long_term',
       unit_type: 'bed_space',
-      group_label: 'Room 2A',
+      room_id: ids.rooms.room2a,
       description: `Ladies air-conditioned 4-bed room (Bed ${bedNum}) with privacy curtain, reading lamp, charging outlet, personal numbered locker, and study desk.`,
       max_guests: 1,
       bedrooms: 1,
@@ -199,7 +226,7 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
       name: `Room 3B · Bed ${bedNum}`,
       mode: 'long_term',
       unit_type: 'bed_space',
-      group_label: 'Room 3B',
+      room_id: ids.rooms.room3b,
       description: `Gents air-conditioned 6-bed room (Bed ${bedNum}) with reading light, clip-on fan, charging outlet, personal locker, and row of study desks.`,
       max_guests: 1,
       bedrooms: 1,
@@ -388,6 +415,7 @@ export function buildTitaLornaDormBrand(today: CalendarDate): BrandBundle {
     rateOverrides: [],
     unitFees: [],
     unitAmenities,
+    rooms,
     houseRules: [
       {
         id: makeDemoUuid(groupHex, '0008', 1),

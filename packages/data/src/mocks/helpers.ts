@@ -30,6 +30,7 @@ import {
   type PropertyPageDraft,
   type PropertyView,
   type PublicPagePhoto,
+  type PublicRoomView,
   type PublicUnitCardView,
   type PublicUnitView,
   type Result,
@@ -271,6 +272,21 @@ export function calculatePaidAndBalance(
     paidCentavos: centavos(paidClamped),
     balanceCentavos: centavos(balanceClamped),
   };
+}
+
+/** The public part of a bed space's room (R-1b). */
+export function publicRoomFor(world: DemoWorld, roomId: string | null): PublicRoomView | null {
+  if (roomId === null) return null;
+  const room = world.rooms.find((item) => item.id === roomId);
+  return room
+    ? {
+        id: room.id,
+        name: room.name,
+        guests: room.guests,
+        bathroom: room.bathroom,
+        description: room.description,
+      }
+    : null;
 }
 
 export function quoteForUnit(params: {
@@ -755,7 +771,7 @@ export function buildPropertyView(
       name: unit.name,
       mode: unit.mode,
       unit_type: unit.unit_type,
-      group_label: unit.group_label,
+      room: publicRoomFor(world, unit.room_id),
       description: unit.description,
       max_guests: unit.max_guests,
       bedrooms: unit.bedrooms,
@@ -1091,7 +1107,7 @@ export function buildPublicUnitView(
     name: unit.name,
     mode: unit.mode,
     unit_type: unit.unit_type,
-    group_label: unit.group_label,
+    room: publicRoomFor(world, unit.room_id),
     description: unit.description,
     max_guests: unit.max_guests,
     bedrooms: unit.bedrooms,

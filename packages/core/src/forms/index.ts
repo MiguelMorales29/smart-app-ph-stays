@@ -46,5 +46,5 @@ export {
   checkPasswordConfirmation,
   phMobileInputSchema,
 } from './rules.js';
-export { bedSpacesFormSchema, unitFormSchema } from './unit.js';
-export type { BedSpacesForm, UnitForm } from './unit.js';
+export { bedSpacesFormSchema, roomFormSchema, unitFormSchema } from './unit.js';
+export type { BedSpacesForm, RoomForm, UnitForm } from './unit.js';

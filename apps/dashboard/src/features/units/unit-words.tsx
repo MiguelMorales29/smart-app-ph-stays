@@ -1,6 +1,9 @@
 import {
   formatPesos,
   type OwnerUnitListItemView,
+  type RoomBathroom,
+  type RoomGuests,
+  type RoomsRow,
   type UnitStatus,
   type UnitType,
   type UnitsRow,
@@ -19,13 +22,30 @@ export function unitStatusLabel(status: UnitStatus): string {
   return UNIT_STATUS_META[status].label;
 }
 
+export const ROOM_GUESTS_LABEL: Record<RoomGuests, string> = {
+  anyone: 'Anyone',
+  ladies: 'Ladies only',
+  gents: 'Gents only',
+};
+
+export const ROOM_BATHROOM_LABEL: Record<RoomBathroom, string> = {
+  shared: 'Shared bathroom',
+  in_room: 'Bathroom in the room',
+};
+
+/** "Shared room · 4 beds · Shared bathroom" */
+export function roomFactsText(room: Pick<RoomsRow, 'bathroom'>, bedCount: number): string {
+  return `Shared room · ${bedCount} ${bedCount === 1 ? 'bed' : 'beds'} · ${ROOM_BATHROOM_LABEL[room.bathroom]}`;
+}
+
 /** "Whole place · 2 guests · 1 bed", or "Bed space · Room 3" for bed spaces. */
 export function unitSummaryText(
-  unit: Pick<UnitsRow, 'unit_type' | 'max_guests' | 'beds' | 'group_label'>,
+  unit: Pick<UnitsRow, 'unit_type' | 'max_guests' | 'beds'>,
+  roomName?: string | null,
 ): string {
   const typeLabel = UNIT_TYPE_LABEL[unit.unit_type];
   if (unit.unit_type === 'bed_space') {
-    return unit.group_label ? `${typeLabel} · ${unit.group_label}` : typeLabel;
+    return roomName ? `${typeLabel} · ${roomName}` : typeLabel;
   }
   const guestsLabel = `${unit.max_guests} ${unit.max_guests === 1 ? 'guest' : 'guests'}`;
   const bedsLabel = `${unit.beds} ${unit.beds === 1 ? 'bed' : 'beds'}`;

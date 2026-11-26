@@ -8,6 +8,8 @@ import {
   paymentAccountMethodSchema,
   propertySlugSchema,
   propertyStatusSchema,
+  roomBathroomSchema,
+  roomGuestsSchema,
   unitModeSchema,
   unitSlugSchema,
   unitStatusSchema,
@@ -91,6 +93,23 @@ export const propertyPagesRow = z.object({
 });
 export type PropertyPagesRow = z.infer<typeof propertyPagesRow>;
 
+/**
+ * A shared room whose beds are rented one by one (R-1b, D92). The room holds what every bed shares
+ * (name, who may stay, bathroom, description); each bed is a `units` row with `room_id` set.
+ */
+export const roomsRow = z.object({
+  id: uuidSchema,
+  account_id: uuidSchema,
+  property_id: uuidSchema,
+  name: z.string().trim().min(1).max(40),
+  guests: roomGuestsSchema,
+  bathroom: roomBathroomSchema,
+  description: z.string().max(2000).nullable(),
+  created_at: isoTimestampSchema,
+  updated_at: isoTimestampSchema,
+});
+export type RoomsRow = z.infer<typeof roomsRow>;
+
 export const unitsRow = z.object({
   id: uuidSchema,
   account_id: uuidSchema,
@@ -99,7 +118,8 @@ export const unitsRow = z.object({
   name: z.string().min(1).max(80),
   mode: unitModeSchema,
   unit_type: unitTypeSchema,
-  group_label: z.string().min(1).max(40).nullable(),
+  /** Set for bed spaces only: the shared room the bed is in. */
+  room_id: uuidSchema.nullable(),
   description: z.string().max(4000).nullable(),
   max_guests: z.int().min(1),
   bedrooms: z.int().min(0),

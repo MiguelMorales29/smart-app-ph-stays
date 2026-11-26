@@ -46,6 +46,13 @@ export const DASHBOARD_ROUTE_CATALOG: readonly RouteCatalogEntry[] = [
     frame: 'AppFrame',
     phase: 5,
   },
+  {
+    app: 'dashboard',
+    path: '/units/rooms/dec0de40-0040-4000-8000-000000000001?as=owner:tita-lorna-dorm',
+    label: 'Edit room (Room 2A, Tita Lorna)',
+    frame: 'AppFrame',
+    phase: 5,
+  },
   { app: 'dashboard', path: '/guests', label: 'Guests', frame: 'AppFrame', phase: 8 },
   { app: 'dashboard', path: '/settings', label: 'Settings', frame: 'AppFrame', phase: 4 },
   {

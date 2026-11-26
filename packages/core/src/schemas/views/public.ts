@@ -25,6 +25,7 @@ import {
   unitLeaseTermsRow,
   unitOccupancyRow,
   unitStayTermsRow,
+  roomsRow,
   unitsRow,
   weekdayRatesRow,
 } from '../tables/index.js';
@@ -149,6 +150,15 @@ export const publicPageMediaViewSchema = z.object({
 });
 export type PublicPageMediaView = z.infer<typeof publicPageMediaViewSchema>;
 
+export const publicRoomViewSchema = roomsRow.pick({
+  id: true,
+  name: true,
+  guests: true,
+  bathroom: true,
+  description: true,
+});
+export type PublicRoomView = z.infer<typeof publicRoomViewSchema>;
+
 export const publicUnitCardViewSchema = unitsRow
   .pick({
     id: true,
@@ -157,7 +167,6 @@ export const publicUnitCardViewSchema = unitsRow
     name: true,
     mode: true,
     unit_type: true,
-    group_label: true,
     description: true,
     max_guests: true,
     bedrooms: true,
@@ -172,6 +181,8 @@ export const publicUnitCardViewSchema = unitsRow
     price_from: centavosSchema.nullable(),
     photos: z.array(publicPhotoViewSchema),
     amenity_ids: z.array(amenitiesRow.shape.id),
+    /** The shared room of a bed space (R-1b); null for whole places and private rooms. */
+    room: publicRoomViewSchema.nullable(),
   });
 export type PublicUnitCardView = z.infer<typeof publicUnitCardViewSchema>;
 

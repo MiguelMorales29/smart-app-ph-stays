@@ -163,7 +163,7 @@ describe('property-rules', () => {
       kind: 'room',
       title: 'Room 2A',
       targetUnitSlug: 'room-2a-bed-1',
-      factsLine: 'Ladies · 4 beds',
+      factsLine: 'Ladies · 4 beds · Shared bathroom',
       bedCount: 4,
     });
     expect(lornaCards[0]?.factsLine).not.toContain('free');
@@ -173,7 +173,7 @@ describe('property-rules', () => {
       kind: 'room',
       title: 'Room 3B',
       targetUnitSlug: 'room-3b-bed-1',
-      factsLine: 'Gents · 6 beds',
+      factsLine: 'Gents · 6 beds · Shared bathroom',
       bedCount: 6,
     });
 

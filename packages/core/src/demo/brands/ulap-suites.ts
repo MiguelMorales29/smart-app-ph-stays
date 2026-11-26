@@ -333,7 +333,7 @@ export function buildUlapSuitesBrand(
         name: 'Studio Fog',
         mode: 'short_stay',
         unit_type: 'entire_place',
-        group_label: null,
+        room_id: null,
         description:
           'Cozy 24 sqm studio with fairy-light queen bed, 100-inch projector screen, coffee bar, work desk, and pine-tree window.',
         max_guests: 2,
@@ -356,7 +356,7 @@ export function buildUlapSuitesBrand(
         name: '1BR Taal View',
         mode: 'short_stay',
         unit_type: 'entire_place',
-        group_label: null,
+        room_id: null,
         description:
           'Spacious 36 sqm 1-bedroom suite with sunset balcony over Taal Lake, queen bedroom, sofa bed, karaoke speaker, and full kitchen.',
         max_guests: 4,

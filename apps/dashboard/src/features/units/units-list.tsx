@@ -11,8 +11,9 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
+  Trash2Icon,
 } from 'lucide-react';
-import { formatPesos, type OwnerUnitListItemView } from '@smartapp/core';
+import { formatPesos, type OwnerUnitListItemView, type RoomsRow } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
@@ -33,34 +34,45 @@ import {
 } from '@smartapp/ui/components/table';
 import { cn } from '@smartapp/ui/lib/utils';
 import { bedPartOfName } from '@/data/units/bulk';
-import { UNIT_TYPE_LABEL, UnitStatusBadge, unitPriceText, unitSummaryText } from './unit-words';
+import {
+  ROOM_GUESTS_LABEL,
+  UNIT_TYPE_LABEL,
+  UnitStatusBadge,
+  roomFactsText,
+  unitPriceText,
+  unitSummaryText,
+} from './unit-words';
 
 export type UnitEntry =
   | { readonly kind: 'unit'; readonly key: string; readonly item: OwnerUnitListItemView }
   | {
       readonly kind: 'room';
       readonly key: string;
-      readonly label: string;
+      readonly room: RoomsRow;
       readonly beds: readonly OwnerUnitListItemView[];
     };
 
-/** Keeps the list order and puts bed spaces together under their room. */
+/**
+ * Keeps the owner's order. Every whole place and private room is its own entry; only beds are
+ * grouped, under their shared room (R-1b, D92). No category titles: a title over separate units
+ * read as one category (Lex, 26 Nov).
+ */
 export function toEntries(units: readonly OwnerUnitListItemView[]): UnitEntry[] {
   const entries: UnitEntry[] = [];
   const rooms = new Map<string, OwnerUnitListItemView[]>();
   for (const item of units) {
-    const label = item.unit.unit_type === 'bed_space' ? item.unit.group_label : null;
-    if (label === null) {
+    const room = item.unit.unit_type === 'bed_space' ? item.room : null;
+    if (room === null) {
       entries.push({ kind: 'unit', key: item.unit.id, item });
       continue;
     }
-    const beds = rooms.get(label);
+    const beds = rooms.get(room.id);
     if (beds) {
       beds.push(item);
     } else {
       const list = [item];
-      rooms.set(label, list);
-      entries.push({ kind: 'room', key: `room:${label}`, label, beds: list });
+      rooms.set(room.id, list);
+      entries.push({ kind: 'room', key: `room:${room.id}`, room, beds: list });
     }
   }
   return entries;
@@ -82,8 +94,9 @@ export interface UnitListActions {
   readonly onArchive: (ids: readonly string[]) => void;
   readonly onRestore: (ids: readonly string[]) => void;
   readonly onDuplicate: (id: string) => void;
-  readonly onAddBed: (roomLabel: string) => void;
-  readonly onRenameRoom: (roomLabel: string, ids: readonly string[]) => void;
+  /** Never-booked units only (AUDIT-1 A20); the page asks before deleting. */
+  readonly onDelete: (ids: readonly string[]) => void;
+  readonly onAddBed: (roomId: string) => void;
 }
 
 const LONG_PRESS_MS = 450;
@@ -253,10 +266,17 @@ function UnitMenu({
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => actions.onArchive([id])}>
-              <ArchiveIcon aria-hidden="true" />
-              Archive
-            </DropdownMenuItem>
+            {item.can_delete ? (
+              <DropdownMenuItem variant="destructive" onClick={() => actions.onDelete([id])}>
+                <Trash2Icon aria-hidden="true" />
+                Delete
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem variant="destructive" onClick={() => actions.onArchive([id])}>
+                <ArchiveIcon aria-hidden="true" />
+                Archive
+              </DropdownMenuItem>
+            )}
           </>
         )}
       </DropdownMenuContent>
@@ -265,15 +285,17 @@ function UnitMenu({
 }
 
 function RoomMenu({
-  label,
+  room,
   beds,
   actions,
 }: {
-  readonly label: string;
+  readonly room: RoomsRow;
   readonly beds: readonly OwnerUnitListItemView[];
   readonly actions: UnitListActions;
 }) {
+  const label = room.name;
   const ids = beds.map((bed) => bed.unit.id);
+  const canDelete = beds.every((bed) => bed.can_delete);
   const archived = beds.every((bed) => bed.unit.archived_at !== null);
   const hidden = beds.filter((bed) => bed.unit.status !== 'listed').map((bed) => bed.unit.id);
   const listed = beds.filter((bed) => bed.unit.status === 'listed').map((bed) => bed.unit.id);
@@ -299,9 +321,11 @@ function RoomMenu({
           </DropdownMenuItem>
         ) : (
           <>
-            <DropdownMenuItem onClick={() => actions.onRenameRoom(label, ids)}>
+            <DropdownMenuItem
+              render={<Link to="/units/rooms/$roomId" params={{ roomId: room.id }} />}
+            >
               <PencilIcon aria-hidden="true" />
-              Rename room
+              Edit room
             </DropdownMenuItem>
             {hidden.length > 0 ? (
               <DropdownMenuItem onClick={() => actions.onShow(hidden)}>
@@ -316,10 +340,17 @@ function RoomMenu({
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => actions.onArchive(ids)}>
-              <ArchiveIcon aria-hidden="true" />
-              Archive room
-            </DropdownMenuItem>
+            {canDelete ? (
+              <DropdownMenuItem variant="destructive" onClick={() => actions.onDelete(ids)}>
+                <Trash2Icon aria-hidden="true" />
+                Delete room
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem variant="destructive" onClick={() => actions.onArchive(ids)}>
+                <ArchiveIcon aria-hidden="true" />
+                Archive room
+              </DropdownMenuItem>
+            )}
           </>
         )}
       </DropdownMenuContent>
@@ -408,7 +439,9 @@ export function UnitCard({
             </div>
           )}
         </div>
-        <p className="truncate text-sm text-muted-foreground">{unitSummaryText(item.unit)}</p>
+        <p className="truncate text-sm text-muted-foreground">
+          {unitSummaryText(item.unit, item.room?.name)}
+        </p>
         <p className="text-sm font-medium text-foreground tabular">
           {price ?? <span className="font-normal text-muted-foreground">No price yet</span>}
         </p>
@@ -482,14 +515,15 @@ function BedRow({
 
 /** A room of bed spaces as one bounded group: room header with its own menu, beds indented under it. */
 export function RoomCard({
-  label,
+  room,
   beds,
   actions,
 }: {
-  readonly label: string;
+  readonly room: RoomsRow;
   readonly beds: readonly OwnerUnitListItemView[];
   readonly actions: UnitListActions;
 }) {
+  const label = room.name;
   const ids = beds.map((bed) => bed.unit.id);
   const listed = beds.filter((bed) => bed.unit.status === 'listed').length;
   const price = roomPriceText(beds);
@@ -507,12 +541,29 @@ export function RoomCard({
         ) : null}
         <Cover items={beds} className="w-20 shrink-0 rounded-md" />
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 font-medium">{label}</h3>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {actions.selecting ? (
+              <h3 className="line-clamp-2 font-medium">{label}</h3>
+            ) : (
+              <h3 className="line-clamp-2 font-medium">
+                <Link
+                  to="/units/rooms/$roomId"
+                  params={{ roomId: room.id }}
+                  className="hover-hover:hover:underline"
+                >
+                  {label}
+                </Link>
+              </h3>
+            )}
+            {room.guests === 'anyone' ? null : (
+              <Badge variant="secondary">{ROOM_GUESTS_LABEL[room.guests]}</Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground tabular">
-            {beds.length} {beds.length === 1 ? 'bed' : 'beds'}
+            {roomFactsText(room, beds.length)}
             {archived ? '' : ` · ${listed} listed`}
-            {price ? ` · ${price}` : ''}
           </p>
+          {price ? <p className="text-sm font-medium tabular">{price}</p> : null}
         </div>
         {actions.selecting ? (
           <div className="relative z-20 flex size-11 items-center justify-center">
@@ -531,13 +582,13 @@ export function RoomCard({
                 variant="outline"
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-                onClick={() => actions.onAddBed(label)}
+                onClick={() => actions.onAddBed(room.id)}
               >
                 <PlusIcon aria-hidden="true" />
                 <span className="max-sm:sr-only">Add a bed</span>
               </Button>
             )}
-            <RoomMenu label={label} beds={beds} actions={actions} />
+            <RoomMenu room={room} beds={beds} actions={actions} />
           </div>
         )}
       </div>
@@ -662,12 +713,12 @@ function UnitRow({
   );
 }
 
-/** The table view: same groups as the cards, rooms as a header row with their beds indented below. */
+/** The table view: one list like the cards; a shared room is a header row with its beds below. */
 export function UnitsTable({
-  sections,
+  entries,
   actions,
 }: {
-  readonly sections: readonly { readonly title: string; readonly entries: readonly UnitEntry[] }[];
+  readonly entries: readonly UnitEntry[];
   readonly actions: UnitListActions;
 }) {
   return (
@@ -690,25 +741,14 @@ export function UnitsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sections.flatMap((section) => {
+          {(() => {
             const rows: ReactNode[] = [];
-            if (sections.length > 1) {
-              rows.push(
-                <TableRow key={`section:${section.title}`} className="hover:bg-transparent">
-                  <TableCell
-                    colSpan={actions.selecting ? 6 : 5}
-                    className="pt-4 pb-1 text-xs font-medium text-muted-foreground"
-                  >
-                    {section.title}
-                  </TableCell>
-                </TableRow>,
-              );
-            }
-            for (const entry of section.entries) {
+            for (const entry of entries) {
               if (entry.kind === 'unit') {
                 rows.push(<UnitRow key={entry.key} item={entry.item} actions={actions} />);
                 continue;
               }
+              const label = entry.room.name;
               const ids = entry.beds.map((bed) => bed.unit.id);
               const listed = entry.beds.filter((bed) => bed.unit.status === 'listed').length;
               const allChecked = ids.every((id) => actions.selected.has(id));
@@ -717,20 +757,36 @@ export function UnitsTable({
                 <TableRow key={entry.key} className="bg-muted/50 hover:bg-muted/50">
                   {actions.selecting ? (
                     <SelectCell
-                      label={`Select every bed in ${entry.label}`}
+                      label={`Select every bed in ${label}`}
                       checked={allChecked}
                       indeterminate={!allChecked && ids.some((id) => actions.selected.has(id))}
                       onChange={(on) => actions.onToggle(ids, on)}
                     />
                   ) : null}
-                  <TableCell colSpan={5}>
+                  <TableCell colSpan={5} className="whitespace-normal">
                     <div className="flex min-h-11 items-center gap-3">
                       <Cover items={entry.beds} className="w-14 shrink-0 rounded-md" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium">{entry.label}</p>
+                        <p className="flex flex-wrap items-center gap-x-2 font-medium">
+                          {actions.selecting ? (
+                            label
+                          ) : (
+                            <Link
+                              to="/units/rooms/$roomId"
+                              params={{ roomId: entry.room.id }}
+                              className="hover-hover:hover:underline"
+                            >
+                              {label}
+                            </Link>
+                          )}
+                          {entry.room.guests === 'anyone' ? null : (
+                            <Badge variant="secondary">
+                              {ROOM_GUESTS_LABEL[entry.room.guests]}
+                            </Badge>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground tabular">
-                          {entry.beds.length} {entry.beds.length === 1 ? 'bed' : 'beds'} · {listed}{' '}
-                          listed
+                          {roomFactsText(entry.room, entry.beds.length)} · {listed} listed
                           {price ? ` · ${price}` : ''}
                         </p>
                       </div>
@@ -742,13 +798,13 @@ export function UnitsTable({
                               variant="outline"
                               size="sm"
                               className="min-h-11 sm:min-h-9"
-                              onClick={() => actions.onAddBed(entry.label)}
+                              onClick={() => actions.onAddBed(entry.room.id)}
                             >
                               <PlusIcon aria-hidden="true" />
                               <span className="max-sm:sr-only">Add a bed</span>
                             </Button>
                           )}
-                          <RoomMenu label={entry.label} beds={entry.beds} actions={actions} />
+                          <RoomMenu room={entry.room} beds={entry.beds} actions={actions} />
                         </div>
                       )}
                     </div>
@@ -757,12 +813,12 @@ export function UnitsTable({
               );
               for (const bed of entry.beds) {
                 rows.push(
-                  <UnitRow key={bed.unit.id} item={bed} actions={actions} inRoom={entry.label} />,
+                  <UnitRow key={bed.unit.id} item={bed} actions={actions} inRoom={label} />,
                 );
               }
             }
             return rows;
-          })}
+          })()}
         </TableBody>
       </Table>
     </div>

@@ -23,7 +23,7 @@ describe('operation contract', () => {
 
   it('ensures every operation entry matches its key and has valid access, errors, and featureIds', () => {
     const entries = Object.entries(operations);
-    expect(entries.length).toBe(86);
+    expect(entries.length).toBe(89);
 
     for (const [key, spec] of entries) {
       expect(spec.name).toBe(key);

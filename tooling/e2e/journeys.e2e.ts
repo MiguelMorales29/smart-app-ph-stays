@@ -187,19 +187,21 @@ test.describe('Owner journeys (FIX-1 J)', () => {
 
     await bedsDialog.getByLabel('Monthly rent for each bed').fill('3500');
     await bedsDialog.getByRole('button', { name: 'Add 2 beds' }).click();
-    await expect(page).toHaveURL(/\/units\/.+\/photos/);
+    // Beds share their room, so the room page opens with the new beds in its list (R-1b).
+    await expect(page).toHaveURL(/\/units\/rooms\//);
+    await expect(page.getByRole('link', { name: /Bed 7/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Bed 8/ })).toBeVisible();
 
-    // Return to /units and verify Bed 7 and Bed 8 appear under Room 3B without a duplicate Bed 1.
+    // Back in /units, Room 3B now has 8 beds and no duplicate Bed 1.
     await page.getByRole('link', { name: 'Units' }).first().click();
     const visibleRows = page.locator('tr:visible, article:visible');
     await expect(visibleRows.filter({ hasText: /Bed 7/ }).first()).toBeVisible();
-    await expect(visibleRows.filter({ hasText: /Bed 8/ }).first()).toBeVisible();
     await expect(
       visibleRows.filter({ hasText: 'Room 3B' }).filter({ hasText: '8 beds' }).first(),
     ).toBeVisible();
   });
 
-  test('R-1 units: archive -> Archived filter -> Restore, rename a room, table view remembered', async ({
+  test('R-1 units: archive -> Archived filter -> Restore, table view remembered, delete a draft, edit a room (R-1b)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -225,15 +227,30 @@ test.describe('Owner journeys (FIX-1 J)', () => {
     await page.reload({ waitUntil: 'networkidle' });
     await expect(page.locator('table:visible')).toBeVisible();
 
-    // Rename a room in the dorm: every bed follows.
+    // A draft that was never booked can be deleted (AUDIT-1 A20).
+    await page.getByRole('button', { name: /^Drafts/ }).click();
+    await page.getByRole('button', { name: 'More for Garden Patio Studio', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('Garden Patio Studio deleted')).toBeVisible();
+
+    // Edit a shared room once: the name and who can stay reach every bed (R-1b).
     await page.goto(`${DASHBOARD_ORIGIN}/units?as=owner:tita-lorna-dorm&clock=golden`, {
       waitUntil: 'networkidle',
     });
     await page.getByRole('button', { name: 'More for Room 2A', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Rename room' }).click();
+    await page.getByRole('menuitem', { name: 'Edit room' }).click();
+    await expect(page.getByRole('heading', { name: 'Room 2A', level: 1 })).toBeVisible();
     await page.getByLabel('Room name').fill('Ladies dorm');
-    await page.getByRole('dialog').getByRole('button', { name: 'Rename room' }).click();
-    await expect(page.getByText('Renamed to Ladies dorm')).toBeVisible();
+    await page.getByRole('button', { name: 'Ladies only' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('heading', { name: 'Ladies dorm', level: 1 })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Bed 1/ })).toBeVisible();
+    // Back in the list (no reload: demo edits live in memory).
+    await page
+      .getByRole('navigation', { name: /breadcrumb/i })
+      .getByRole('link', { name: 'Units' })
+      .click();
     await expect(page.getByRole('button', { name: 'More for Ladies dorm · Bed 1' })).toBeVisible();
   });
 

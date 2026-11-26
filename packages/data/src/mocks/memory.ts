@@ -2419,7 +2419,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
               {
                 property_id: sourceUnit.property_id,
                 unit_type: sourceUnit.unit_type,
-                group_label: sourceUnit.group_label,
+                room_id: sourceUnit.room_id,
                 archived_at: null,
               },
             ],
@@ -2435,11 +2435,14 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
 
           // A bed space copies as the next bed in its room ("Room 1 · Bed 4"), other units as "(Copy)".
           let copyName = `${sourceUnit.name.slice(0, 72)} (Copy)`;
-          if (sourceUnit.unit_type === 'bed_space' && sourceUnit.group_label !== null) {
-            const label = sourceUnit.group_label;
+          const sourceRoom =
+            sourceUnit.room_id === null
+              ? undefined
+              : world.rooms.find((r) => r.id === sourceUnit.room_id);
+          if (sourceUnit.unit_type === 'bed_space' && sourceRoom) {
+            const label = sourceRoom.name;
             const roomBeds = propertyUnits.filter(
-              (u) =>
-                u.unit_type === 'bed_space' && u.group_label === label && u.archived_at === null,
+              (u) => u.room_id === sourceRoom.id && u.archived_at === null,
             );
             const highest = roomBeds.reduce((max, bed) => {
               const match = /(\d+)\s*$/.exec(bed.name.trim());
@@ -2450,9 +2453,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
 
           // The copy sits right after its source (after the last bed of the same room).
           const sameRoom = (u: (typeof world.units)[number]) =>
-            sourceUnit.group_label !== null &&
-            u.group_label === sourceUnit.group_label &&
-            u.unit_type === 'bed_space';
+            sourceUnit.room_id !== null && u.room_id === sourceUnit.room_id;
           const anchorOrder = propertyUnits
             .filter((u) => u.id === sourceUnit.id || sameRoom(u))
             .reduce((max, u) => Math.max(max, u.sort_order), sourceUnit.sort_order);
@@ -2526,7 +2527,7 @@ export function createMemorySource(options: MemorySourceOptions): DataSource {
           for (const link of world.unit_amenities.filter((a) => a.unit_id === sourceUnit.id)) {
             world.unit_amenities.push({ ...link, unit_id: newUnitId, created_at: nowIso });
           }
-          if (sourceUnit.unit_type === 'bed_space' && sourceUnit.group_label !== null) {
+          if (sourceUnit.unit_type === 'bed_space' && sourceUnit.room_id !== null) {
             // Beds in a room share the room's photos (the editor saves them to every bed).
             const roomPhotos = world.listing_photos.filter((p) => p.unit_id === sourceUnit.id);
             for (const photo of roomPhotos) {

@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { BedDoubleIcon, DoorClosedIcon, HomeIcon } from 'lucide-react';
 import {
+  ROOM_GUESTS,
   readErrorDetails,
   slugifyPropertyName,
   type OwnerUnitListItemView,
+  type RoomGuests,
   type UnitMode,
   type UnitType,
 } from '@smartapp/core';
@@ -29,6 +31,7 @@ import {
   nextNewRoomName,
   summarizeBedSpaceRooms,
 } from './bed-space-helpers';
+import { ROOM_GUESTS_LABEL } from './unit-words';
 
 const NEW_ROOM_VALUE = '__new__';
 
@@ -167,9 +170,9 @@ function AddUnitForm({
   const defaultMode = useMemo(() => deriveDefaultUnitMode(units), [units]);
   const defaultNewRoom = useMemo(() => nextNewRoomName(units), [units]);
 
-  const trimmedInitial = initialRoom?.trim() ?? '';
-  const matchedInitialRoom = trimmedInitial
-    ? existingRooms.find((r) => r.label.toLowerCase() === trimmedInitial.toLowerCase())
+  // `?room=` carries the room's id (R-1b).
+  const matchedInitialRoom = initialRoom
+    ? existingRooms.find((r) => r.id === initialRoom)
     : undefined;
 
   const [unitType, setUnitType] = useState<Exclude<UnitType, 'bed_space'>>('entire_place');
@@ -177,12 +180,11 @@ function AddUnitForm({
   const [name, setName] = useState('');
   const [guests, setGuests] = useState(2);
   const [roomChoice, setRoomChoice] = useState<string>(() =>
-    matchedInitialRoom ? matchedInitialRoom.label : NEW_ROOM_VALUE,
+    matchedInitialRoom ? matchedInitialRoom.id : NEW_ROOM_VALUE,
   );
-  const [newRoomName, setNewRoomName] = useState<string>(() =>
-    trimmedInitial && !matchedInitialRoom ? trimmedInitial : defaultNewRoom,
-  );
-  const [beds, setBeds] = useState(() => (trimmedInitial ? 1 : 4));
+  const [newRoomName, setNewRoomName] = useState<string>(defaultNewRoom);
+  const [roomGuests, setRoomGuests] = useState<RoomGuests>('anyone');
+  const [beds, setBeds] = useState(() => (matchedInitialRoom ? 1 : 4));
   const [price, setPrice] = useState<number | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [limit, setLimit] = useState<{ limit: number; used: number } | null>(null);
@@ -191,12 +193,11 @@ function AddUnitForm({
   const per = mode === 'long_term' ? 'a month' : 'a night';
   const selectedType: UnitType = kind === 'beds' ? 'bed_space' : unitType;
 
-  const isExistingRoomSelected =
-    existingRooms.length > 0 &&
-    roomChoice !== NEW_ROOM_VALUE &&
-    existingRooms.some((r) => r.label === roomChoice);
-  const effectiveRoom = isExistingRoomSelected ? roomChoice : newRoomName;
-  const startNumber = nextBedNumberForRoom(existingRooms, effectiveRoom);
+  const chosenRoom =
+    roomChoice === NEW_ROOM_VALUE ? undefined : existingRooms.find((r) => r.id === roomChoice);
+  const isExistingRoomSelected = chosenRoom !== undefined;
+  const effectiveRoom = chosenRoom ? chosenRoom.label : newRoomName;
+  const startNumber = nextBedNumberForRoom(existingRooms, chosenRoom?.id ?? null);
   const endNumber = startNumber + beds - 1;
 
   const computedSubmitLabel =
@@ -232,18 +233,29 @@ function AddUnitForm({
     const next: Record<string, string> = {};
     if (kind === 'unit' && !name.trim()) next.name = 'Enter the unit name.';
     if (kind === 'beds' && !effectiveRoom.trim()) next.room = 'Enter the room name.';
+    if (
+      kind === 'beds' &&
+      !chosenRoom &&
+      existingRooms.some((r) => r.label.toLowerCase() === newRoomName.trim().toLowerCase())
+    ) {
+      next.room = 'You already have a room with this name. Pick it above, or use another name.';
+    }
     if (price === null || price <= 0) next.price = 'Enter a price above ₱0.';
     setErrors(next);
     setLimit(null);
     if (Object.keys(next).length > 0 || propertyId === null || price === null) return;
     try {
       if (kind === 'beds') {
-        const canonicalRoom =
-          existingRooms.find((r) => r.label.toLowerCase() === effectiveRoom.trim().toLowerCase())
-            ?.label ?? effectiveRoom.trim().slice(0, 40);
         const created = await createBeds.mutateAsync({
           propertyId,
-          groupLabel: canonicalRoom,
+          room: chosenRoom
+            ? { kind: 'existing', roomId: chosenRoom.id }
+            : {
+                kind: 'new',
+                name: newRoomName.trim().slice(0, 40),
+                guests: roomGuests,
+                bathroom: 'shared',
+              },
           namePrefix: 'Bed',
           count: beds,
           startNumber,
@@ -254,9 +266,18 @@ function AddUnitForm({
           monthlyRentCentavos: mode === 'long_term' ? price : null,
           baseNightlyCentavos: mode === 'short_stay' ? price : null,
         });
-        const first = created[0];
-        if (first) done(first.id);
-        else onClose();
+        // Beds share the room's photos and amenities, so the room is the next stop (R-1b).
+        const roomId = created[0]?.room_id ?? null;
+        if (roomId) {
+          void navigate({
+            to: '/units/rooms/$roomId',
+            params: { roomId },
+            ...(chosenRoom ? {} : { hash: 'photos' }),
+            replace: true,
+          });
+        } else {
+          onClose();
+        }
         return;
       }
       const saved = await saveUnit.mutateAsync({
@@ -267,7 +288,7 @@ function AddUnitForm({
         slug: slugifyPropertyName(name) || 'unit',
         mode,
         unitType,
-        groupLabel: null,
+        roomId: null,
         description: null,
         maxGuests: guests,
         bedrooms: unitType === 'entire_place' ? 1 : 0,
@@ -401,7 +422,7 @@ function AddUnitForm({
               <NativeSelect
                 id="add-room-select"
                 className="w-full"
-                value={isExistingRoomSelected ? roomChoice : NEW_ROOM_VALUE}
+                value={chosenRoom ? chosenRoom.id : NEW_ROOM_VALUE}
                 onChange={(event) => {
                   const value = event.target.value;
                   setRoomChoice(value);
@@ -409,7 +430,7 @@ function AddUnitForm({
                 }}
               >
                 {existingRooms.map((r) => (
-                  <NativeSelectOption key={r.label} value={r.label}>
+                  <NativeSelectOption key={r.id} value={r.id}>
                     {r.label} ({r.count} {r.count === 1 ? 'bed' : 'beds'})
                   </NativeSelectOption>
                 ))}
@@ -430,6 +451,17 @@ function AddUnitForm({
                 onChange={(event) => setNewRoomName(event.target.value)}
               />
               <FieldError>{errors.room}</FieldError>
+            </Field>
+          ) : null}
+          {!isExistingRoomSelected ? (
+            <Field>
+              <FieldLabel id="add-room-guests-label">Who can stay</FieldLabel>
+              <SegmentedControl
+                aria-labelledby="add-room-guests-label"
+                value={roomGuests}
+                onValueChange={setRoomGuests}
+                options={ROOM_GUESTS.map((value) => ({ value, label: ROOM_GUESTS_LABEL[value] }))}
+              />
             </Field>
           ) : null}
           <RowGroup

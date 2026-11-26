@@ -3,12 +3,7 @@ import type { OperationInput } from '@smartapp/data';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { setupKeys } from '../setup/keys';
-import {
-  createIdempotencyKey,
-  requireOwnerClient,
-  unwrapResult,
-  useActiveDataClient,
-} from '../shared';
+import { createIdempotencyKey, requireOwnerClient, useActiveDataClient } from '../shared';
 import { unitsKeys } from './keys';
 
 /** Builds a saveUnit input that keeps everything the detail view already has. */
@@ -24,7 +19,7 @@ export function saveUnitInputFromDetail(
     slug: unit.slug,
     mode: unit.mode,
     unitType: unit.unit_type,
-    groupLabel: unit.group_label,
+    roomId: unit.room_id,
     description: unit.description,
     maxGuests: unit.max_guests,
     bedrooms: unit.bedrooms,
@@ -269,38 +264,4 @@ export function useBulkArchiveMutation() {
 export function bedPartOfName(name: string, roomLabel: string): string {
   const prefix = `${roomLabel} · `;
   return name.startsWith(prefix) ? name.slice(prefix.length) : name;
-}
-
-/** Renames a room: every bed's room label and the room part of its name (verdict 4, A6). */
-export function useRenameRoomMutation() {
-  const active = useActiveDataClient();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: {
-      readonly unitIds: readonly string[];
-      readonly from: string;
-      readonly to: string;
-    }) => {
-      const { source, session, accountId } = requireOwnerClient(active);
-      for (const unitId of input.unitIds) {
-        const detail = unwrapResult(await source.getOwnerUnit({ accountId, unitId }, session));
-        const base = saveUnitInputFromDetail(detail);
-        unwrapResult(
-          await source.saveUnit(
-            {
-              ...base,
-              accountId,
-              idempotencyKey: createIdempotencyKey('rename-room'),
-              groupLabel: input.to,
-              name: `${input.to} · ${bedPartOfName(detail.unit.name, input.from)}`.slice(0, 80),
-            },
-            session,
-          ),
-        );
-      }
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: unitsKeys.all });
-    },
-  });
 }

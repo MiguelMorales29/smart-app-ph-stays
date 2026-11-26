@@ -36,6 +36,7 @@ import {
   unitLeaseTermsRow,
   unitOccupancyRow,
   unitStayTermsRow,
+  roomsRow,
   unitsRow,
   weekdayRatesRow,
 } from '../tables/index.js';
@@ -290,6 +291,10 @@ export type SlugCheckView = z.infer<typeof slugCheckViewSchema>;
 
 export const ownerUnitListItemViewSchema = z.object({
   unit: unitsRow,
+  /** The shared room of a bed space (R-1b). */
+  room: roomsRow.nullable(),
+  /** True when the unit has never had a booking or lease, so it can be deleted (A20). */
+  can_delete: z.boolean(),
   cover_photo: ownerPhotoViewSchema.nullable(),
   photo_count: z.int().min(0),
   stay_terms: unitStayTermsRow.nullable(),
@@ -299,6 +304,7 @@ export type OwnerUnitListItemView = z.infer<typeof ownerUnitListItemViewSchema>;
 
 export const ownerUnitDetailViewSchema = z.object({
   unit: unitsRow,
+  room: roomsRow.nullable(),
   stay_terms: unitStayTermsRow.nullable(),
   lease_terms: unitLeaseTermsRow.nullable(),
   weekday_rates: z.array(weekdayRatesRow),

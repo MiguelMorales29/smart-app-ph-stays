@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { uuidSchema } from '../ids/index.js';
-import { positiveCentavosSchema, unitsRow } from '../schemas/tables/index.js';
+import { positiveCentavosSchema, roomsRow, unitsRow } from '../schemas/tables/index.js';
 
 export const unitFormSchema = z
   .object(unitsRow.shape)
@@ -10,7 +10,6 @@ export const unitFormSchema = z
     slug: true,
     mode: true,
     unit_type: true,
-    group_label: true,
     description: true,
     max_guests: true,
     bedrooms: true,
@@ -24,9 +23,18 @@ export const unitFormSchema = z
   });
 export type UnitForm = z.infer<typeof unitFormSchema>;
 
+/** Edit room (R-1b): what every bed in a shared room shares. */
+export const roomFormSchema = z.object({
+  name: z.string().trim().min(1, 'Enter the room name.').max(40, 'Use up to 40 characters.'),
+  guests: roomsRow.shape.guests,
+  bathroom: roomsRow.shape.bathroom,
+  description: z.string().max(2000, 'Use up to 2,000 characters.'),
+});
+export type RoomForm = z.infer<typeof roomFormSchema>;
+
 export const bedSpacesFormSchema = z
   .object({
-    group_label: z.string().min(1, 'Enter a room or wing name.').max(40),
+    room_name: z.string().trim().min(1, 'Enter the room name.').max(40),
     name_prefix: z.string().min(1, 'Enter a bed label prefix.').max(30),
     count: z.int().min(1).max(20),
     start_number: z.int().min(1).max(99),

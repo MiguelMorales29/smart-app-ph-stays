@@ -29,14 +29,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
-import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
-import { Input } from '@smartapp/ui/components/input';
+import { Field, FieldLabel } from '@smartapp/ui/components/field';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/sortable';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { ErrorState } from '@smartapp/ui/compositions/error-state';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@smartapp/ui/components/alert-dialog';
 import { MilestonePicture } from '@smartapp/ui/compositions/milestone-picture';
 import { MoneyInput } from '@smartapp/ui/compositions/money-input';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
@@ -51,10 +60,13 @@ import {
   useBulkArchiveMutation,
   useBulkUnitPriceMutation,
   useBulkUnitStatusMutation,
-  useRenameRoomMutation,
 } from '@/data/units/bulk';
 import { useOwnerUnitsQuery } from '@/data/units/reads';
-import { useDuplicateUnitMutation, useReorderUnitsMutation } from '@/data/units/writes';
+import {
+  useDeleteUnitMutation,
+  useDuplicateUnitMutation,
+  useReorderUnitsMutation,
+} from '@/data/units/writes';
 import { AddUnitSheet } from './add-unit-sheet';
 import { UnitNotReadySheet, type NotReadyState } from './unit-not-ready-sheet';
 import { UNIT_STATUS_META } from './unit-words';
@@ -124,34 +136,6 @@ function matchesFilter(item: OwnerUnitListItemView, filter: UnitsFilter | null):
   return filter === null || item.unit.status === FILTER_STATUS[filter];
 }
 
-/** Whole places and private rooms first, then shared rooms with their beds (verdict 4). */
-function toSections(entries: readonly UnitEntry[]) {
-  const places = entries.filter((entry) => entry.kind === 'unit');
-  const rooms = entries.filter((entry) => entry.kind === 'room');
-  const bedCount = rooms.reduce(
-    (sum, entry) => sum + (entry.kind === 'room' ? entry.beds.length : 0),
-    0,
-  );
-  return [
-    ...(places.length > 0
-      ? [
-          {
-            title: `Whole places and private rooms · ${places.length}`,
-            entries: places,
-          },
-        ]
-      : []),
-    ...(rooms.length > 0
-      ? [
-          {
-            title: `Shared rooms · ${rooms.length} ${rooms.length === 1 ? 'room' : 'rooms'}, ${bedCount} ${bedCount === 1 ? 'bed' : 'beds'}`,
-            entries: rooms,
-          },
-        ]
-      : []),
-  ];
-}
-
 /** /units (OW-08, OW-27, F24, R-1): every unit and bed space, grouped, with filters and bulk actions. */
 export function UnitsPage() {
   const search = useSearch({ from: '/app-frame/units' });
@@ -164,7 +148,7 @@ export function UnitsPage() {
   const bulkStatus = useBulkUnitStatusMutation();
   const bulkPrice = useBulkUnitPriceMutation();
   const bulkArchive = useBulkArchiveMutation();
-  const renameRoom = useRenameRoomMutation();
+  const deleteUnit = useDeleteUnitMutation();
   const duplicate = useDuplicateUnitMutation();
   const reorder = useReorderUnitsMutation();
 
@@ -176,9 +160,7 @@ export function UnitsPage() {
   const [priceOpen, setPriceOpen] = useState(false);
   const [nightlyPrice, setNightlyPrice] = useState<number | null>(null);
   const [monthlyPrice, setMonthlyPrice] = useState<number | null>(null);
-  const [rename, setRename] = useState<{ from: string; ids: readonly string[] } | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const [renameError, setRenameError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<readonly string[] | null>(null);
   const [savedView, setSavedView] = useState<UnitsView | null>(readSavedView);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -192,7 +174,7 @@ export function UnitsPage() {
   const filter = search.filter ?? null;
   const showingArchived = filter === 'archived';
   const visible = everything.filter((item) => matchesFilter(item, filter));
-  const sections = toSections(toEntries(visible));
+  const entries = toEntries(visible);
   const propertyId = property.data?.property.id ?? null;
   const view: UnitsView = savedView ?? (all.length > TABLE_DEFAULT_ABOVE ? 'table' : 'cards');
 
@@ -226,15 +208,15 @@ export function UnitsPage() {
     go({ filter: next === 'all' ? null : next });
   }
 
-  function openAdd(kind: 'unit' | 'beds', roomLabel?: string) {
+  function openAdd(kind: 'unit' | 'beds', roomId?: string) {
     if (planLimitEnforced) {
-      if (kind === 'beds' && roomLabel && propertyId) {
+      if (kind === 'beds' && roomId && propertyId) {
         const afterAddingOneBed = countPlanUnits([
           ...all.map((item) => item.unit),
           {
             property_id: propertyId,
             unit_type: 'bed_space',
-            group_label: roomLabel,
+            room_id: roomId,
             archived_at: null,
           },
         ]);
@@ -247,7 +229,7 @@ export function UnitsPage() {
         return;
       }
     }
-    go({ add: kind, room: roomLabel ?? null });
+    go({ add: kind, room: roomId ?? null });
   }
 
   function toggle(ids: readonly string[], on: boolean) {
@@ -398,43 +380,28 @@ export function UnitsPage() {
     );
   }
 
-  function openRename(from: string, ids: readonly string[]) {
-    setRename({ from, ids });
-    setRenameValue(from);
-    setRenameError(null);
-  }
-
-  async function submitRename() {
-    if (!rename) return;
-    const to = renameValue.trim();
-    if (to.length === 0) {
-      setRenameError('Enter a room name.');
-      return;
+  /** Deletes never-booked units (AUDIT-1 A20) after the owner confirms; there is no Undo. */
+  async function confirmDelete() {
+    if (!deleting) return;
+    const ids = deleting;
+    let removed = 0;
+    for (const unitId of ids) {
+      try {
+        await deleteUnit.mutateAsync({ unitId });
+        removed += 1;
+      } catch (caught) {
+        notify.error(extractAppError(caught).message);
+        break;
+      }
     }
-    if (to === rename.from) {
-      setRename(null);
-      return;
-    }
-    const taken = all.some(
-      (item) =>
-        item.unit.unit_type === 'bed_space' &&
-        item.unit.group_label?.toLowerCase() === to.toLowerCase() &&
-        item.unit.group_label !== rename.from,
-    );
-    if (taken) {
-      setRenameError('Another room already has this name. Pick a different one.');
-      return;
-    }
-    const { from, ids } = rename;
-    try {
-      await renameRoom.mutateAsync({ unitIds: ids, from, to });
-      setRename(null);
-      notify.success(`Renamed to ${to}`, {
-        onUndo: () => void renameRoom.mutateAsync({ unitIds: ids, from: to, to: from }),
-      });
-    } catch (caught) {
-      setRenameError(extractAppError(caught).message);
-    }
+    setDeleting(null);
+    stopSelecting();
+    if (removed > 0)
+      notify.success(
+        removed === 1 && ids.length === 1
+          ? `${nameOf(ids[0] ?? '')} deleted`
+          : `${removed} deleted`,
+      );
   }
 
   if (units.isPending || property.isPending) {
@@ -487,8 +454,8 @@ export function UnitsPage() {
     onArchive: (ids) => void setArchived(ids, true),
     onRestore: (ids) => void setArchived(ids, false),
     onDuplicate: (id) => void duplicateUnit(id),
-    onAddBed: (label) => openAdd('beds', label),
-    onRenameRoom: openRename,
+    onAddBed: (roomId) => openAdd('beds', roomId),
+    onDelete: (ids) => setDeleting(ids),
   };
 
   const sheet = (
@@ -763,31 +730,24 @@ export function UnitsPage() {
         </p>
       ) : view === 'table' ? (
         <div ref={listRef}>
-          <UnitsTable sections={sections} actions={actions} />
+          <UnitsTable entries={entries} actions={actions} />
         </div>
       ) : (
-        <div ref={listRef} className="space-y-6">
-          {sections.map((section) => (
-            <section key={section.title} aria-label={section.title} className="space-y-3">
-              {sections.length > 1 ? (
-                <h2 className="text-sm font-medium text-muted-foreground">{section.title}</h2>
-              ) : null}
-              {/* Cards: rows on phones (< 640px), auto-fill grid from 640px up; rooms span the full row. */}
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
-                {section.entries.map((entry) =>
-                  entry.kind === 'unit' ? (
-                    <li key={entry.key} className="flex">
-                      <UnitCard item={entry.item} actions={actions} />
-                    </li>
-                  ) : (
-                    <li key={entry.key} className="sm:col-span-full">
-                      <RoomCard label={entry.label} beds={entry.beds} actions={actions} />
-                    </li>
-                  ),
-                )}
-              </ul>
-            </section>
-          ))}
+        <div ref={listRef}>
+          {/* Cards: rows on phones (< 640px), auto-fill grid from 640px up; rooms span the full row. */}
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
+            {entries.map((entry) =>
+              entry.kind === 'unit' ? (
+                <li key={entry.key} className="flex">
+                  <UnitCard item={entry.item} actions={actions} />
+                </li>
+              ) : (
+                <li key={entry.key} className="sm:col-span-full">
+                  <RoomCard room={entry.room} beds={entry.beds} actions={actions} />
+                </li>
+              ),
+            )}
+          </ul>
         </div>
       )}
 
@@ -962,59 +922,34 @@ export function UnitsPage() {
         </div>
       </AppSheet>
 
-      <AppSheet
-        open={rename !== null}
-        onOpenChange={(open) => (open ? undefined : setRename(null))}
-        size="sm"
-        title="Rename room"
-        description="Every bed in this room gets the new name. Guests see it on your page."
-        footer={
-          <>
-            <Button
-              data-sheet-cancel=""
-              variant="outline"
-              className="min-h-11"
-              onClick={() => setRename(null)}
-            >
-              Cancel
-            </Button>
-            <AsyncButton
-              className="min-h-11"
-              state={renameRoom.isPending ? 'busy' : 'idle'}
-              onClick={() => void submitRename()}
-            >
-              Rename room
-            </AsyncButton>
-          </>
-        }
+      <AlertDialog
+        open={deleting !== null}
+        onOpenChange={(open) => (open ? undefined : setDeleting(null))}
       >
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submitRename();
-          }}
-        >
-          <Field data-invalid={renameError ? true : undefined}>
-            <FieldLabel htmlFor="room-name">Room name</FieldLabel>
-            <Input
-              id="room-name"
-              value={renameValue}
-              maxLength={40}
-              autoComplete="off"
-              aria-invalid={renameError ? true : undefined}
-              onChange={(event) => {
-                setRenameValue(event.target.value);
-                setRenameError(null);
-              }}
-            />
-            <FieldDescription>
-              {rename ? `${rename.ids.length} ${rename.ids.length === 1 ? 'bed' : 'beds'} · ` : ''}
-              Up to 40 characters, such as &ldquo;Room 2&rdquo; or &ldquo;Ladies&rsquo; dorm&rdquo;.
-            </FieldDescription>
-            <FieldError>{renameError}</FieldError>
-          </Field>
-        </form>
-      </AppSheet>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleting && deleting.length === 1
+                ? `Delete ${nameOf(deleting[0] ?? '')}?`
+                : `Delete ${deleting?.length ?? 0} beds?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              It was never booked, so nothing else changes. Its photos, prices and rules are removed
+              too. This can&rsquo;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteUnit.isPending}
+              onClick={() => void confirmDelete()}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <UnitNotReadySheet notReady={notReady} onClose={() => setNotReady(null)} />
 
@@ -1056,7 +991,7 @@ function ReorderList({
           const name =
             entry.kind === 'unit'
               ? entry.item.unit.name
-              : `${entry.label} · ${entry.beds.length} beds`;
+              : `${entry.room.name} · ${entry.beds.length} beds`;
           return (
             <SortableItem
               key={entry.key}

@@ -419,6 +419,7 @@ exports[`marketing pack snapshot at golden clock > matches snapshot for summary 
       "property_pages": 4,
       "push_subscriptions": 0,
       "rate_overrides": 6,
+      "rooms": 2,
       "saved_replies": 6,
       "stay_reviews": 7,
       "subscription_payments": 4,

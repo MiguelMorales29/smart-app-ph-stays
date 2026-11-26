@@ -78,6 +78,7 @@ export function summarizeDemoWorld(
     data_exports: world.data_exports.length,
     properties: world.properties.length,
     property_pages: world.property_pages.length,
+    rooms: world.rooms.length,
     units: world.units.length,
     unit_stay_terms: world.unit_stay_terms.length,
     unit_lease_terms: world.unit_lease_terms.length,

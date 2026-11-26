@@ -1,6 +1,7 @@
-import type { OwnerUnitListItemView, UnitMode, UnitsRow } from '@smartapp/core';
+import type { OwnerUnitListItemView, UnitMode } from '@smartapp/core';
 
 export interface BedSpaceRoomSummary {
+  readonly id: string;
   readonly label: string;
   readonly count: number;
   readonly maxBedNumber: number;
@@ -21,50 +22,37 @@ export function parseBedNumber(name: string): number | null {
  * and highest bed number so new beds continue numbering without duplicates (FIX-1 C).
  */
 export function summarizeBedSpaceRooms(
-  units: readonly Pick<OwnerUnitListItemView, 'unit'>[],
+  units: readonly Pick<OwnerUnitListItemView, 'unit' | 'room'>[],
 ): BedSpaceRoomSummary[] {
-  const byKey = new Map<string, { label: string; count: number; maxBedNumber: number }>();
-  const orderedKeys: string[] = [];
+  const byId = new Map<
+    string,
+    { id: string; label: string; count: number; maxBedNumber: number }
+  >();
 
   for (const item of units) {
-    const unit: Pick<UnitsRow, 'archived_at' | 'unit_type' | 'group_label' | 'name'> = item.unit;
-    if (unit.archived_at !== null) continue;
-    if (unit.unit_type !== 'bed_space') continue;
-    const label = unit.group_label?.trim() ?? '';
-    if (!label) continue;
-    const key = label.toLowerCase();
+    const { unit, room } = item;
+    if (unit.archived_at !== null || unit.unit_type !== 'bed_space' || room === null) continue;
     const parsedNum = parseBedNumber(unit.name);
-    const existing = byKey.get(key);
+    const existing = byId.get(room.id);
     if (existing) {
       existing.count += 1;
       existing.maxBedNumber = Math.max(existing.maxBedNumber, parsedNum ?? existing.count);
     } else {
-      orderedKeys.push(key);
-      byKey.set(key, {
-        label,
-        count: 1,
-        maxBedNumber: parsedNum ?? 1,
-      });
+      byId.set(room.id, { id: room.id, label: room.name, count: 1, maxBedNumber: parsedNum ?? 1 });
     }
   }
-
-  return orderedKeys.flatMap((key) => {
-    const entry = byKey.get(key);
-    return entry ? [entry] : [];
-  });
+  return [...byId.values()];
 }
 
 /**
- * Returns the next bed number for the given room label (highest existing bed number + 1, or 1
- * when creating a new room).
+ * Returns the next bed number for the given room (highest existing bed number + 1, or 1 when the
+ * room is new).
  */
 export function nextBedNumberForRoom(
   rooms: readonly BedSpaceRoomSummary[],
-  roomLabel: string,
+  roomId: string | null,
 ): number {
-  const normalized = roomLabel.trim().toLowerCase();
-  if (!normalized) return 1;
-  const match = rooms.find((room) => room.label.toLowerCase() === normalized);
+  const match = roomId === null ? undefined : rooms.find((room) => room.id === roomId);
   return match ? match.maxBedNumber + 1 : 1;
 }
 
@@ -72,7 +60,9 @@ export function nextBedNumberForRoom(
  * Default name for a new bed-space room based on the number of existing bed-space rooms
  * (not total units or beds), avoiding collisions with any existing room label.
  */
-export function nextNewRoomName(units: readonly Pick<OwnerUnitListItemView, 'unit'>[]): string {
+export function nextNewRoomName(
+  units: readonly Pick<OwnerUnitListItemView, 'unit' | 'room'>[],
+): string {
   const rooms = summarizeBedSpaceRooms(units);
   const used = new Set(rooms.map((room) => room.label.toLowerCase()));
   let num = rooms.length + 1;

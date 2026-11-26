@@ -142,8 +142,7 @@ function firstUnfinishedStep(items: readonly SetupChecklistItemView[]): Onboardi
 function firstGroup(units: readonly OwnerUnitListItemView[]): OwnerUnitListItemView[] {
   const first = units[0];
   if (!first) return [];
-  if (first.unit.group_label)
-    return units.filter((item) => item.unit.group_label === first.unit.group_label);
+  if (first.unit.room_id) return units.filter((item) => item.unit.room_id === first.unit.room_id);
   return [first];
 }
 
@@ -745,7 +744,7 @@ function UnitStep({
               className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
             >
               <span className="truncate font-medium">{item.unit.name}</span>
-              <span className="text-muted-foreground">{item.unit.group_label ?? ''}</span>
+              <span className="text-muted-foreground">{item.room?.name ?? ''}</span>
             </li>
           ))}
         </ul>
@@ -770,7 +769,12 @@ function UnitStep({
             if (type === 'bed_space') {
               await createBeds.mutateAsync({
                 propertyId,
-                groupLabel: room.trim().slice(0, 40),
+                room: {
+                  kind: 'new',
+                  name: room.trim().slice(0, 40),
+                  guests: 'anyone',
+                  bathroom: 'shared',
+                },
                 namePrefix: 'Bed',
                 count: beds,
                 startNumber: 1,
@@ -790,7 +794,7 @@ function UnitStep({
                 slug: slugifyPropertyName(name) || 'unit',
                 mode: 'short_stay',
                 unitType: type,
-                groupLabel: null,
+                roomId: null,
                 description: null,
                 maxGuests: guests,
                 bedrooms: rooms,
@@ -922,7 +926,7 @@ function PhotosStep({
   const target = group[0];
   const detail = useOwnerUnitQuery(target?.unit.id ?? null);
   const setPhotos = useSetUnitPhotosMutation();
-  const label = target?.unit.group_label ?? target?.unit.name ?? 'Your unit';
+  const label = target?.room?.name ?? target?.unit.name ?? 'Your unit';
   const pipeline = usePhotoPipeline({ saved: detail.data?.photos, altPrefix: label });
   const [error, setError] = useState<string | null>(null);
 
@@ -936,7 +940,7 @@ function PhotosStep({
     );
   }
 
-  const shared = target.unit.group_label ? ` (shared by ${group.length} beds)` : '';
+  const shared = target.room ? ` (shared by ${group.length} beds)` : '';
 
   return (
     <StepFrame
@@ -1092,7 +1096,7 @@ function PriceStep({
         title="Price"
         description={
           group.length > 1
-            ? `One price for all ${group.length} beds in ${target.unit.group_label ?? 'this room'}.`
+            ? `One price for all ${group.length} beds in ${target.room?.name ?? 'this room'}.`
             : `For ${target.unit.name}.`
         }
         onBack={onBack}

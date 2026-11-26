@@ -10,6 +10,7 @@ import {
   unitAmenitiesRow,
   unitLeaseTermsRow,
   unitStayTermsRow,
+  roomsRow,
   unitsRow,
 } from './listing.js';
 
@@ -155,7 +156,7 @@ describe('listing table schemas', () => {
       name: 'Buong Bahay Villa',
       mode: 'short_stay',
       unit_type: 'entire_place',
-      group_label: null,
+      room_id: null,
       description: '4 bedrooms with private pool',
       max_guests: 15,
       bedrooms: 4,
@@ -170,9 +171,25 @@ describe('listing table schemas', () => {
       updated_at: ts,
     };
     expect(unitsRow.safeParse(unit).success).toBe(true);
-    expect(unitsRow.safeParse({ ...unit, group_label: 'Room 2A' }).success).toBe(true);
-    expect(unitsRow.safeParse({ ...unit, group_label: '' }).success).toBe(false);
-    expect(unitsRow.safeParse({ ...unit, group_label: 'a'.repeat(41) }).success).toBe(false);
+    expect(
+      unitsRow.safeParse({ ...unit, room_id: '00000000-0000-4000-8000-0000000000a1' }).success,
+    ).toBe(true);
+    expect(unitsRow.safeParse({ ...unit, room_id: 'Room 2A' }).success).toBe(false);
+    const room = {
+      id: '00000000-0000-4000-8000-0000000000a1',
+      account_id: unit.account_id,
+      property_id: unit.property_id,
+      name: 'Room 2A',
+      guests: 'ladies',
+      bathroom: 'shared',
+      description: null,
+      created_at: ts,
+      updated_at: ts,
+    };
+    expect(roomsRow.safeParse(room).success).toBe(true);
+    expect(roomsRow.safeParse({ ...room, name: '  ' }).success).toBe(false);
+    expect(roomsRow.safeParse({ ...room, name: 'a'.repeat(41) }).success).toBe(false);
+    expect(roomsRow.safeParse({ ...room, guests: 'couples' }).success).toBe(false);
     expect(unitsRow.safeParse({ ...unit, max_guests: 0 }).success).toBe(false);
     expect(unitsRow.safeParse({ ...unit, bathrooms: 1.25 }).success).toBe(false);
     expect(unitsRow.safeParse({ ...unit, slug: 'a'.repeat(41) }).success).toBe(false);
