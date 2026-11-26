@@ -342,6 +342,9 @@ function UnitEditor({
       return;
     }
     setState('busy');
+    // Which write is running, so a failure is reported for that part only (AUDIT-1 A11).
+    let step: 'details' | 'prices' | 'photos' = 'details';
+    const savedParts: string[] = [];
     try {
       let latest = current;
       if (form.formState.isDirty || amenitiesDirty || leaseDirty) {
@@ -384,8 +387,10 @@ function UnitEditor({
         setAmenityIds([...saved.amenity_ids]);
         setLease(leaseDraftFrom(saved));
         draft.clear();
+        savedParts.push('details');
       }
       if ((priceDirty || rulesDirty) && price.baseNightly !== null) {
+        step = 'prices';
         const otherFees = latest.fees
           .filter((fee) => fee.code === 'other')
           .map((fee) => ({
@@ -399,7 +404,8 @@ function UnitEditor({
           latest.fees.find((fee) => fee.code === code)?.label ?? fallback;
         const result = await savePrices.mutateAsync({
           unitId: unit.id,
-          expectedUpdatedAt: null,
+          // The prices as last read (after the details save above), so another tab's change isn't overwritten (A12).
+          expectedUpdatedAt: latest.stay_terms?.updated_at ?? null,
           baseNightlyCentavos: centavos(price.baseNightly),
           baseGuests: Math.min(price.baseGuests, unit.max_guests),
           minNights: rules.minNights,
@@ -456,11 +462,14 @@ function UnitEditor({
           rate_overrides: result.rateOverrides,
           fees: result.fees,
         };
+        latest = next;
         setCurrent(next);
         setPrice(priceDraftFrom(next));
         setRules(rulesDraftFrom(next));
+        savedParts.push('prices');
       }
       if (photos.dirty) {
+        step = 'photos';
         const savedPhotosList = await savePhotos.mutateAsync({
           propertyId: unit.property_id,
           units: roomBeds.length > 0 ? roomBeds : [{ unitId: unit.id, name: unit.name }],
@@ -476,6 +485,13 @@ function UnitEditor({
       const error = extractAppError(caught);
       if (readErrorDetails(error).reason === 'changed_elsewhere') {
         setStale(true);
+        return false;
+      }
+      if (step !== 'details') {
+        // Details (and prices) already saved stay saved; say what didn't, and keep the owner here.
+        const part = step === 'prices' ? 'prices and booking rules' : 'photos';
+        const kept = savedParts.length > 0 ? ` Your ${savedParts.join(' and ')} were saved.` : '';
+        setTopError(`We couldn't save the ${part}: ${error.message}${kept}`);
         return false;
       }
       const applied = applyAppErrorToForm(caught, form, {

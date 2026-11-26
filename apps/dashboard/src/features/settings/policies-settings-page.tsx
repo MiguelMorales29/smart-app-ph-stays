@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useBlocker } from '@tanstack/react-router';
-import { PlusIcon } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { CalendarRangeIcon } from 'lucide-react';
 import {
   CANCELLATION_PRESET_COPY,
   cancellationRefund,
@@ -16,7 +17,6 @@ import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { Textarea } from '@smartapp/ui/components/textarea';
-import { ChoiceChip } from '@smartapp/ui/compositions/choice-chip';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { RowControl, RowGroup, RowPicker, RowSwitch } from '@smartapp/ui/compositions/grouped-rows';
 import { RadioCards } from '@smartapp/ui/compositions/radio-cards';
@@ -25,6 +25,8 @@ import { TimeSelect } from '@smartapp/ui/compositions/time-select';
 import { notify } from '@smartapp/ui/lib/notify';
 import { usePoliciesQuery } from '@/data/settings/reads';
 import { useSavePoliciesMutation } from '@/data/settings/writes';
+import { useOwnerUnitsQuery } from '@/data/units/reads';
+import { HouseRulesEditor } from './house-rules-editor';
 import { extractAppError } from '@/data/shared';
 import { SettingsPane } from './settings-nav';
 import {
@@ -42,8 +44,6 @@ const PRESETS: readonly Exclude<CancellationPreset, 'custom'>[] = [
   'firm',
   'non_refundable',
 ];
-
-const SUGGESTED_RULES = ['No smoking', 'No pets', 'No parties', 'Quiet hours 10 PM–7 AM'];
 
 /** The worked example under each preset, computed (₱3,000 paid, ₱1,500 down, 3 days before). */
 function workedExample(preset: Exclude<CancellationPreset, 'custom'>): string {
@@ -125,11 +125,16 @@ function PoliciesForm({
   readonly houseRules: readonly HouseRulesRow[];
 }) {
   const save = useSavePoliciesMutation();
+  const units = useOwnerUnitsQuery();
+  // Monthly units follow their lease terms, so nightly-only rules are labelled or hidden (AUDIT-1 A15).
+  const modes = new Set((units.data ?? []).map((item) => item.unit.mode));
+  const hasMonthly = modes.has('long_term');
+  const hasNightly = modes.has('short_stay') || !hasMonthly;
+  const mixed = hasNightly && hasMonthly;
   const [state, setState] = useSaveState();
   const { offline, message } = useOfflineSave();
   const [saved, setSaved] = useState(() => draftFrom(property, houseRules));
   const [draft, setDraft] = useState(saved);
-  const [ownRule, setOwnRule] = useState('');
   const [errors, setErrors] = useState<{ note?: string; privacy?: string; form?: string }>({});
   const dirty = !same(draft, saved);
   const set = (change: Partial<PoliciesDraft>) =>
@@ -139,7 +144,6 @@ function PoliciesForm({
     enableBeforeUnload: false,
     withResolver: true,
   });
-  const ruleChips = [...new Set([...SUGGESTED_RULES, ...draft.rules])];
 
   async function onSave() {
     const next: typeof errors = {};
@@ -178,13 +182,6 @@ function PoliciesForm({
     }
   }
 
-  function addOwnRule() {
-    const rule = ownRule.trim().slice(0, 200);
-    if (!rule || draft.rules.includes(rule) || draft.rules.length >= 20) return;
-    set({ rules: [...draft.rules, rule] });
-    setOwnRule('');
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {errors.form ? (
@@ -193,164 +190,168 @@ function PoliciesForm({
         </Alert>
       ) : null}
 
-      <Field>
-        <FieldLabel id="pol-cancel-label">If a guest cancels</FieldLabel>
-        <RadioCards
-          aria-labelledby="pol-cancel-label"
-          columns={1}
-          value={draft.preset}
-          onValueChange={(preset) => set({ preset })}
-          options={[
-            ...PRESETS.map((preset) => ({
-              value: preset,
-              label: CANCELLATION_PRESET_COPY[preset].label,
-              description: (
-                <>
-                  {CANCELLATION_PRESET_COPY[preset].summary}
-                  <span className="mt-1 block text-foreground tabular">
-                    {workedExample(preset)}
-                  </span>
-                </>
-              ),
-            })),
-            {
-              value: 'custom' as const,
-              label: CANCELLATION_PRESET_COPY.custom.label,
-              description: CANCELLATION_PRESET_COPY.custom.summary,
-            },
-          ]}
-        />
-      </Field>
-      {draft.preset === 'custom' ? (
-        <Field data-invalid={errors.note ? true : undefined}>
-          <FieldLabel htmlFor="pol-note">Your cancellation rule</FieldLabel>
-          <Textarea
-            id="pol-note"
-            rows={3}
-            maxLength={1000}
-            value={draft.note}
-            aria-invalid={errors.note ? true : undefined}
-            onChange={(event) => set({ note: event.target.value })}
-          />
-          <FieldError>{errors.note}</FieldError>
-        </Field>
-      ) : null}
-      {draft.preset === 'dp_rebook' ? (
-        <RowGroup title="Date changes">
-          <RowPicker
-            label="Ask at least"
-            hint="Before check-in"
-            value={draft.rebookMinDays}
-            options={withCurrent([1, 3, 7, 14], draft.rebookMinDays).map((days) => ({
-              value: days,
-              label: `${days} ${days === 1 ? 'day' : 'days'}`,
-            }))}
-            onValueChange={(rebookMinDays) => set({ rebookMinDays })}
-          />
-          <RowPicker
-            label="New dates within"
-            value={draft.rebookWithinMonths}
-            options={withCurrent([1, 3, 6, 12], draft.rebookWithinMonths).map((months) => ({
-              value: months,
-              label: `${months} ${months === 1 ? 'month' : 'months'}`,
-            }))}
-            onValueChange={(rebookWithinMonths) => set({ rebookWithinMonths })}
-          />
-        </RowGroup>
-      ) : null}
-
-      <RowGroup title="Times">
-        <RowControl label="Check-in from" labelFor="pol-checkin">
-          <TimeSelect
-            id="pol-checkin"
-            className="w-36"
-            value={draft.checkin}
-            onValueChange={(checkin) => set({ checkin })}
-          />
-        </RowControl>
-        <RowControl label="Check-out by" labelFor="pol-checkout">
-          <TimeSelect
-            id="pol-checkout"
-            className="w-36"
-            value={draft.checkout}
-            onValueChange={(checkout) => set({ checkout })}
-          />
-        </RowControl>
-      </RowGroup>
-      <Field>
-        <FieldLabel htmlFor="pol-arrival">Arrival details</FieldLabel>
-        <Textarea
-          id="pol-arrival"
-          rows={3}
-          maxLength={2000}
-          placeholder="Gate code, parking, where to get the key"
-          value={draft.arrival}
-          onChange={(event) => set({ arrival: event.target.value })}
-        />
-        <FieldDescription>Only guests with a confirmed booking see this.</FieldDescription>
-      </Field>
-
-      <RowGroup title="Guests">
-        <RowSwitch
-          label="Ask for a guest list and IDs"
-          hint="Names and a valid ID of everyone staying"
-          checked={draft.guestIds}
-          onCheckedChange={(guestIds) => set({ guestIds })}
-        />
-        {draft.guestIds ? (
-          <RowPicker
-            label="Due before check-in"
-            value={draft.guestListDue}
-            options={withCurrent([12, 24, 48, 72], draft.guestListDue).map((hours) => ({
-              value: hours,
-              label: `${hours} hours`,
-            }))}
-            onValueChange={(guestListDue) => set({ guestListDue })}
-          />
-        ) : null}
-      </RowGroup>
-
-      <fieldset className="flex min-w-0 flex-col gap-3">
-        <legend className="mb-1.5 text-sm font-medium text-muted-foreground">House rules</legend>
-        <div className="flex min-w-0 flex-wrap gap-2">
-          {ruleChips.map((rule) => (
-            <ChoiceChip
-              key={rule}
-              pressed={draft.rules.includes(rule)}
-              onPressedChange={(on) =>
-                set({
-                  rules: on ? [...draft.rules, rule] : draft.rules.filter((item) => item !== rule),
-                })
-              }
-            >
-              {rule}
-            </ChoiceChip>
-          ))}
-        </div>
-        <form
-          className="flex min-w-0 gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            addOwnRule();
-          }}
+      {hasMonthly ? (
+        <section
+          aria-labelledby="pol-monthly"
+          className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4"
         >
-          <label htmlFor="pol-own-rule" className="sr-only">
-            Your own rule
-          </label>
-          <Input
-            id="pol-own-rule"
-            className="min-w-0 flex-1"
-            placeholder="Add your own rule"
-            maxLength={200}
-            value={ownRule}
-            onChange={(event) => setOwnRule(event.target.value)}
-          />
-          <Button type="submit" variant="outline" className="min-h-11 shrink-0">
-            <PlusIcon aria-hidden="true" />
-            Add
+          <h2 id="pol-monthly" className="flex items-center gap-2 font-medium">
+            <CalendarRangeIcon aria-hidden="true" className="size-4 text-muted-foreground" />
+            {mixed ? 'For monthly rentals' : 'Move-in rules'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Monthly units follow their own lease terms: rent, advance, deposit and the shortest
+            lease. Set them on each unit, under Price.
+            {mixed ? ' The cancellation rule and times below are for nightly stays only.' : ''}
+          </p>
+          <Button
+            variant="outline"
+            className="min-h-11 self-start sm:min-h-9"
+            nativeButton={false}
+            render={<Link to="/units" />}
+          >
+            Open units
           </Button>
-        </form>
-      </fieldset>
+        </section>
+      ) : null}
+
+      {mixed ? <h2 className="-mb-2 text-base font-semibold">For nightly stays</h2> : null}
+
+      {hasNightly ? (
+        <>
+          <Field>
+            <FieldLabel id="pol-cancel-label">If a guest cancels</FieldLabel>
+            <RadioCards
+              aria-labelledby="pol-cancel-label"
+              columns={1}
+              value={draft.preset}
+              onValueChange={(preset) => set({ preset })}
+              options={[
+                ...PRESETS.map((preset) => ({
+                  value: preset,
+                  label: CANCELLATION_PRESET_COPY[preset].label,
+                  description: (
+                    <>
+                      {CANCELLATION_PRESET_COPY[preset].summary}
+                      <span className="mt-1 block text-foreground tabular">
+                        {workedExample(preset)}
+                      </span>
+                    </>
+                  ),
+                })),
+                {
+                  value: 'custom' as const,
+                  label: CANCELLATION_PRESET_COPY.custom.label,
+                  description: CANCELLATION_PRESET_COPY.custom.summary,
+                },
+              ]}
+            />
+          </Field>
+          {draft.preset === 'custom' ? (
+            <Field data-invalid={errors.note ? true : undefined}>
+              <FieldLabel htmlFor="pol-note">Your cancellation rule</FieldLabel>
+              <Textarea
+                id="pol-note"
+                rows={3}
+                maxLength={1000}
+                value={draft.note}
+                aria-invalid={errors.note ? true : undefined}
+                onChange={(event) => set({ note: event.target.value })}
+              />
+              <FieldError>{errors.note}</FieldError>
+            </Field>
+          ) : null}
+          {draft.preset === 'dp_rebook' ? (
+            <RowGroup title="Date changes">
+              <RowPicker
+                label="Ask at least"
+                hint="Before check-in"
+                value={draft.rebookMinDays}
+                options={withCurrent([1, 3, 7, 14], draft.rebookMinDays).map((days) => ({
+                  value: days,
+                  label: `${days} ${days === 1 ? 'day' : 'days'}`,
+                }))}
+                onValueChange={(rebookMinDays) => set({ rebookMinDays })}
+              />
+              <RowPicker
+                label="New dates within"
+                value={draft.rebookWithinMonths}
+                options={withCurrent([1, 3, 6, 12], draft.rebookWithinMonths).map((months) => ({
+                  value: months,
+                  label: `${months} ${months === 1 ? 'month' : 'months'}`,
+                }))}
+                onValueChange={(rebookWithinMonths) => set({ rebookWithinMonths })}
+              />
+            </RowGroup>
+          ) : null}
+
+          <RowGroup title="Times">
+            <RowControl label="Check-in from" labelFor="pol-checkin">
+              <TimeSelect
+                id="pol-checkin"
+                className="w-36"
+                value={draft.checkin}
+                onValueChange={(checkin) => set({ checkin })}
+              />
+            </RowControl>
+            <RowControl label="Check-out by" labelFor="pol-checkout">
+              <TimeSelect
+                id="pol-checkout"
+                className="w-36"
+                value={draft.checkout}
+                onValueChange={(checkout) => set({ checkout })}
+              />
+            </RowControl>
+          </RowGroup>
+          <Field>
+            <FieldLabel htmlFor="pol-arrival">Arrival details</FieldLabel>
+            <Textarea
+              id="pol-arrival"
+              rows={3}
+              maxLength={2000}
+              placeholder="Gate code, parking, where to get the key"
+              value={draft.arrival}
+              onChange={(event) => set({ arrival: event.target.value })}
+            />
+            <FieldDescription>Only guests with a confirmed booking see this.</FieldDescription>
+          </Field>
+
+          <RowGroup title="Guests">
+            <RowSwitch
+              label="Ask for a guest list and IDs"
+              hint="Names and a valid ID of everyone staying"
+              checked={draft.guestIds}
+              onCheckedChange={(guestIds) => set({ guestIds })}
+            />
+            {draft.guestIds ? (
+              <RowPicker
+                label="Due before check-in"
+                value={draft.guestListDue}
+                options={withCurrent([12, 24, 48, 72], draft.guestListDue).map((hours) => ({
+                  value: hours,
+                  label: `${hours} hours`,
+                }))}
+                onValueChange={(guestListDue) => set({ guestListDue })}
+              />
+            ) : null}
+          </RowGroup>
+        </>
+      ) : (
+        <Field>
+          <FieldLabel htmlFor="pol-arrival">Move-in details</FieldLabel>
+          <Textarea
+            id="pol-arrival"
+            rows={3}
+            maxLength={2000}
+            placeholder="Where to get the keys, who to meet, parking"
+            value={draft.arrival}
+            onChange={(event) => set({ arrival: event.target.value })}
+          />
+          <FieldDescription>Only tenants with a confirmed lease see this.</FieldDescription>
+        </Field>
+      )}
+
+      <HouseRulesEditor rules={draft.rules} onChange={(rules) => set({ rules })} />
 
       <Field data-invalid={errors.privacy ? true : undefined}>
         <FieldLabel htmlFor="pol-privacy">Privacy contact</FieldLabel>
@@ -373,19 +374,23 @@ function PoliciesForm({
           How guests read it
         </h2>
         <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 text-sm">
-          <p>
-            <span className="font-medium">Check-in</span> from{' '}
-            {formatWallTime12h(draft.checkin) ?? draft.checkin} ·{' '}
-            <span className="font-medium">Check-out</span> by{' '}
-            {formatWallTime12h(draft.checkout) ?? draft.checkout}
-          </p>
-          <p>
-            <span className="font-medium">Cancellation:</span>{' '}
-            {draft.preset === 'custom'
-              ? draft.note.trim() || 'Your rule goes here.'
-              : CANCELLATION_PRESET_COPY[draft.preset].summary}
-          </p>
-          {draft.guestIds ? (
+          {hasNightly ? (
+            <>
+              <p>
+                <span className="font-medium">Check-in</span> from{' '}
+                {formatWallTime12h(draft.checkin) ?? draft.checkin} ·{' '}
+                <span className="font-medium">Check-out</span> by{' '}
+                {formatWallTime12h(draft.checkout) ?? draft.checkout}
+              </p>
+              <p>
+                <span className="font-medium">Cancellation:</span>{' '}
+                {draft.preset === 'custom'
+                  ? draft.note.trim() || 'Your rule goes here.'
+                  : CANCELLATION_PRESET_COPY[draft.preset].summary}
+              </p>
+            </>
+          ) : null}
+          {hasNightly && draft.guestIds ? (
             <p>Send the guest list and IDs {draft.guestListDue} hours before check-in.</p>
           ) : null}
           {draft.rules.length > 0 ? (

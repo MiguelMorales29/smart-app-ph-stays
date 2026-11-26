@@ -88,7 +88,8 @@ Plan: `docs/prompts/UI-library-expansion.md` and `docs/component-catalog.md`.
 
 - [x] AUDIT-1 Code audit of Phase 3–5 against the blueprints: `docs/audits/AUDIT-1.md` (24 findings)
 - [x] R-1 Units: rooms as groups with a room menu, Cards/Table switch, Archived with Restore, bulk archive, price split by nightly and monthly, duplicate copies everything, hold default 60, Rent Control Act warning
-- [ ] R-2 Settings and saving (A11, A12, A15–A17)
+- [x] R-2 Settings and saving (A11, A12, A15–A17): house rules list, monthly move-in rules, closed dates calendar, link fields with Open, saves keep the owner in place
+- [ ] R-2b Special days (reason, different hours, PH holidays; needs a `special_days` table)
 - [ ] R-3 Booking rules and amenities (A13, A14)
 - [ ] R-4 Shared pieces (A18, A19, A23, A24)
 
