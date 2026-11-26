@@ -27,6 +27,7 @@ import { StorefrontKitUi1Section } from './StorefrontKitUi1Section';
 import { StorefrontKitUi2Section } from './StorefrontKitUi2Section';
 import { StorefrontKitUi3Section } from './StorefrontKitUi3Section';
 import { StorefrontKitUi4Section } from './StorefrontKitUi4Section';
+import { StorefrontKitUi5Section } from './StorefrontKitUi5Section';
 
 export const STOREFRONT_KIT_LOOKS = [
   'ulap-suites',
@@ -399,6 +400,14 @@ export async function StorefrontKitView({
               dont="Compute stay nights in browser-local time or block a taken night from serving as check-out when prior nights are free (D75)."
             >
               <StorefrontKitUi4Section propertyName={activeLook.propertyView.property.name} />
+            </KitSection>
+
+            <KitSection
+              title="Guest notices, stay rewards & conversation (UI-5)"
+              useFor="Marquee for short guest notices, StampCard for nights toward a free night, and Message/Bubble/Marker for the booking conversation."
+              dont="Put anything a guest must read to book in a moving strip, or count unpaid nights as stamps."
+            >
+              <StorefrontKitUi5Section propertyName={activeLook.propertyView.property.name} />
             </KitSection>
           </div>
         </PropertyFrame>

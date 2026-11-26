@@ -3,6 +3,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 const repoRoot = resolve(import.meta.dirname, '../..');
 
+// Local runs can point at an installed browser when Playwright's own build is missing or too new for the
+// machine (as in the food app): PLAYWRIGHT_CHANNEL=chrome pnpm ui-scan, or PLAYWRIGHT_CHROMIUM_PATH=/path.
+const channel = process.env.PLAYWRIGHT_CHANNEL;
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+
 export default defineConfig({
   testDir: import.meta.dirname,
   testMatch: /.*\.e2e\.ts/,
@@ -27,6 +32,8 @@ export default defineConfig({
   },
   use: {
     headless: true,
+    ...(channel ? { channel } : {}),
+    ...(executablePath ? { launchOptions: { executablePath } } : {}),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

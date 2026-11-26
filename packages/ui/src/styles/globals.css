@@ -134,6 +134,99 @@
       transform: rotate(270deg);
     }
   }
+  /* Magic UI and Dice UI animations ported from the food app (UI-5). */
+  --animate-shine: shine var(--duration) infinite linear;
+  --animate-shiny-text: shiny-text 8s infinite;
+  --animate-marquee-left: marquee-left var(--marquee-duration) linear var(--marquee-loop-count);
+  --animate-marquee-right: marquee-right var(--marquee-duration) linear var(--marquee-loop-count);
+  --animate-marquee-left-rtl: marquee-left-rtl var(--marquee-duration) linear
+    var(--marquee-loop-count);
+  --animate-marquee-right-rtl: marquee-right-rtl var(--marquee-duration) linear
+    var(--marquee-loop-count);
+  --animate-marquee-up: marquee-up var(--marquee-duration) linear var(--marquee-loop-count);
+  --animate-marquee-down: marquee-down var(--marquee-duration) linear var(--marquee-loop-count);
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    to {
+      background-position: 0% 0%;
+    }
+  }
+  @keyframes shiny-text {
+    0%,
+    90%,
+    100% {
+      background-position: calc(-100% - var(--shiny-width)) 0;
+    }
+    30%,
+    60% {
+      background-position: calc(100% + var(--shiny-width)) 0;
+    }
+  }
+  @keyframes marquee-left {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(calc(-100% - var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-right {
+    0% {
+      transform: translateX(calc(-100% - var(--marquee-gap)));
+    }
+    100% {
+      transform: translateX(0%);
+    }
+  }
+  @keyframes marquee-up {
+    0% {
+      transform: translateY(0%);
+    }
+    100% {
+      transform: translateY(calc(-100% - var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-down {
+    0% {
+      transform: translateY(calc(-100% - var(--marquee-gap)));
+    }
+    100% {
+      transform: translateY(calc(-100% - var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-left-rtl {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(calc(100% + var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-right-rtl {
+    0% {
+      transform: translateX(calc(100% + var(--marquee-gap)));
+    }
+    100% {
+      transform: translateX(0%);
+    }
+  }
+  /* Magic UI Pulsating Button (decision R38): three pulses per visit, then it rests. Only its ripple
+     variant is used: the registry's "pulse" variant would replace Tailwind's animate-pulse, which the
+     skeletons need. */
+  --animate-pulse-ripple: pulse-ripple var(--duration) cubic-bezier(0.16, 1, 0.3, 1) 3;
+  @keyframes pulse-ripple {
+    0% {
+      box-shadow: 0 0 0 0 oklch(from var(--pulse-color, var(--bg)) l c h / 1);
+    }
+    100% {
+      box-shadow: 0 0 0 var(--distance) oklch(from var(--pulse-color, var(--bg)) l c h / 0);
+    }
+  }
 }
 
 @utility duration-press {
@@ -494,4 +587,26 @@ body:has([data-slot='dev-switch-panel']):not(:has([data-dev-panel-menu])) {
 @utility receipt-edge-bottom {
   background: radial-gradient(circle at 8px 8px, transparent 6px, var(--paper) 6px);
   background-size: 16px 8px;
+}
+
+/* Stamp lands on the loyalty card (stamp-card, ported from the food app in UI-5). */
+@keyframes press-stamp {
+  0% {
+    transform: scale(1.3) rotate(-8deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.95) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@utility press-stamp {
+  animation: press-stamp var(--dur-slow) var(--ease-spring) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }

@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
   "agentGuidance": false,
   "globalEnv": ["NODE_ENV"],
   "tasks": {
