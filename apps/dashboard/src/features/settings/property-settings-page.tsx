@@ -1,13 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useBlocker } from '@tanstack/react-router';
-import {
-  ExternalLinkIcon,
-  LinkIcon,
-  MapPinIcon,
-  MessageCircleIcon,
-  StarIcon,
-  ThumbsUpIcon,
-} from 'lucide-react';
+import { ExternalLinkIcon, LinkIcon, MapPinIcon } from 'lucide-react';
 import {
   isValidPhMobile,
   PH_PROVINCES,
@@ -23,6 +16,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@smartapp/ui/components/input-group';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
+import { BrandIcon } from '@smartapp/ui/compositions/brand-icon';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
@@ -291,7 +285,16 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
       <div className="flex flex-col gap-2">
         <RowGroup title="Web address">
           <RowButton
-            label={<span className="tabular">smartapp.webserbisyo.com/{property.slug}</span>}
+            label={
+              // Wraps after the slash on phones instead of cutting the address (R-4).
+              <span className="block tabular whitespace-normal">
+                smartapp.
+                <wbr />
+                webserbisyo.com/
+                <wbr />
+                <span className="break-all">{property.slug}</span>
+              </span>
+            }
             hint="Old links and printed QR codes keep working"
             value="Change"
             icon={<LinkIcon />}
@@ -323,7 +326,7 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
         <LinkField
           id="prop-messenger"
           label="Messenger link"
-          icon={<MessageCircleIcon />}
+          icon={<BrandIcon brand="messenger" tile={false} size="sm" />}
           placeholder="m.me/yourpage"
           value={draft.messenger}
           maxLength={200}
@@ -332,7 +335,7 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
         <LinkField
           id="prop-facebook"
           label="Facebook page"
-          icon={<ThumbsUpIcon />}
+          icon={<BrandIcon brand="facebook" tile={false} size="sm" />}
           placeholder="facebook.com/yourpage"
           value={draft.facebook}
           maxLength={200}
@@ -341,7 +344,7 @@ function PropertyForm({ view }: { readonly view: OwnerPropertyView }) {
         <LinkField
           id="prop-review"
           label="Google review link"
-          icon={<StarIcon />}
+          icon={<BrandIcon brand="google" tile={false} size="sm" />}
           placeholder="g.page/r/your-place/review"
           value={draft.reviewUrl}
           maxLength={500}

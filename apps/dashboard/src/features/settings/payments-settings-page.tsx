@@ -37,6 +37,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { NativeSelect, NativeSelectOption } from '@smartapp/ui/components/native-select';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
+import { BrandIcon } from '@smartapp/ui/compositions/brand-icon';
 import { AppSheet } from '@smartapp/ui/compositions/app-sheet';
 import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
@@ -143,13 +144,7 @@ export function PaymentsSettingsPage() {
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
               {list.map((account, index) => (
                 <li key={account.id} className="flex min-h-16 items-center gap-3 px-4 py-2.5">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-sm font-semibold text-foreground">
-                    {account.method === 'qr_ph' ? (
-                      <QrCodeIcon aria-hidden="true" className="size-5" />
-                    ) : (
-                      accountTitle(account).slice(0, 2)
-                    )}
-                  </span>
+                  <BrandIcon brand={account.method} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
                       {accountTitle(account)} · {account.account_name}

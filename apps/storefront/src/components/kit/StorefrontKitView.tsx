@@ -369,7 +369,7 @@ export async function StorefrontKitView({
 
             <KitSection
               title="Guest reactions, status rings & brand marks (UI-1)"
-              useFor="HeartToggle for saved stays, StatusLogo for open/busy/paused property rings, BrandLockup for platform branding, MessengerIcon for Messenger buttons, and theme-coloured celebration effects."
+              useFor="HeartToggle for saved stays, StatusAvatar for open/busy/paused property logos, BrandLockup for platform branding, MessengerIcon for Messenger buttons, and theme-coloured celebration effects."
               dont="Use MessengerIcon outside Messenger buttons or fire celebrations under reduced motion."
             >
               <StorefrontKitUi1Section

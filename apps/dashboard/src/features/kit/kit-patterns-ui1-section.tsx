@@ -1,5 +1,6 @@
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
+import { BrandIcon } from '@smartapp/ui/compositions/brand-icon';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { DrawnCheckIcon } from '@smartapp/ui/compositions/drawn-check';
@@ -7,6 +8,7 @@ import { InfoList } from '@smartapp/ui/compositions/info-list';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { ResponsiveSheet } from '@smartapp/ui/compositions/responsive-sheet';
 import { ScrollHint } from '@smartapp/ui/compositions/scroll-hint';
+import { StatusAvatar } from '@smartapp/ui/compositions/status-avatar';
 import {
   CalendarIcon,
   ClockIcon,
@@ -217,6 +219,25 @@ export function KitPatternsUi1Section() {
         useFor="One-tap copy with animated check feedback, smooth tabular KPI counters, and self-drawing confirmation checks."
         dont="Fail silently when clipboard access is denied (CopyButton falls back and notifies)."
         render={() => <FeedbackCompositionsDemo />}
+      />
+
+      <DualSurfaceShowcase
+        title="StatusAvatar & BrandIcon"
+        source="R-4 compositions (D94): shadcn Avatar on Base UI; simple-icons marks (CC0)"
+        useFor="A property or person with an open, busy or paused dot; Messenger, Facebook and Google marks next to their links; GCash, Maya and bank tiles in Payments."
+        dont="Recolour or redraw a brand mark; show a status dot without its word somewhere."
+        render={() => (
+          <div className="flex flex-wrap items-center gap-4">
+            <StatusAvatar name="Ulap Suites" status="open" size="lg" shape="rounded" />
+            <StatusAvatar name="Ulap Suites" status="busy" size="lg" shape="rounded" />
+            <StatusAvatar name="Ulap Suites" status="paused" size="lg" shape="rounded" />
+            <BrandIcon brand="messenger" label="Messenger" />
+            <BrandIcon brand="facebook" label="Facebook" />
+            <BrandIcon brand="google" label="Google" />
+            <BrandIcon brand="gcash" label="GCash" />
+            <BrandIcon brand="bank" label="Bank" />
+          </div>
+        )}
       />
     </div>
   );
