@@ -94,7 +94,10 @@ function LinkField({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Open ${label}, in a new tab`}
-              className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'h-8 gap-1.5 px-2.5 pointer-coarse:h-9')}
+              className={cn(
+                buttonVariants({ variant: 'ghost', size: 'sm' }),
+                'h-8 gap-1.5 px-2.5 pointer-coarse:h-9',
+              )}
             >
               Open
               <ExternalLinkIcon aria-hidden="true" />
